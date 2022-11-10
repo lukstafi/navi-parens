@@ -1,0 +1,172 @@
+{
+  "name": "navi-parens",
+  "displayName": "Navi Parens",
+  "description": "Navigate structured code with convenient key shortcuts.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.73.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:vscodelukstafi.goToNextBracket",
+    "onCommand:vscodelukstafi.goToPreviousBracket",
+    "onCommand:vscodelukstafi.goToUpBracket",
+    "onCommand:vscodelukstafi.goToDownBracket",
+    "onCommand:vscodelukstafi.selectToNextBracket",
+    "onCommand:vscodelukstafi.selectToPreviousBracket",
+    "onCommand:vscodelukstafi.selectToUpBracket",
+    "onCommand:vscodelukstafi.selectToDownBracket"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscodelukstafi.goToNextBracket",
+        "title": "Go To Next Bracket: Go past the next same-level closing bracket/scope"
+      },
+      {
+        "command": "vscodelukstafi.goToPreviousBracket",
+        "title": "Go To Previous Bracket: Go to the previous same-level opening bracket/scope"
+      },
+      {
+        "command": "vscodelukstafi.goToUpBracket",
+        "title": "Go To Up Bracket: Go outside the opening of the current level"
+      },
+      {
+        "command": "vscodelukstafi.goToDownBracket",
+        "title": "Go To Down Bracket: Go outside the closing of the current level"
+      },
+      {
+        "command": "vscodelukstafi.selectToNextBracket",
+        "title": "Select To Next Bracket: Select past the next same-level closing bracket/scope"
+      },
+      {
+        "command": "vscodelukstafi.selectToPreviousBracket",
+        "title": "Select To Previous Bracket: Select to the previous same-level opening bracket/scope"
+      },
+      {
+        "command": "vscodelukstafi.selectToUpBracket",
+        "title": "Slect To Up Bracket: Select till outside the opening of the current level"
+      },
+      {
+        "command": "vscodelukstafi.selectToDownBracket",
+        "title": "Select To Down Bracket: Select till outside the closing of the current level"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "-editor.action.insertCursorAtEndOfEachLineSelected",
+        "key": "shift+alt+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "editor.action.insertCursorAtEndOfEachLineSelected",
+        "key": "shift+alt+p",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorRight",
+        "key": "alt+l",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorLeft",
+        "key": "alt+j",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorUp",
+        "key": "alt+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorDown",
+        "key": "alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorRightSelect",
+        "key": "shift+alt+l",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorLeftSelect",
+        "key": "shift+alt+j",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorUpSelect",
+        "key": "shift+alt+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorDownSelect",
+        "key": "shift+alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vscodelukstafi.goToNextBracket",
+        "key": "ctrl+alt+l",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vscodelukstafi.goToPreviousBracket",
+        "key": "ctrl+alt+j",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vscodelukstafi.goToUpBracket",
+        "key": "ctrl+alt+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vscodelukstafi.goToDownBracket",
+        "key": "ctrl+alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vscodelukstafi.selectToNextBracket",
+        "key": "shift+ctrl+alt+l",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vscodelukstafi.selectToPreviousBracket",
+        "key": "shift+ctrl+alt+j",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vscodelukstafi.selectToUpBracket",
+        "key": "shift+ctrl+alt+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "vscodelukstafi.selectToDownBracket",
+        "key": "shift+ctrl+alt+k",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.73.0",
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@typescript-eslint/parser": "^5.42.0",
+    "eslint": "^8.26.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "typescript": "^4.8.4",
+    "@vscode/test-electron": "^2.2.0"
+  }
+}
