@@ -42,14 +42,18 @@ If you have any requirements or dependencies, add a section describing those and
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+* `navi-parens.enable`: [`true`] Enable/disable this extension.
+* `navi-parens.rebind`: [`true`] How to deal with the `shift+alt+i` binding conflict.
+** If `true`:
+*** rebind `insertCursorAtEndOfEachLineSelected` from `shift+alt+i` to `shift+alt+p`
+*** bind `cursorUpSelect` to `shift+alt+i`
+*** do not make bindings for `ctrl+alt+o`.
+** If `false`:
+*** bind `cursorUpSelect` to `ctrl+shift+alt+o`
+*** bind `cursorUp` to both `alt+i` and `ctrl+alt+o`.
+
 
 ## Known Issues
 
