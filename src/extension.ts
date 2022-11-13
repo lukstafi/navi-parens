@@ -1,26 +1,72 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "navi-parens" is now active!');
+	console.log('Congratulations, your extension "navi-parens" is being activated!');
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerTextEditorCommand('navi-parens.goToNextBracket', goToNextBracket);
-
-	context.subscriptions.push(disposable(f(g())));
+	function newCommand(command: string, callback: (textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, ...args: any[]) => void) {
+		context.subscriptions.push(vscode.commands.registerTextEditorCommand(command, callback));
+	}
+	newCommand('navi-parens.goToNextBracket', goToNextBracket);
+	newCommand('navi-parens.goToPreviousBracket', goToPreviousBracket);
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {}
 
 async function goToNextBracket(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, ...args: any[]) {
-	
+	let pos = textEditor.selection.active;
+	console.log('For now, debug info at position: %d, %d', pos.line, pos.character);
+	await printDocumentSymbols(textEditor.document);
+}
+
+async function goToPreviousBracket(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit, ...args: any[]) {
+	let pos = textEditor.selection.active;
+	console.log('For now, debug info at position: %d, %d', pos.line, pos.character);
+	await printRangeSemanticTokens(textEditor.document, textEditor.selection);
+}
+
+async function printDocumentSymbols(doc: vscode.TextDocument) {	
+	let symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>('vscode.executeDocumentSymbolProvider', doc.uri);
+	if (symbols === undefined) {
+		console.log('No symbols in the document.');
+		return;
+	}
+	console.log('All symbols:');
+	printSymbols(symbols, 1);
+}
+
+function printSymbols(symbols: vscode.DocumentSymbol[], indent: number) {	
+	for(let symbol of symbols) {
+		console.log('%s%s: %s (is string? %s)', ' '.repeat(indent), symbol.name, symbol.detail, (symbol.kind === vscode.SymbolKind.String));
+		console.log('%sChildren:', ' '.repeat(indent));
+		printSymbols(symbol.children, indent+1);
+	}
+}
+
+async function printRangeSemanticTokens(doc: vscode.TextDocument, range: vscode.Range) {
+	let cancel = new vscode.CancellationTokenSource();
+	let tokens = await vscode.commands.executeCommand<vscode.SemanticTokens>('vscode.provideDocumentRangeSemanticTokens', doc.uri, range,	cancel);
+	let legend = await vscode.commands.executeCommand<vscode.SemanticTokensLegend>('vscode.provideDocumentRangeSemanticTokensLegend', doc.uri, range,	cancel);
+	if (tokens === undefined || legend === undefined) {
+		console.log('No tokens in the range.');
+		return;
+	}
+	console.log('All tokens:');
+	let numTokens = tokens.data.length / 5;
+	var line = 0;
+	var column = 0;
+	for (var i = 0; i < numTokens; ++i) {
+		let deltaLine = tokens.data[i*5];
+		let deltaStartChar = tokens.data[i*5+1];
+		let tokenLen = tokens.data[i*5+2];
+		let tokenType = legend.tokenTypes[tokens.data[i*5+3]];
+
+		line += deltaLine;
+		if (deltaLine == 0) {
+			column = deltaStartChar;
+		} else {
+			column += deltaStartChar;
+		}
+		console.log('  %d,%d+%d: %s', line, column, tokenLen, tokenType);
+	}
 }
