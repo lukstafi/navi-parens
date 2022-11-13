@@ -26,6 +26,8 @@ Extra key bindings:
 * `cursorUpSelect`: `shift+alt+i`
 * `cursorDownSelect`: `shift+alt+k`
 
+When navigating scopes with empty (closing) delimiters, e.g. for scopes based on indentation, Navi Parens keeps track of the exact current scope and changes scopes without changing cursor position when needed.
+
 ## TODO: remaining auto-generated suggested sections
 
 Image paths are relative to this README file.
