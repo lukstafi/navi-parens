@@ -1,5 +1,13 @@
 import * as vscode from 'vscode';
 
+interface DocumentNavigationState {
+  /** Cache for the symbol trees for the whole document. Lazily populated, cleared on a document change. */
+	symbols: vscode.DocumentSymbol[] | null;
+	/** A stack of ancestor symbols with the current symbol at position 0. */
+	currentSymbolZipper: vscode.DocumentSymbol[] | null;
+}
+let documentStates = new Map<vscode.Uri, DocumentNavigationState>();
+
 export function activate(context: vscode.ExtensionContext) {
 
 	console.log('Congratulations, your extension "navi-parens" is being activated!');
@@ -25,7 +33,7 @@ async function goToPreviousBracket(textEditor: vscode.TextEditor, edit: vscode.T
 	await printRangeSemanticTokens(textEditor.document, textEditor.selection);
 }
 
-async function printDocumentSymbols(doc: vscode.TextDocument) {	
+async function printDocumentSymbols(doc: vscode.TextDocument) {
 	let symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>('vscode.executeDocumentSymbolProvider', doc.uri);
 	if (symbols === undefined) {
 		console.log('No symbols in the document.');
@@ -51,7 +59,7 @@ async function printRangeSemanticTokens(doc: vscode.TextDocument, range: vscode.
 		console.log('No tokens in the range.');
 		return;
 	}
-	console.log('All tokens:');
+	console.log('Range tokens:');
 	let numTokens = tokens.data.length / 5;
 	var line = 0;
 	var column = 0;

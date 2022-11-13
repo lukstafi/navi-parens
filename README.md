@@ -1,6 +1,6 @@
 # navi-parens README
 
-This is the README for your extension "navi-parens". It provides structured code navigation similar to what's available in Emacs.
+Navi Parens is a Visual Studio Code extension that provides structured code navigation similar to what's available in Emacs.
 Over time it might also include some other functionality and configuration that I find useful.
 
 ## Features
@@ -26,7 +26,13 @@ Extra key bindings:
 * `cursorUpSelect`: `shift+alt+i`
 * `cursorDownSelect`: `shift+alt+k`
 
-When navigating scopes with empty (closing) delimiters, e.g. for scopes based on indentation, Navi Parens keeps track of the exact current scope and changes scopes without changing cursor position when needed.
+When navigating scopes with empty (closing) delimiters, Navi Parens keeps track of the exact current scope and changes scopes without changing cursor position when needed.
+
+Currently, Navi Parens uses two sources of structure information:
+* a judicious use of the built-in `Go to Bracket` command,
+* defined-symbols, as in the outline view, where the corresponding scope is the full range of a definition.
+
+In languages like Python these sources can be less-than-ideal. In the future, I might try to incorporate the scopes available to fold/unfold. Unfortunately, the fold/unfold scopes do not seem easily available to VSCode extensions.
 
 ## TODO: remaining auto-generated suggested sections
 
