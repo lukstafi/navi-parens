@@ -15,8 +15,8 @@
     "onCommand:navi-parens.goPastPreviousScope",
     "onCommand:navi-parens.goToUpScope",
     "onCommand:navi-parens.goToDownScope",
-    "onCommand:navi-parens.selectToNextScope",
-    "onCommand:navi-parens.selectToPreviousScope",
+    "onCommand:navi-parens.selectPastNextScope",
+    "onCommand:navi-parens.selectPastPreviousScope",
     "onCommand:navi-parens.selectToUpScope",
     "onCommand:navi-parens.selectToDownScope"
   ],
@@ -40,11 +40,11 @@
         "title": "Go To Down Scope: Go outside the closing of the current level"
       },
       {
-        "command": "navi-parens.selectToNextScope",
+        "command": "navi-parens.selectPastNextScope",
         "title": "Select To Next Scope: Select past the next same-level closing bracket/scope"
       },
       {
-        "command": "navi-parens.selectToPreviousScope",
+        "command": "navi-parens.selectPastPreviousScope",
         "title": "Select To Previous Scope: Select to the previous same-level opening bracket/scope"
       },
       {
@@ -128,12 +128,12 @@
         "when": "editorTextFocus"
       },
       {
-        "command": "navi-parens.selectToNextScope",
+        "command": "navi-parens.selectPastNextScope",
         "key": "shift+ctrl+alt+l",
         "when": "editorTextFocus"
       },
       {
-        "command": "navi-parens.selectToPreviousScope",
+        "command": "navi-parens.selectPastPreviousScope",
         "key": "shift+ctrl+alt+j",
         "when": "editorTextFocus"
       },
