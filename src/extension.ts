@@ -83,10 +83,38 @@ async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, po
 	}
 	const anchor = select ? textEditor.selection.anchor : cursor;
 	textEditor.selection = new vscode.Selection(anchor, cursor);
+	textEditor.revealRange(textEditor.selection);
 }
 
-async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, point: (r: vscode.Range) => vscode.Position) {
-	let oldSelection = textEditor.selection;
+async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
+	let state = await updateStateForPosition(textEditor);
+	const stack = state.lastSymbolAndAncestors;
+	//
+	const siblingSymbols = stack.length > 0 ? stack[stack.length - 1].children : state.rootSymbols;
+	const pos = textEditor.selection.active;
+	const good = (s: vscode.Range) => before ? s.end.isBefore(pos) : s.start.isAfter(pos);
+	let candidate: vscode.Range | null = null;
+	const better = (s: vscode.Range) => before ? candidate?.end.isBefore(s.end) : candidate?.start.isAfter(s.start);
+	for (const sibling of siblingSymbols) {
+		if (!good(sibling.range)) {
+			continue;
+		}
+		if (!candidate || better(sibling.range) || sibling.range.contains(candidate)) {
+			candidate = sibling.range;
+		}
+	}
+	if (!candidate) {
+		// If no progress, optionally shift to higher scope.
+		// if (stack.length > 0) {
+		// 	stack.pop();
+		// 	await goPastSiblingScope(textEditor, select, before);
+		// }
+		return;
+	}
+	const cursor = before ? candidate.start : candidate.end;
+	const anchor = select ? textEditor.selection.anchor : cursor;
+	textEditor.selection = new vscode.Selection(anchor, cursor);
+	textEditor.revealRange(textEditor.selection);
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -102,10 +130,10 @@ export function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(vscode.commands.registerTextEditorCommand(command, callback));
 	}
 
-	newCommand('navi-parens.goPastNextScope', textEditor => goPastSiblingScope(textEditor, false, r => r.start));
-	newCommand('navi-parens.goPastPreviousScope', textEditor => goPastSiblingScope(textEditor, false, r => r.end));
-	newCommand('navi-parens.selectPastNextScope', textEditor => goPastSiblingScope(textEditor, true, r => r.start));
-	newCommand('navi-parens.selectPastPreviousScope', textEditor => goPastSiblingScope(textEditor, true, r => r.end));
+	newCommand('navi-parens.goPastNextScope', textEditor => goPastSiblingScope(textEditor, false, false));
+	newCommand('navi-parens.goPastPreviousScope', textEditor => goPastSiblingScope(textEditor, false, true));
+	newCommand('navi-parens.selectPastNextScope', textEditor => goPastSiblingScope(textEditor, true, false));
+	newCommand('navi-parens.selectPastPreviousScope', textEditor => goPastSiblingScope(textEditor, true, true));
 	newCommand('navi-parens.goToUpScope', textEditor => goToOuterScope(textEditor, false, r => r.start));
 	newCommand('navi-parens.goToDownScope', textEditor => goToOuterScope(textEditor, false, r => r.end));
 	newCommand('navi-parens.selectToUpScope', textEditor => goToOuterScope(textEditor, true, r => r.start));
