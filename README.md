@@ -26,8 +26,6 @@ Extra key bindings:
 * `cursorUpSelect`: `shift+alt+i`
 * `cursorDownSelect`: `shift+alt+k`
 
-When navigating scopes with empty (closing) delimiters, Navi Parens keeps track of the exact current scope and changes scopes without changing cursor position when needed.
-
 Currently, Navi Parens uses two sources of structure information:
 * a judicious use of the built-in `Go to Bracket` command,
 * defined-symbols, as in the outline view, where the corresponding scope is the full range of a definition.
@@ -66,6 +64,8 @@ This extension contributes the following settings:
 Currently, multiple cursors are not supported.
 
 I ignore defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.
+
+To simplify the implementation, navigating up or down a scope advances the cursor if possible. This is usually the desired behavior, but reduces a bit the flexibility of navigating scopes with empty (closing) delimiters.
 
 ## Release Notes
 
