@@ -137,7 +137,7 @@ async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, po
 async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
 	let state = await updateStateForPosition(textEditor);
 	const stack = state.lastSymbolAndAncestors;
-	//
+	// First, find a defined-symbol candidate, if any.
 	const siblingSymbols = stack.length > 0 ? stack[stack.length - 1].children : state.rootSymbols;
 	const pos = textEditor.selection.active;
 	const good = (s: vscode.Range) => before ? s.end.isBeforeOrEqual(pos) : s.start.isAfterOrEqual(pos);
@@ -151,6 +151,17 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 			candidate = sibling.range;
 		}
 	}
+	// Check if there are any brackets to consider.
+	let gap;
+	if (candidate) {
+		gap = before ? new vscode.Range(candidate.end, pos) : new vscode.Range(pos, candidate.start);
+	} else {
+		let invalidRange = new vscode.Range(0, 0, textEditor.document.lineCount, 0);
+		let fullRange = textEditor.document.validateRange(invalidRange);
+		gap = before ? new vscode.Range(fullRange.start, pos) : new vscode.Range(pos, fullRange.end);
+	}
+	const gapText = textEditor.document.getText(gap);
+	
 	if (!candidate) {
 		// If no progress, optionally shift to higher scope.
 		// TODO: optionally but by default.
