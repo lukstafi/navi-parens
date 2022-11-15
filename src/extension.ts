@@ -161,7 +161,20 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 		gap = before ? new vscode.Range(fullRange.start, pos) : new vscode.Range(pos, fullRange.end);
 	}
 	const gapText = textEditor.document.getText(gap);
-	
+	const bracketTriggers = before ? [")", "]", "}", ">"] : ["(", "[", "{", "<"]
+	function bracketOffset(last: number) {
+		const f = (b: string) => before ? gapText.lastIndexOf(b, last) :  gapText.indexOf(b, last);
+		const indices: number[] = bracketTriggers.map(f).filter(idx => idx > 0);
+		if (indices.length == 0) { return -1; }
+		return before ? Math.max(...indices) : Math.min(...indices);
+	}
+	let last = before ? gapText.length - 1 : 0;
+	while (true) {
+		last = bracketOffset(last);
+		if (last != -1) { break; }
+		
+	}
+
 	if (!candidate) {
 		// If no progress, optionally shift to higher scope.
 		// TODO: optionally but by default.
