@@ -80,8 +80,10 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 	}
 	if (startSelection.isAfterOrEqual(pos)) {
 		// Semantics mismatch -- right-adjacent scope selected.
-		// Note: `textEditor.selection.active = pos.translate(0, -1);` doesn't work because we need to await.
-		await vscode.commands.executeCommand('cursorMove', {to: 'left', by: 'character', select: false, value: 1});
+		// Note: `textEditor.selection.active = pos.translate(0, -1);` doesn't work.
+		// For comparison (would probably be slower):
+		// await vscode.commands.executeCommand('cursorMove', {to: 'left', by: 'character', select: false, value: 1});
+		textEditor.selection = new vscode.Selection(savedSelection.anchor, pos.translate(0, -1));
 		await vscode.commands.executeCommand('editor.action.jumpToBracket');
 		endSelection = textEditor.selection.active;
 		await vscode.commands.executeCommand('editor.action.jumpToBracket');
@@ -89,7 +91,7 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 	}
 	while (endSelection.isBefore(pos)) {
 		// If we run too far, `containsInside` below will be false, so OK.
-		await vscode.commands.executeCommand('cursorMove', {to: 'left', by: 'character', select: false, value: 1});
+		textEditor.selection = new vscode.Selection(savedSelection.anchor, textEditor.selection.active.translate(0, -1));
 		await vscode.commands.executeCommand('editor.action.jumpToBracket');
 		endSelection = textEditor.selection.active;
 		await vscode.commands.executeCommand('editor.action.jumpToBracket');
