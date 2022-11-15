@@ -67,6 +67,8 @@ I ignore defined-symbols that are out-of-order with respect to the syntactic str
 
 To simplify the implementation, navigating up or down a scope advances the cursor if possible. This is usually the desired behavior, but reduces a bit the flexibility of navigating scopes with empty (closing) delimiters.
 
+Currently, navigating scopes with multicharacter closing brackets might not work well.
+
 ## Release Notes
 
 Users appreciate release notes as you update your extension.

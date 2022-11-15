@@ -68,19 +68,59 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 	}
 	state.lastPosition = pos;
 
-	// TODO: compute
-	state.lastBracketScope = null;
+	const savedSelection = textEditor.selection;
+	// It would be great to use 'editor.action.selectToBracket' but that flashes a selection in the UI.
+	await vscode.commands.executeCommand('editor.action.jumpToBracket');
+	let endSelection = textEditor.selection.active;
+	await vscode.commands.executeCommand('editor.action.jumpToBracket');
+	let startSelection = textEditor.selection.active; /*(()(()(())))   ()    ()*/
+	if (startSelection.isAfter(endSelection)) {
+		// Touching the outer bracket.
+		[startSelection, endSelection] = [endSelection, startSelection];
+	}
+	if (startSelection.isAfterOrEqual(pos)) {
+		// Semantics mismatch -- right-adjacent scope selected.
+		// Note: `textEditor.selection.active = pos.translate(0, -1);` doesn't work because we need to await.
+		await vscode.commands.executeCommand('cursorMove', {to: 'left', by: 'character', select: false, value: 1});
+		await vscode.commands.executeCommand('editor.action.jumpToBracket');
+		endSelection = textEditor.selection.active;
+		await vscode.commands.executeCommand('editor.action.jumpToBracket');
+		startSelection = textEditor.selection.active;
+	}
+	while (endSelection.isBefore(pos)) {
+		// If we run too far, `containsInside` below will be false, so OK.
+		await vscode.commands.executeCommand('cursorMove', {to: 'left', by: 'character', select: false, value: 1});
+		await vscode.commands.executeCommand('editor.action.jumpToBracket');
+		endSelection = textEditor.selection.active;
+		await vscode.commands.executeCommand('editor.action.jumpToBracket');
+		startSelection = textEditor.selection.active;
+	}
+	// Select past the outer bracket.
+	// TODO: support mulit-character tokens.
+	const bracketRange = new vscode.Range(startSelection, endSelection.translate(0, 1));
+	if (containsInside(bracketRange, pos)) {
+		state.lastBracketScope = bracketRange;
+	} else {
+		state.lastBracketScope = null;
+	}
+	textEditor.selection = savedSelection;
 
 	return state;
 }
 
 async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, point: (r: vscode.Range) => vscode.Position) {
 	let state = await updateStateForPosition(textEditor);
-	let currentSymbol = state.lastSymbolAndAncestors.pop();
-	if (!currentSymbol) {
-		return;
+	let currentRange = state.lastSymbolAndAncestors.pop()?.range;
+	if (!currentRange) {
+		if (!state.lastBracketScope) {
+			return;
+		} else {
+			currentRange = state.lastBracketScope;
+		}
+	} else if (!!state.lastBracketScope && currentRange.contains(state.lastBracketScope)) {
+		currentRange = state.lastBracketScope;
 	}
-	const cursor = point(currentSymbol.range);
+	const cursor = point(currentRange);
 	const anchor = select ? textEditor.selection.anchor : cursor;
 	textEditor.selection = new vscode.Selection(anchor, cursor);
 	textEditor.revealRange(textEditor.selection);
