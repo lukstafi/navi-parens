@@ -18,6 +18,11 @@ interface DocumentNavigationState {
 }
 let documentStates = new Map<vscode.Uri, DocumentNavigationState>();
 
+/** From Navi Parens perspective, positions on the border of a scope are outside of the scope. */
+function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
+	return range.contains(pos) && !range.start.isEqual(pos) && !range.end.isEqual(pos);
+}
+
 async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<DocumentNavigationState> {
 	const uri = textEditor.document.uri;
 	const pos = textEditor.selection.active;
@@ -49,7 +54,7 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 	while (children && children.length > 0) {
 		let candidate: vscode.DocumentSymbol | null = null;
 		for (const child of children) {
-			if (child.range.contains(pos)) {
+			if (containsInside(child.range, pos)) {
 				if (!candidate) {
 					candidate = child;
 				} else if (child.range.contains(candidate.range)) {
@@ -76,11 +81,6 @@ async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, po
 		return;
 	}
 	const cursor = point(currentSymbol.range);
-	if (cursor.isEqual(textEditor.selection.active)) {
-		// No progress, try again. This time `updateStateForPosition` will do nothing, and we will pop another symbol from the stack.
-		await goToOuterScope(textEditor, select, point);
-		return;
-	}
 	const anchor = select ? textEditor.selection.anchor : cursor;
 	textEditor.selection = new vscode.Selection(anchor, cursor);
 	textEditor.revealRange(textEditor.selection);
@@ -92,7 +92,7 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 	//
 	const siblingSymbols = stack.length > 0 ? stack[stack.length - 1].children : state.rootSymbols;
 	const pos = textEditor.selection.active;
-	const good = (s: vscode.Range) => before ? s.end.isBefore(pos) : s.start.isAfter(pos);
+	const good = (s: vscode.Range) => before ? s.end.isBeforeOrEqual(pos) : s.start.isAfterOrEqual(pos);
 	let candidate: vscode.Range | null = null;
 	const better = (s: vscode.Range) => before ? candidate?.end.isBefore(s.end) : candidate?.start.isAfter(s.start);
 	for (const sibling of siblingSymbols) {
@@ -105,10 +105,11 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 	}
 	if (!candidate) {
 		// If no progress, optionally shift to higher scope.
-		// if (stack.length > 0) {
-		// 	stack.pop();
-		// 	await goPastSiblingScope(textEditor, select, before);
-		// }
+		// TODO: optionally but by default.
+		if (stack.length > 0) {
+			stack.pop();
+			await goPastSiblingScope(textEditor, select, before);
+		}
 		return;
 	}
 	const cursor = before ? candidate.start : candidate.end;
