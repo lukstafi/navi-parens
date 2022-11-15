@@ -88,7 +88,10 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 		endSelection = textEditor.selection.active;
 		await vscode.commands.executeCommand('editor.action.jumpToBracket');
 		startSelection = textEditor.selection.active;
-	}
+		if (startSelection.isAfter(endSelection)) {
+			[startSelection, endSelection] = [endSelection, startSelection];
+		}
+		}
 	while (endSelection.isBefore(pos)) {
 		// If we run too far, `containsInside` below will be false, so OK.
 		textEditor.selection = new vscode.Selection(savedSelection.anchor, textEditor.selection.active.translate(0, -1));
@@ -96,6 +99,9 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 		endSelection = textEditor.selection.active;
 		await vscode.commands.executeCommand('editor.action.jumpToBracket');
 		startSelection = textEditor.selection.active;
+		if (startSelection.isAfter(endSelection)) {
+			[startSelection, endSelection] = [endSelection, startSelection];
+		}
 	}
 	// Select past the outer bracket.
 	// TODO: support mulit-character tokens.
