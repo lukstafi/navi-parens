@@ -17,6 +17,12 @@ interface DocumentNavigationState {
 	/** Position of the cursor on last update. */
 	lastPosition: vscode.Position;
 
+	/** Visible range on last update. */
+	lastVisibleRange: vscode.Range;
+
+	/** Whether the lastVisibleRange was invalidated within side-effects of a Navi Parens command. */
+	leftVisibleRange: boolean;
+
 	/** Cache to avoid UI interaction when extracting bracket scopes using jumpToBracket.
 	 * Key: cursor position for initiating jumpToBracket.
 	 * Value: resulting cursor position.
@@ -36,16 +42,18 @@ function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
 async function jumpToBracket(textEditor: vscode.TextEditor, pos: vscode.Position): Promise<vscode.Position> {
 	const uri = textEditor.document.uri;
 	let state = documentStates.get(uri);
-	if (!!state) {
-		let result = state.jumpToBracketCache.get(pos);
-		if (!!result) { return result; }
-	 } else {
+	if (!state) {
 		// Being defensive: on actual code paths this should not happen.
 		state = {
 			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastBracketScope: null, lastPosition: pos,
+			lastVisibleRange: textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2)),
+			leftVisibleRange: false,
 			jumpToBracketCache: new Map<vscode.Position, vscode.Position>()
 		};
 		documentStates.set(uri, state);
+	 } else {
+		let result = state.jumpToBracketCache.get(pos);
+		if (!!result) { return result; }
 	 }
 		// Note: `textEditor.selection.active = pos;` didn't work.
 		textEditor.selection = new vscode.Selection(pos, pos);
@@ -53,6 +61,9 @@ async function jumpToBracket(textEditor: vscode.TextEditor, pos: vscode.Position
 	 await vscode.commands.executeCommand('cursorMove', { to: 'right', by: 'character', select: false, value: 0});
 	 await vscode.commands.executeCommand('editor.action.jumpToBracket');
 	const result = textEditor.selection.active;
+	if (!state.lastVisibleRange.contains(result)) {
+		state.leftVisibleRange = true;
+	}
 	state.jumpToBracketCache.set(pos, result);
 	return result;
 }
@@ -64,9 +75,14 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 	if (!state) {
 		state = {
 			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastBracketScope: null, lastPosition: pos,
+			lastVisibleRange: textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2)),
+			leftVisibleRange: false,
 			jumpToBracketCache: new Map<vscode.Position, vscode.Position>()
 		};
 		documentStates.set(uri, state);
+	} else {
+		state.lastVisibleRange = textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2));
+		state.leftVisibleRange = false;
 	}
 	if (state.needsUpdate) {
 		state.rootSymbols = 
@@ -145,7 +161,6 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 }
 
 async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, point: (r: vscode.Range) => vscode.Position) {
-	const savedVisible = textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2));
 	let state = await updateStateForPosition(textEditor);
 	let currentRange = state.lastSymbolAndAncestors.pop()?.range;
 	if (!currentRange) {
@@ -160,17 +175,16 @@ async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, po
 	const cursor = point(currentRange);
 	const anchor = select ? textEditor.selection.anchor : cursor;
 	textEditor.selection = new vscode.Selection(anchor, cursor);
-	if (savedVisible.contains(textEditor.selection)) {
-		textEditor.revealRange(savedVisible);
-	} else {
+	if (!state.lastVisibleRange.contains(textEditor.selection)) {
 		textEditor.revealRange(textEditor.selection);
+	} else if (state.leftVisibleRange) {
+		textEditor.revealRange(state.lastVisibleRange);
 	}
 }
 
 async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
 	// State update might interact with the UI, save UI state early.
 	const savedSelection = textEditor.selection;
-	const savedVisible = textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2));
 	let state = await updateStateForPosition(textEditor);
 	const stack = state.lastSymbolAndAncestors;
 	// First, find a defined-symbol candidate, if any.
@@ -240,7 +254,9 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 		if (!candidate) {
 			if (!!targetPos) { console.warn('Navi Parens: Things broke, maybe a bug. Bailing out.'); }
 			textEditor.selection = savedSelection;
-			textEditor.revealRange(savedVisible);
+			if (state.leftVisibleRange) {
+				textEditor.revealRange(state.lastVisibleRange);
+			}
 			 return;
 		}
 		targetPos = before ? candidate.start : candidate.end;
@@ -248,10 +264,10 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 	const anchor = select ? textEditor.selection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
 	// jumpToBracket could have moved the screen.
-	if (savedVisible.contains(textEditor.selection)) {
-		textEditor.revealRange(savedVisible);
-	} else {
+	if (!state.lastVisibleRange.contains(textEditor.selection)) {
 		textEditor.revealRange(textEditor.selection);
+	} else if (state.leftVisibleRange) {
+		textEditor.revealRange(state.lastVisibleRange);
 	}
 }
 
