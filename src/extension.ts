@@ -16,6 +16,12 @@ interface DocumentNavigationState {
 
 	/** Position of the cursor on last update. */
 	lastPosition: vscode.Position;
+
+	/** Cache to avoid UI interaction when extracting bracket scopes using jumpToBracket.
+	 * Key: cursor position for initiating jumpToBracket.
+	 * Value: resulting cursor position.
+	 */
+	jumpToBracketCache: Map<vscode.Position, vscode.Position>;
 }
 let documentStates = new Map<vscode.Uri, DocumentNavigationState>();
 
@@ -24,17 +30,49 @@ function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
 	return range.contains(pos) && !range.start.isEqual(pos) && !range.end.isEqual(pos);
 }
 
+/** Computes the resulting cursor position of `editor.action.jumpToBracket` from the given position.
+ * Uses a global cache. Does not restore the selection state, to minimize the overall UI interactions.
+ */
+async function jumpToBracket(textEditor: vscode.TextEditor, pos: vscode.Position): Promise<vscode.Position> {
+	const uri = textEditor.document.uri;
+	let state = documentStates.get(uri);
+	if (!!state) {
+		let result = state.jumpToBracketCache.get(pos);
+		if (!!result) { return result; }
+	 } else {
+		// Being defensive: on actual code paths this should not happen.
+		state = {
+			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastBracketScope: null, lastPosition: pos,
+			jumpToBracketCache: new Map<vscode.Position, vscode.Position>()
+		};
+		documentStates.set(uri, state);
+	 }
+		// Note: `textEditor.selection.active = pos;` didn't work.
+		textEditor.selection = new vscode.Selection(pos, pos);
+	 // Make sure everything updated so jumpToBracket works reliably.
+	 await vscode.commands.executeCommand('cursorMove', { to: 'right', by: 'character', select: false, value: 0});
+	 await vscode.commands.executeCommand('editor.action.jumpToBracket');
+	const result = textEditor.selection.active;
+	state.jumpToBracketCache.set(pos, result);
+	return result;
+}
+
 async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<DocumentNavigationState> {
 	const uri = textEditor.document.uri;
 	const pos = textEditor.selection.active;
 	let state = documentStates.get(uri);
 	if (!state) {
-		state = {needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastBracketScope: null, lastPosition: pos};
+		state = {
+			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastBracketScope: null, lastPosition: pos,
+			jumpToBracketCache: new Map<vscode.Position, vscode.Position>()
+		};
 		documentStates.set(uri, state);
 	}
 	if (state.needsUpdate) {
-		state.rootSymbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>('vscode.executeDocumentSymbolProvider', uri);
+		state.rootSymbols = 
+			await vscode.commands.executeCommand<vscode.DocumentSymbol[]>('vscode.executeDocumentSymbolProvider', uri);
 		state.lastSymbolAndAncestors = [];
+		state.jumpToBracketCache.clear();
 		state.needsUpdate = false;
 	} else if (pos.isEqual(state.lastPosition)) {
 		return state;
@@ -70,36 +108,25 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 	state.lastPosition = pos;
 
 	const savedSelection = textEditor.selection;
-	// It would be great to use 'editor.action.selectToBracket' but that flashes a selection in the UI.
-	await vscode.commands.executeCommand('editor.action.jumpToBracket');
-	let endSelection = textEditor.selection.active;
-	await vscode.commands.executeCommand('editor.action.jumpToBracket');
-	let startSelection = textEditor.selection.active;
+	let endSelection = await jumpToBracket(textEditor, savedSelection.active);
+	let startSelection = await jumpToBracket(textEditor, endSelection);
 	if (startSelection.isAfter(endSelection)) {
 		// Touching the outer bracket.
 		[startSelection, endSelection] = [endSelection, startSelection];
 	}
 	if (startSelection.isAfterOrEqual(pos)) {
-		// Semantics mismatch -- right-adjacent scope selected.
-		// Note: `textEditor.selection.active = pos.translate(0, -1);` doesn't work.
-		// For comparison (would probably be slower):
-		// await vscode.commands.executeCommand('cursorMove', {to: 'left', by: 'character', select: false, value: 1});
-		textEditor.selection = new vscode.Selection(savedSelection.anchor, pos.translate(0, -1));
-		await vscode.commands.executeCommand('editor.action.jumpToBracket');
-		endSelection = textEditor.selection.active;
-		await vscode.commands.executeCommand('editor.action.jumpToBracket');
-		startSelection = textEditor.selection.active;
+		// Semantics mismatch -- there is a scope right-adjacent to the cursor.
+		endSelection = await jumpToBracket(textEditor, pos.translate(0, -1));
+		startSelection = await jumpToBracket(textEditor, endSelection);
 		if (startSelection.isAfter(endSelection)) {
 			[startSelection, endSelection] = [endSelection, startSelection];
 		}
-		}
+	}
 	while (endSelection.isBefore(pos)) {
+		// Moving to the left put us inside another scope, get out of it.
 		// If we run too far, `containsInside` below will be false, so OK.
-		textEditor.selection = new vscode.Selection(savedSelection.anchor, textEditor.selection.active.translate(0, -1));
-		await vscode.commands.executeCommand('editor.action.jumpToBracket');
-		endSelection = textEditor.selection.active;
-		await vscode.commands.executeCommand('editor.action.jumpToBracket');
-		startSelection = textEditor.selection.active;
+		endSelection = await jumpToBracket(textEditor, startSelection.translate(0, -1));
+		startSelection = await jumpToBracket(textEditor, endSelection);
 		if (startSelection.isAfter(endSelection)) {
 			[startSelection, endSelection] = [endSelection, startSelection];
 		}
@@ -118,6 +145,7 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 }
 
 async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, point: (r: vscode.Range) => vscode.Position) {
+	const savedVisible = textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2));
 	let state = await updateStateForPosition(textEditor);
 	let currentRange = state.lastSymbolAndAncestors.pop()?.range;
 	if (!currentRange) {
@@ -132,10 +160,17 @@ async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, po
 	const cursor = point(currentRange);
 	const anchor = select ? textEditor.selection.anchor : cursor;
 	textEditor.selection = new vscode.Selection(anchor, cursor);
-	textEditor.revealRange(textEditor.selection);
+	if (savedVisible.contains(textEditor.selection)) {
+		textEditor.revealRange(savedVisible);
+	} else {
+		textEditor.revealRange(textEditor.selection);
+	}
 }
 
 async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
+	// State update might interact with the UI, save UI state early.
+	const savedSelection = textEditor.selection;
+	const savedVisible = textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2));
 	let state = await updateStateForPosition(textEditor);
 	const stack = state.lastSymbolAndAncestors;
 	// First, find a defined-symbol candidate, if any.
@@ -153,8 +188,6 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 		}
 	}
 	// Check if there are any brackets to consider.
-	const savedSelection = textEditor.selection;
-	const savedVisible = textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2));
 	let doc = textEditor.document;
 	// Delimit search for the bracket by: the cursor, the candidate, the parent bracket scope, the parent defined symbol.
 	let gap;
@@ -190,12 +223,7 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 		lastOffset = bracketOffset(lastOffset);
 		if (lastOffset === -1) { targetPos = null; break; }
 		let offsetPos = doc.positionAt(doc.offsetAt(gap.start) + lastOffset);
-			textEditor.selection = new vscode.Selection(savedSelection.anchor, offsetPos);
-		// Make sure everything updated so jumpToBracket works reliably.
-		await vscode.commands.executeCommand('cursorMove', {
-			to: (before ? 'left' : 'right'), by: 'character', select: false, value: 0});
-		await vscode.commands.executeCommand('editor.action.jumpToBracket');
-		targetPos = textEditor.selection.active;
+		targetPos = await jumpToBracket(textEditor, offsetPos);
 		// We could have jumped to outer bracket scope.
 		if (!gap.contains(targetPos)) { continue; }
 		// If we are outside any bracket scope, we could have jumped to a start of bracket.
