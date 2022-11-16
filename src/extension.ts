@@ -24,10 +24,10 @@ interface DocumentNavigationState {
 	leftVisibleRange: boolean;
 
 	/** Cache to avoid UI interaction when extracting bracket scopes using jumpToBracket.
-	 * Key: cursor position for initiating jumpToBracket.
+	 * Key: cursor position in the format `${p.line}/${p.character}` for initiating jumpToBracket.
 	 * Value: resulting cursor position.
 	 */
-	jumpToBracketCache: Map<vscode.Position, vscode.Position>;
+	jumpToBracketCache: Map<string, vscode.Position>;
 }
 let documentStates = new Map<vscode.Uri, DocumentNavigationState>();
 
@@ -40,6 +40,7 @@ function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
  * Uses a global cache. Does not restore the selection state, to minimize the overall UI interactions.
  */
 async function jumpToBracket(textEditor: vscode.TextEditor, pos: vscode.Position): Promise<vscode.Position> {
+	const posStr = `${pos.line}/${pos.character}`;
 	const uri = textEditor.document.uri;
 	let state = documentStates.get(uri);
 	if (!state) {
@@ -48,11 +49,11 @@ async function jumpToBracket(textEditor: vscode.TextEditor, pos: vscode.Position
 			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastBracketScope: null, lastPosition: pos,
 			lastVisibleRange: textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2)),
 			leftVisibleRange: false,
-			jumpToBracketCache: new Map<vscode.Position, vscode.Position>()
+			jumpToBracketCache: new Map<string, vscode.Position>()
 		};
 		documentStates.set(uri, state);
 	 } else {
-		let result = state.jumpToBracketCache.get(pos);
+		let result = state.jumpToBracketCache.get(posStr);
 		if (!!result) { return result; }
 	 }
 		// Note: `textEditor.selection.active = pos;` didn't work.
@@ -64,7 +65,7 @@ async function jumpToBracket(textEditor: vscode.TextEditor, pos: vscode.Position
 	if (!state.lastVisibleRange.contains(result)) {
 		state.leftVisibleRange = true;
 	}
-	state.jumpToBracketCache.set(pos, result);
+	state.jumpToBracketCache.set(posStr, result);
 	return result;
 }
 
@@ -77,7 +78,7 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastBracketScope: null, lastPosition: pos,
 			lastVisibleRange: textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2)),
 			leftVisibleRange: false,
-			jumpToBracketCache: new Map<vscode.Position, vscode.Position>()
+			jumpToBracketCache: new Map<string, vscode.Position>()
 		};
 		documentStates.set(uri, state);
 	} else {
