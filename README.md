@@ -69,6 +69,8 @@ To simplify the implementation, navigating up or down a scope advances the curso
 
 Currently, navigating scopes with multicharacter closing brackets might not work well.
 
+Currently, interaction of brackets with definitions can be undesirable in e.g. JavaScript with definitions inside a `for` loop header or `if` condition. I plan to fix it.
+
 ## Release Notes
 
 Users appreciate release notes as you update your extension.
