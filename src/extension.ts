@@ -154,6 +154,7 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 	}
 	// Check if there are any brackets to consider.
 	const savedSelection = textEditor.selection;
+	const savedVisible = textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2));
 	let doc = textEditor.document;
 	// Delimit search for the bracket by: the cursor, the candidate, the parent bracket scope, the parent defined symbol.
 	let gap;
@@ -176,21 +177,27 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 	const gapText = doc.getText(gap);
 	const bracketTriggers = before ? [")", "]", "}", ">"] : ["(", "[", "{", "<"];
 	function bracketOffset(last: number) {
-		const f = (b: string) => before ? gapText.lastIndexOf(b, last) :  gapText.indexOf(b, last);
+		let start = last + (before ? -1 : 1);
+		const f = (b: string) => before ? gapText.lastIndexOf(b, start) :  gapText.indexOf(b, start);
 		const indices: number[] = bracketTriggers.map(f).filter(idx => idx !== -1);
 		if (indices.length === 0) { return -1; }
 		return before ? Math.max(...indices) : Math.min(...indices);
 	}
-	let lastOffset = before ? gapText.length - 1 : 0;
+	let lastOffset = before ? gapText.length : -1;
 	let targetPos: vscode.Position | null = null;
 	// Ignore delimiters in comments or string literals etc. by keeping looking.
 	while (true) {
 		lastOffset = bracketOffset(lastOffset);
-		if (lastOffset === -1) { break; }
+		if (lastOffset === -1) { targetPos = null; break; }
 		let offsetPos = doc.positionAt(doc.offsetAt(gap.start) + lastOffset);
-		textEditor.selection = new vscode.Selection(savedSelection.anchor, offsetPos);
+			textEditor.selection = new vscode.Selection(savedSelection.anchor, offsetPos);
+		// Make sure everything updated so jumpToBracket works reliably.
+		await vscode.commands.executeCommand('cursorMove', {
+			to: (before ? 'left' : 'right'), by: 'character', select: false, value: 0});
 		await vscode.commands.executeCommand('editor.action.jumpToBracket');
 		targetPos = textEditor.selection.active;
+		// We could have jumped to outer bracket scope.
+		if (!gap.contains(targetPos)) { continue; }
 		// If we are outside any bracket scope, we could have jumped to a start of bracket.
 		if (!before && !!state.lastBracketScope &&
 			 bracketTriggers.includes(doc.getText(new vscode.Range(targetPos, targetPos.translate(0, 1))))) {
@@ -203,20 +210,21 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 	// Checking !gap.contains(targetPos) for robustness, it shouldn't happen.
 	if (!targetPos || !gap.contains(targetPos)) {
 		if (!candidate) {
-			// If no progress, optionally shift to higher scope.
-			// TODO: optionally but by default.
-			// TODO: clear the parent bracket scope instead, if tighter than parent symbol scope.
-			if (stack.length > 0) {
-				stack.pop();
-				await goPastSiblingScope(textEditor, select, before);
-			}
-			return;
+			if (!!targetPos) { console.warn('Navi Parens: Things broke, maybe a bug. Bailing out.'); }
+			textEditor.selection = savedSelection;
+			textEditor.revealRange(savedVisible);
+			 return;
 		}
 		targetPos = before ? candidate.start : candidate.end;
 	}
 	const anchor = select ? textEditor.selection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
-	textEditor.revealRange(textEditor.selection);
+	// jumpToBracket could have moved the screen.
+	if (savedVisible.contains(textEditor.selection)) {
+		textEditor.revealRange(savedVisible);
+	} else {
+		textEditor.revealRange(textEditor.selection);
+	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
