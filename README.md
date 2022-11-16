@@ -32,8 +32,6 @@ Currently, Navi Parens uses two sources of structure information:
 
 In languages like Python these sources can be less-than-ideal. In the future, I might try to incorporate the scopes available to fold/unfold. Unfortunately, the fold/unfold scopes do not seem easily available to VSCode extensions.
 
-As an optimization, the defined-symbols are only recomputed on edit when the cursor needs to leave its current line.
-
 ## TODO: provide some animations
 
 Image paths are relative to this README file.
@@ -60,6 +58,8 @@ This extension contributes the following settings:
 
 
 ## Technical Details and Known Issues
+
+TODO? As an optimization, the defined-symbols are only recomputed on edit when the cursor needs to leave its current line.
 
 Currently, multiple cursors are not supported.
 
