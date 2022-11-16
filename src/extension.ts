@@ -52,15 +52,13 @@ async function jumpToBracket(textEditor: vscode.TextEditor, pos: vscode.Position
 			jumpToBracketCache: new Map<string, vscode.Position>()
 		};
 		documentStates.set(uri, state);
-	 } else {
+	} else {
 		let result = state.jumpToBracketCache.get(posStr);
 		if (!!result) { return result; }
-	 }
-		// Note: `textEditor.selection.active = pos;` didn't work.
-		textEditor.selection = new vscode.Selection(pos, pos);
-	 // Make sure everything updated so jumpToBracket works reliably.
-	 await vscode.commands.executeCommand('cursorMove', { to: 'right', by: 'character', select: false, value: 0});
-	 await vscode.commands.executeCommand('editor.action.jumpToBracket');
+	}
+	// Note: `textEditor.selection.active = pos;` didn't work.
+	textEditor.selection = new vscode.Selection(pos, pos);
+	await vscode.commands.executeCommand('editor.action.jumpToBracket');
 	const result = textEditor.selection.active;
 	if (!state.lastVisibleRange.contains(result)) {
 		state.leftVisibleRange = true;
@@ -125,32 +123,36 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 	state.lastPosition = pos;
 
 	const savedSelection = textEditor.selection;
-	let endSelection = await jumpToBracket(textEditor, savedSelection.active);
-	let startSelection = await jumpToBracket(textEditor, endSelection);
-	if (startSelection.isAfter(endSelection)) {
-		// Touching the outer bracket.
-		[startSelection, endSelection] = [endSelection, startSelection];
+	let endScope = await jumpToBracket(textEditor, pos);
+	let startScope = await jumpToBracket(textEditor, endScope);
+	if (startScope.isAfter(endScope)) {
+		// Perhaps the cursor was initially touching the outer bracket from the inside.
+		[startScope, endScope] = [endScope, startScope];
 	}
-	if (startSelection.isAfterOrEqual(pos)) {
-		// Semantics mismatch -- there is a scope right-adjacent to the cursor.
-		endSelection = await jumpToBracket(textEditor, pos.translate(0, -1));
-		startSelection = await jumpToBracket(textEditor, endSelection);
-		if (startSelection.isAfter(endSelection)) {
-			[startSelection, endSelection] = [endSelection, startSelection];
+	if (startScope.isAfterOrEqual(pos)) {
+		// Semantics mismatch -- there was a scope right-adjacent to the cursor.
+		endScope = await jumpToBracket(textEditor, pos.translate(0, -1));
+		startScope = await jumpToBracket(textEditor, endScope);
+		if (startScope.isAfter(endScope)) {
+			[startScope, endScope] = [endScope, startScope];
 		}
 	}
-	while (endSelection.isBefore(pos)) {
+	while (endScope.isBefore(pos)) {
 		// Moving to the left put us inside another scope, get out of it.
 		// If we run too far, `containsInside` below will be false, so OK.
-		endSelection = await jumpToBracket(textEditor, startSelection.translate(0, -1));
-		startSelection = await jumpToBracket(textEditor, endSelection);
-		if (startSelection.isAfter(endSelection)) {
-			[startSelection, endSelection] = [endSelection, startSelection];
+		endScope = await jumpToBracket(textEditor, startScope.translate(0, -1));
+		if (endScope.isEqual(startScope)) {
+			// Outside of any scope, lastBracketScope will be null.
+			break;
+		}
+		startScope = await jumpToBracket(textEditor, endScope);
+		if (startScope.isAfter(endScope)) {
+			[startScope, endScope] = [endScope, startScope];	
 		}
 	}
 	// Select past the outer bracket.
 	// TODO: support mulit-character tokens.
-	const bracketRange = new vscode.Range(startSelection, endSelection.translate(0, 1));
+	const bracketRange = new vscode.Range(startScope, endScope.translate(0, 1));
 	if (containsInside(bracketRange, pos)) {
 		state.lastBracketScope = bracketRange;
 	} else {
