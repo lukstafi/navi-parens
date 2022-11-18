@@ -28,10 +28,9 @@ interface DocumentNavigationState {
 }
 let documentStates = new Map<vscode.Uri, DocumentNavigationState>();
 
-/** TODO: make this configurable. */
-const closingBrackets = [")", "]", "}", ">"];
-const openingBrackets = ["(", "[", "{", "<"];
-const allBrackets = openingBrackets.concat(closingBrackets);
+let closingBrackets: string[] = [")", "]", "}", ">"];
+let openingBrackets: string[] = ["(", "[", "{", "<"];
+let allBrackets = openingBrackets.concat(closingBrackets);
 
 /** From Navi Parens perspective, positions on the border of a scope are outside of the scope. */
 function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
@@ -424,6 +423,18 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, the extension "navi-parens" is being activated!');
+
+	const configuration = vscode.workspace.getConfiguration();
+	const closingBracketsConfig = configuration.get<string[]>("navi-parens.closingBrackets");
+	if (closingBracketsConfig) {
+		closingBrackets = closingBracketsConfig;
+	}
+	const openingBracketsConfig = configuration.get<string[]>("navi-parens.openingBrackets");
+	if (openingBracketsConfig) {
+		openingBrackets = openingBracketsConfig;
+	}
+	allBrackets = openingBrackets.concat(closingBrackets);
+	
 
 	vscode.workspace.onDidChangeTextDocument(event => {
 		const uri = event.document.uri;

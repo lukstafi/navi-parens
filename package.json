@@ -56,16 +56,39 @@
         "title": "Select To Down Scope: Select till outside the closing of the current level"
       }
     ],
+    "configuration": {
+      "title": "Navi Parens",
+      "properties": {
+        "navi-parens.rebind": {
+          "markdownDescription": "How to deal with the `shift+alt+i` binding conflict. If `true`, the built-in command becomes `shift+alt+p`. If `false`, we add navigation to `ctrl+alt+o` instead of `alt+i`",
+          "type": "boolean",
+          "default": "true",
+          "scope": "application"
+        },
+        "navi-parens.closingBrackets": {
+          "description": "The superset of supported closing delimiters (the default should be enough)",
+          "type": "array",
+          "default": [")", "]", "}", ">"],
+          "scope": "language-overridable"
+        },
+        "navi-parens.openingBrackets": {
+          "description": "The superset of supported opening delimiters (the default should be enough)",
+          "type": "array",
+          "default": ["(", "[", "{", "<"],
+          "scope": "language-overridable"
+        }
+      }
+    },
     "keybindings": [
       {
         "command": "-editor.action.insertCursorAtEndOfEachLineSelected",
         "key": "shift+alt+i",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.rebind"
       },
       {
         "command": "editor.action.insertCursorAtEndOfEachLineSelected",
         "key": "shift+alt+p",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.rebind"
       },
       {
         "command": "cursorRight",
@@ -81,6 +104,11 @@
         "command": "cursorUp",
         "key": "alt+i",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorUp",
+        "key": "ctrl+alt+o",
+        "when": "editorTextFocus && !config.navi-parens.rebind"
       },
       {
         "command": "cursorDown",
@@ -100,7 +128,12 @@
       {
         "command": "cursorUpSelect",
         "key": "shift+alt+i",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.rebind"
+      },
+      {
+        "command": "cursorUpSelect",
+        "key": "ctrl+shift+alt+o",
+        "when": "editorTextFocus && !config.navi-parens.rebind"
       },
       {
         "command": "cursorDownSelect",

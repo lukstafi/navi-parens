@@ -46,8 +46,8 @@ For example if there is an image subfolder under your extension project workspac
 
 This extension contributes the following settings:
 
-* `navi-parens.enable`: [`true`] Enable/disable this extension.
-* `navi-parens.rebind`: [`true`] How to deal with the `shift+alt+i` binding conflict.
+* `navi-parens.rebind`: How to deal with the `shift+alt+i` binding conflict.
+** Defaults to `true`.
 ** If `true`:
 *** rebind `insertCursorAtEndOfEachLineSelected` from `shift+alt+i` to `shift+alt+p`
 *** bind `cursorUpSelect` to `shift+alt+i`
@@ -55,6 +55,10 @@ This extension contributes the following settings:
 ** If `false`:
 *** bind `cursorUpSelect` to `ctrl+shift+alt+o`
 *** bind `cursorUp` to both `alt+i` and `ctrl+alt+o`.
+* `navi-parens.closingBrackets`: the superset of supported closing delimiters.
+** Defaults to `[")", "]", "}", ">"]`. The default setting might be sufficient for all use cases.
+** Can be language specific.
+
 
 
 ## Technical Details and Known Issues
