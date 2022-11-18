@@ -71,6 +71,9 @@ Currently, navigating scopes with multicharacter closing brackets might not work
 
 Currently, interaction of brackets with definitions can be undesirable in e.g. JavaScript with definitions inside a `for` loop header or `if` condition. I plan to fix it.
 
+If Navi Parens logs assertion failure, maybe the language has delimiters other than the currently hard-coded `(), [], {}, <>`.
+
+
 ## Release Notes
 
 Users appreciate release notes as you update your extension.

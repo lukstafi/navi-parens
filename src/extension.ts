@@ -10,9 +10,6 @@ interface DocumentNavigationState {
 
 	/** A stack of ancestor symbols with the current symbol at the last (top) position. */
 	lastSymbolAndAncestors: vscode.DocumentSymbol[];
-	
-	/** The encompassing brackets scope, on last update. The scope is from the start of the opening bracket to the end of the closing bracket. */
-	lastBracketScope: vscode.Range | null;
 
 	/** Position of the cursor on last update. */
 	lastPosition: vscode.Position;
@@ -31,6 +28,11 @@ interface DocumentNavigationState {
 }
 let documentStates = new Map<vscode.Uri, DocumentNavigationState>();
 
+/** TODO: make this configurable. */
+const closingBrackets = [")", "]", "}", ">"];
+const openingBrackets = ["(", "[", "{", "<"];
+const allBrackets = openingBrackets.concat(closingBrackets);
+
 /** From Navi Parens perspective, positions on the border of a scope are outside of the scope. */
 function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
 	return range.contains(pos) && !range.start.isEqual(pos) && !range.end.isEqual(pos);
@@ -46,7 +48,7 @@ async function jumpToBracket(textEditor: vscode.TextEditor, pos: vscode.Position
 	if (!state) {
 		// Being defensive: on actual code paths this should not happen.
 		state = {
-			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastBracketScope: null, lastPosition: pos,
+			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastPosition: pos,
 			lastVisibleRange: textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2)),
 			leftVisibleRange: false,
 			jumpToBracketCache: new Map<string, vscode.Position>()
@@ -73,7 +75,7 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 	let state = documentStates.get(uri);
 	if (!state) {
 		state = {
-			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastBracketScope: null, lastPosition: pos,
+			needsUpdate: true, rootSymbols: [], lastSymbolAndAncestors: [], lastPosition: pos,
 			lastVisibleRange: textEditor.visibleRanges.reduce((r1, r2) => r1.union(r2)),
 			leftVisibleRange: false,
 			jumpToBracketCache: new Map<string, vscode.Position>()
@@ -121,63 +123,197 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 		children = candidate.children;
 	}
 	state.lastPosition = pos;
-
-	const savedSelection = textEditor.selection;
-	let endScope = await jumpToBracket(textEditor, pos);
-	let startScope = await jumpToBracket(textEditor, endScope);
-	if (startScope.isAfter(endScope)) {
-		// Perhaps the cursor was initially touching the outer bracket from the inside.
-		[startScope, endScope] = [endScope, startScope];
-	}
-	if (startScope.isAfterOrEqual(pos)) {
-		// Semantics mismatch -- there was a scope right-adjacent to the cursor.
-		endScope = await jumpToBracket(textEditor, pos.translate(0, -1));
-		startScope = await jumpToBracket(textEditor, endScope);
-		if (startScope.isAfter(endScope)) {
-			[startScope, endScope] = [endScope, startScope];
-		}
-	}
-	while (endScope.isBefore(pos)) {
-		// Moving to the left put us inside another scope, get out of it.
-		// If we run too far, `containsInside` below will be false, so OK.
-		endScope = await jumpToBracket(textEditor, startScope.translate(0, -1));
-		if (endScope.isEqual(startScope)) {
-			// Outside of any scope, lastBracketScope will be null.
-			break;
-		}
-		startScope = await jumpToBracket(textEditor, endScope);
-		if (startScope.isAfter(endScope)) {
-			[startScope, endScope] = [endScope, startScope];	
-		}
-	}
-	// Select past the outer bracket.
-	// TODO: support mulit-character tokens.
-	const bracketRange = new vscode.Range(startScope, endScope.translate(0, 1));
-	if (containsInside(bracketRange, pos)) {
-		state.lastBracketScope = bracketRange;
-	} else {
-		state.lastBracketScope = null;
-	}
-	textEditor.selection = savedSelection;
-
 	return state;
 }
 
-async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, point: (r: vscode.Range) => vscode.Position) {
-	let state = await updateStateForPosition(textEditor);
-	let currentRange = state.lastSymbolAndAncestors.pop()?.range;
-	if (!currentRange) {
-		if (!state.lastBracketScope) {
-			return;
+function characterAtPoint(document: vscode.TextDocument, pos: vscode.Position): string {
+	return document.getText(new vscode.Range(pos, pos.translate(0, 1)));
+}
+
+/** Returns the position outside of the outer scope bracket, opening if `before` is true otherwise closing.
+ * If there is no outer scope, returns `null`.
+ */
+async function findOuterBracket(
+		textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): Promise<vscode.Position | null> {
+	const doc = textEditor.document;
+	// TODO: optimize by passing in a search limit range, if any.
+	// TODO: the rules do not handle multicharacter brackets.
+	if (closingBrackets.includes(characterAtPoint(doc, pos))) {
+		// Validate the result -- were we at an actual scope delimiter?
+		let result = await jumpToBracket(textEditor, pos);
+		if (closingBrackets.includes(characterAtPoint(doc, result))) {
+			// No, the new bracket is the actual delimiter.
+			if (before) {
+				let jumpBack = await jumpToBracket(textEditor, result);
+				if (jumpBack.isBefore(pos)) { return jumpBack; }
+				else {
+					console.assert(false, 'editor.action.jumpToBracket skipped over its own opening delimiter.');
+					return null;
+				}
+			} else {
+				// The original bracket wasn't a real delimiter, but the new one is.
+				return result.translate(0, 1);
+			}
+		} else if (openingBrackets.includes(characterAtPoint(doc, result))) {
+			if (result.isBefore(pos)) {
+				// The initial bracket is a real delimiter.
+				if (before) { return result; }
+				else { return pos.translate(0, 1); }
+			} else {
+				// Since we jumped to a scope opening to the right, we are outside of any scope.
+				return null;
+			}
 		} else {
-			currentRange = state.lastBracketScope;
+			console.assert(result.isEqual(pos), 'editor.action.jumpToBracket jumped to a non-delimiter.');
+			return null;
 		}
-	} else if (!!state.lastBracketScope && currentRange.contains(state.lastBracketScope)) {
-		currentRange = state.lastBracketScope;
 	}
-	const cursor = point(currentRange);
-	const anchor = select ? textEditor.selection.anchor : cursor;
-	textEditor.selection = new vscode.Selection(anchor, cursor);
+	if (pos.character === 0) {
+		const endJump = await jumpToBracket(textEditor, pos);
+		if (openingBrackets.includes(characterAtPoint(doc, pos))) {
+			if (closingBrackets.includes(characterAtPoint(doc, endJump))) {
+				// Check if `pos` is the corresponding delimiter.
+				const backJump = await jumpToBracket(textEditor, endJump);
+				if (backJump.isEqual(pos)) {
+					// Skip over a subscope.
+					return await findOuterBracket(textEditor, before, endJump.translate(0, 1));
+				} else if (backJump.isBefore(pos)) {
+					if (before) {	return backJump;}
+					 else { return endJump.translate(0, 1); }
+				} else {
+					console.assert(false, 'editor.action.jumpToBracket skipped over its own opening delimiter.');
+					return null;
+				}
+			} else {
+				// Either editor.action.jumpToBracket was no-op or jumped to a beginning scope.
+				console.assert(endJump.isEqual(pos) || openingBrackets.includes(characterAtPoint(doc, endJump)), 
+					'editor.action.jumpToBracket jumped to a non-delimiter.');
+				return null;
+			}
+		} else {
+			if (closingBrackets.includes(characterAtPoint(doc, endJump))) {
+				if (before) {
+					const backJump = await jumpToBracket(textEditor, endJump);
+					if (backJump.isBefore(pos) && openingBrackets.includes(characterAtPoint(doc, backJump))) {
+						return backJump;
+					} else {
+						console.assert(false, 'editor.action.jumpToBracket skipped over its own opening delimiter.');
+						return null;
+					}
+				} else {
+					return endJump.translate(0, 1);
+				}
+			} else if (openingBrackets.includes(characterAtPoint(doc, endJump))) {
+				if (endJump.isBefore(pos) && closingBrackets.includes(characterAtPoint(doc, pos))) {
+					if (before) {
+						return endJump;
+					} else {
+						return pos.translate(0, 1);
+					}
+				} else {
+					console.assert(endJump.isAfter(pos), 'editor.action.jumpToBracket jumped backward from non-delimiter.');
+					return null;
+				}
+			}
+		}
+	}
+	const leftPos = pos.translate(0, -1);
+	if (openingBrackets.includes(characterAtPoint(doc, leftPos))) {
+		// "()" or "(_" situation. "((" was excluded earlier.
+		const endJump = await jumpToBracket(textEditor, pos);
+		if (endJump.isEqual(leftPos)) {
+			console.assert(closingBrackets.includes(characterAtPoint(doc, pos)),
+				'editor.action.jumpToBracket jumped back to opening bracket but not from a closing bracket.');
+			if (before) {
+				return endJump;
+			} else {
+				return pos.translate(0, 1);
+			}
+		} else if (closingBrackets.includes(characterAtPoint(doc, endJump))) {
+			if (before) {
+				// Verify leftPos is the corresponding delimiter, or generally find the back-delimiter.
+				const backJump = await jumpToBracket(textEditor, endJump);
+				if (!backJump.isBefore(pos)) {
+					console.assert(false, 'editor.action.jumpToBracket skipped over its own opening delimiter.');
+					return null;
+				}
+				return backJump;
+			} else {
+				return endJump.translate(0, 1);
+			}
+		} else {
+			// We are outside of a bracket scope.
+			console.assert(endJump.isEqual(pos) || openingBrackets.includes(characterAtPoint(doc, endJump)),
+				'editor.action.jumpToBracket weird behavior.');
+			return null;
+		}
+	}
+	if (openingBrackets.includes(characterAtPoint(doc, pos))) {
+		// "_(" or ")(" situation: skip over the right subscope and search again.
+		const endJump = await jumpToBracket(textEditor, pos);
+		// But first verify that the current bracket is a delimiter...
+		if (openingBrackets.includes(characterAtPoint(doc, endJump))) {
+			// We are outside any bracket scope.
+			return null;
+		}
+		const backJump = await jumpToBracket(textEditor, endJump);
+		if (backJump.isEqual(pos)) {
+			return await findOuterBracket(textEditor, before, endJump.translate(0, 1));
+		} else if (backJump.isBefore(pos)) {
+			console.assert(openingBrackets.includes(characterAtPoint(doc, backJump)),
+				'editor.action.jumpToBracket weird behavior.');
+			if (before) {
+				return backJump;
+			} else {
+				return endJump.translate(0, 1);
+			}
+		}
+	}
+	// Current character is non-bracket.
+	const rightPos = doc.positionAt(doc.offsetAt(pos) + 1);
+	if (closingBrackets.includes(characterAtPoint(doc, leftPos))) {
+		// ")_" situation: start after "_" to move away from the left subscope.
+		return await findOuterBracket(textEditor, before, rightPos);
+	}
+	// "__" situation: free to jump.
+	const endJump = await jumpToBracket(textEditor, pos);
+	if (endJump.isEqual(pos) || openingBrackets.includes(characterAtPoint(doc, endJump))) {
+		// Outside of any bracket scope.
+		return null;
+	}
+	if (before) {
+		return await jumpToBracket(textEditor, endJump);
+	} else {
+		return endJump.translate(0, 1);
+	}
+}
+
+async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
+	// State update might interact with the UI, save UI state early.
+	const savedSelection = textEditor.selection;
+	const pos = savedSelection.active;
+	let state = await updateStateForPosition(textEditor);
+	const symbolRange = state.lastSymbolAndAncestors.pop()?.range;
+	let result = await findOuterBracket(textEditor, before, pos);
+	if (!!symbolRange) {
+		const symbolResult = before ? symbolRange.start : symbolRange.end;
+		if (!result) {
+			result = symbolResult;
+		} else if (before && result.isBefore(symbolResult)) {
+			result = symbolResult;
+		} else if (!before && result.isAfter(symbolResult)) {
+			result = symbolResult;
+		}
+	}
+	if (!result) {
+		textEditor.selection = savedSelection;
+		if (state.leftVisibleRange) {
+			textEditor.revealRange(state.lastVisibleRange);
+		}
+		return;	
+	}
+	const anchor = select ? textEditor.selection.anchor : result;
+	textEditor.selection = new vscode.Selection(anchor, result);
 	if (!state.lastVisibleRange.contains(textEditor.selection)) {
 		textEditor.revealRange(textEditor.selection);
 	} else if (state.leftVisibleRange) {
@@ -206,7 +342,7 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 	}
 	// Check if there are any brackets to consider.
 	let doc = textEditor.document;
-	// Delimit search for the bracket by: the cursor, the candidate, the parent bracket scope, the parent defined symbol.
+	// Delimit search for the bracket by: the cursor, the candidate, the parent defined symbol.
 	let gap;
 	if (candidate) {
 		gap = before ? new vscode.Range(candidate.end, pos) : new vscode.Range(pos, candidate.start);
@@ -215,21 +351,18 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 		let fullRange = doc.validateRange(invalidRange);
 		gap = before ? new vscode.Range(fullRange.start, pos) : new vscode.Range(pos, fullRange.end);
 	}
-	if (state.lastBracketScope) {
-		gap = gap.intersection(state.lastBracketScope);
-		console.assert(gap, 'Unexpected bracket scope at cursor.');
-	}
 	if (stack.length > 0) {
-		gap = gap?.intersection(stack[stack.length - 1].range);
+		gap = gap.intersection(stack[stack.length - 1].range);
 		console.assert(gap, 'Unexpected defined-symbol scope at cursor.');
 	}
 	if (!gap) {	return;	}
 	const gapText = doc.getText(gap);
-	const bracketTriggers = before ? [")", "]", "}", ">"] : ["(", "[", "{", "<"];
-	function bracketOffset(last: number) {
+	const bracketTriggers = before ? closingBrackets : openingBrackets;
+	const otherBrackets = before ? openingBrackets : closingBrackets;
+	function newOffset(brackets: string[], last: number) {
 		let start = last + (before ? -1 : 1);
 		const f = (b: string) => before ? gapText.lastIndexOf(b, start) :  gapText.indexOf(b, start);
-		const indices: number[] = bracketTriggers.map(f).filter(idx => idx !== -1);
+		const indices: number[] = brackets.map(f).filter(idx => idx !== -1);
 		if (indices.length === 0) { return -1; }
 		return before ? Math.max(...indices) : Math.min(...indices);
 	}
@@ -237,32 +370,47 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 	let targetPos: vscode.Position | null = null;
 	// Ignore delimiters in comments or string literals etc. by keeping looking.
 	while (true) {
-		lastOffset = bracketOffset(lastOffset);
+		const limitOffset = newOffset(otherBrackets, lastOffset);
+		lastOffset = newOffset(bracketTriggers, lastOffset);
 		if (lastOffset === -1) { targetPos = null; break; }
-		let offsetPos = doc.positionAt(doc.offsetAt(gap.start) + lastOffset);
+		if (limitOffset !== -1 && (before ? limitOffset > lastOffset : lastOffset > limitOffset)) {
+			const limitPos = doc.positionAt(doc.offsetAt(gap.start) + limitOffset);
+			if (before) {
+				// Verify outer scope delimiter by jumping and backjumping.
+				const endJump = await jumpToBracket(textEditor, pos);
+				const backJump = await jumpToBracket(textEditor, endJump);
+				if (backJump.isEqual(limitPos)) { targetPos = null; break; }
+			} else {
+				// Verify outer scope delimiter by jumping straight to it.
+				const endJump = await jumpToBracket(textEditor, pos);
+				if (endJump.isEqual(limitPos)) { targetPos = null; break; }
+			}
+		}
+		const offsetPos = doc.positionAt(doc.offsetAt(gap.start) + lastOffset);
 		targetPos = await jumpToBracket(textEditor, offsetPos);
-		// We could have jumped to outer bracket scope.
-		if (!gap.contains(targetPos)) { continue; }
+		// We could have jumped to the outer bracket scope.
+		if (before ? targetPos.isAfterOrEqual(pos) : targetPos.isBefore(pos)) { continue; }
 		// If we are outside any bracket scope, we could have jumped to a start of bracket.
-		if (!before && !!state.lastBracketScope &&
-			 bracketTriggers.includes(doc.getText(new vscode.Range(targetPos, targetPos.translate(0, 1))))) {
+		if (!before && bracketTriggers.includes(characterAtPoint(doc, targetPos))) {
 				continue;
 		}
 		if (before ? targetPos.isBefore(offsetPos) : targetPos.isAfter(offsetPos)) { break; }
 	}
-	if (!before && !!targetPos) { targetPos = targetPos.translate(0, 1); }
-
-	// Checking !gap.contains(targetPos) for robustness, it shouldn't happen.
-	if (!targetPos || !gap.contains(targetPos)) {
-		if (!candidate) {
-			if (!!targetPos) { console.warn('Navi Parens: Things broke, maybe a bug. Bailing out.'); }
-			textEditor.selection = savedSelection;
-			if (state.leftVisibleRange) {
-				textEditor.revealRange(state.lastVisibleRange);
-			}
-			 return;
+	if (!targetPos) {
+		if (candidate) { targetPos = before ? candidate.start : candidate.end; }
+	} else {
+		if (!otherBrackets.includes(characterAtPoint(doc, targetPos))) {
+			console.assert(false, 'jumpToBracket weird behavior when skipping a scope. Bailing out.');
+			targetPos = null;
 		}
-		targetPos = before ? candidate.start : candidate.end;
+		if (!before && !!targetPos) { targetPos = targetPos.translate(0, 1); }
+	}
+	if (!targetPos) {
+		textEditor.selection = savedSelection;
+		if (state.leftVisibleRange) {
+			textEditor.revealRange(state.lastVisibleRange);
+		}
+		return;
 	}
 	const anchor = select ? textEditor.selection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
@@ -291,10 +439,12 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.goPastPreviousScope', textEditor => goPastSiblingScope(textEditor, false, true));
 	newCommand('navi-parens.selectPastNextScope', textEditor => goPastSiblingScope(textEditor, true, false));
 	newCommand('navi-parens.selectPastPreviousScope', textEditor => goPastSiblingScope(textEditor, true, true));
-	newCommand('navi-parens.goToUpScope', textEditor => goToOuterScope(textEditor, false, r => r.start));
-	newCommand('navi-parens.goToDownScope', textEditor => goToOuterScope(textEditor, false, r => r.end));
-	newCommand('navi-parens.selectToUpScope', textEditor => goToOuterScope(textEditor, true, r => r.start));
-	newCommand('navi-parens.selectToDownScope', textEditor => goToOuterScope(textEditor, true, r => r.end));
+	newCommand('navi-parens.goToUpScope', textEditor => goToOuterScope(textEditor, false, true));
+	newCommand('navi-parens.goToDownScope', textEditor => goToOuterScope(textEditor, false, false));
+	newCommand('navi-parens.selectToUpScope', textEditor => goToOuterScope(textEditor, true, true));
+	newCommand('navi-parens.selectToDownScope', textEditor => goToOuterScope(textEditor, true, false));
 }
 
 export function deactivate() {}
+
+// And just some parting comments.
