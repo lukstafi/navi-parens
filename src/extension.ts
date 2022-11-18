@@ -126,8 +126,17 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 	return state;
 }
 
-function characterAtPoint(document: vscode.TextDocument, pos: vscode.Position): string {
-	return document.getText(new vscode.Range(pos, pos.translate(0, 1)));
+function characterAtPoint(doc: vscode.TextDocument, pos: vscode.Position): string {
+	return doc.getText(new vscode.Range(pos, pos.translate(0, 1)));
+}
+
+function nextPosition(doc: vscode.TextDocument, pos: vscode.Position) {
+	let rightPos = doc.positionAt(doc.offsetAt(pos) + 1);
+	if (rightPos.isEqual(pos)) {
+		// In case endline is represented as two characters in the document.
+		rightPos = doc.positionAt(doc.offsetAt(pos) + 2);
+	}
+	return rightPos;
 }
 
 /** Returns the position outside of the outer scope bracket, opening if `before` is true otherwise closing.
@@ -219,33 +228,23 @@ async function findOuterBracket(
 	}
 	const leftPos = pos.translate(0, -1);
 	if (openingBrackets.includes(characterAtPoint(doc, leftPos))) {
-		// "()" or "(_" situation. "((" was excluded earlier.
-		const endJump = await jumpToBracket(textEditor, pos);
-		if (endJump.isEqual(leftPos)) {
-			console.assert(closingBrackets.includes(characterAtPoint(doc, pos)),
-				'editor.action.jumpToBracket jumped back to opening bracket but not from a closing bracket.');
-			if (before) {
-				return endJump;
-			} else {
-				return pos.translate(0, 1);
-			}
-		} else if (closingBrackets.includes(characterAtPoint(doc, endJump))) {
-			if (before) {
-				// Verify leftPos is the corresponding delimiter, or generally find the back-delimiter.
-				const backJump = await jumpToBracket(textEditor, endJump);
-				if (!backJump.isBefore(pos)) {
-					console.assert(false, 'editor.action.jumpToBracket skipped over its own opening delimiter.');
-					return null;
-				}
-				return backJump;
-			} else {
-				return endJump.translate(0, 1);
-			}
-		} else {
-			// We are outside of a bracket scope.
-			console.assert(endJump.isEqual(pos) || openingBrackets.includes(characterAtPoint(doc, endJump)),
-				'editor.action.jumpToBracket weird behavior.');
+		// "((" or "(_" situation. "()" was excluded earlier.
+		const endJump = await jumpToBracket(textEditor, leftPos);
+		if (endJump.isEqual(leftPos) || openingBrackets.includes(characterAtPoint(doc, endJump))) {
+			// It was not in fact a delimiter and we are outside of bracket scopes.
 			return null;
+		}
+		console.assert(closingBrackets.includes(characterAtPoint(doc, endJump)),
+			'editor.action.jumpToBracket jumped to non-bracket.');
+		if (before) {
+			const backJump = await jumpToBracket(textEditor, endJump);
+			if (!backJump.isBefore(pos)) {
+				console.assert(false, 'editor.action.jumpToBracket back jump did not return.');
+				return null;
+			}
+			return backJump;
+		} else {
+			return endJump.translate(0, 1);
 		}
 	}
 	if (openingBrackets.includes(characterAtPoint(doc, pos))) {
@@ -270,7 +269,7 @@ async function findOuterBracket(
 		}
 	}
 	// Current character is non-bracket.
-	const rightPos = doc.positionAt(doc.offsetAt(pos) + 1);
+	let rightPos = nextPosition(doc, pos);
 	if (closingBrackets.includes(characterAtPoint(doc, leftPos))) {
 		// ")_" situation: start after "_" to move away from the left subscope.
 		return await findOuterBracket(textEditor, before, rightPos);
@@ -375,21 +374,22 @@ async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean
 		if (lastOffset === -1) { targetPos = null; break; }
 		if (limitOffset !== -1 && (before ? limitOffset > lastOffset : lastOffset > limitOffset)) {
 			const limitPos = doc.positionAt(doc.offsetAt(gap.start) + limitOffset);
-			if (before) {
-				// Verify outer scope delimiter by jumping and backjumping.
-				const endJump = await jumpToBracket(textEditor, pos);
-				const backJump = await jumpToBracket(textEditor, endJump);
-				if (backJump.isEqual(limitPos)) { targetPos = null; break; }
-			} else {
-				// Verify outer scope delimiter by jumping straight to it.
-				const endJump = await jumpToBracket(textEditor, pos);
-				if (endJump.isEqual(limitPos)) { targetPos = null; break; }
+			// Verify outer scope delimiter by jumping from it.
+			const endJump = await jumpToBracket(textEditor, limitPos);
+			if (before ? endJump.isAfter(pos) : endJump.isBefore(pos)) {
+				targetPos = null;
+				break;
 			}
 		}
 		const offsetPos = doc.positionAt(doc.offsetAt(gap.start) + lastOffset);
 		targetPos = await jumpToBracket(textEditor, offsetPos);
 		// We could have jumped to the outer bracket scope.
 		if (before ? targetPos.isAfterOrEqual(pos) : targetPos.isBefore(pos)) { continue; }
+		if (!before) {
+				// Verify not an outer scope delimiter by backjumping.
+				const backJump = await jumpToBracket(textEditor, targetPos);
+				if (!backJump.isEqual(offsetPos)) { continue; }
+		}
 		// If we are outside any bracket scope, we could have jumped to a start of bracket.
 		if (!before && bracketTriggers.includes(characterAtPoint(doc, targetPos))) {
 				continue;
