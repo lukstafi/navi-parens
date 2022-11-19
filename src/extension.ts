@@ -283,6 +283,10 @@ async function findOuterBracket(
 	}
 	// Current character is non-bracket.
 	let rightPos = nextPosition(doc, pos);
+	if (rightPos.isEqual(pos)) {
+		// End-of-document.
+		return null;
+	}
 	if (closingBrackets.includes(characterAtPoint(doc, leftPos))) {
 		// ")_" situation: start after "_" to move away from the left subscope.
 		return await findOuterBracket(textEditor, before, rightPos);
@@ -300,7 +304,7 @@ async function findOuterBracket(
 	}
 }
 
-async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
+export async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
 	// State update might interact with the UI, save UI state early.
 	const savedSelection = textEditor.selection;
 	const pos = savedSelection.active;
@@ -333,7 +337,7 @@ async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, be
 	}
 }
 
-async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
+export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
 	// State update might interact with the UI, save UI state early.
 	const savedSelection = textEditor.selection;
 	let state = await updateStateForPosition(textEditor);

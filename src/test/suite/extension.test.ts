@@ -1,9 +1,7 @@
 import * as assert from 'assert';
 
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from 'vscode';
-// import * as myExtension from '../../extension';
+import * as myExtension from '../../extension';
 
 function charactersAround(doc: vscode.TextDocument, pos: vscode.Position): string {
 	return doc.getText(new vscode.Range(
@@ -23,6 +21,7 @@ async function openFileWithCursor(annotated: string): Promise<{
 	});
 	const sourcePos = doc.positionAt(source);
 	const targetPos = doc.positionAt(target);
+	const debug1 = charactersAround(doc, sourcePos);
 	const textEditor = await vscode.window.showTextDocument(doc);
 	textEditor.selection = new vscode.Selection(sourcePos, sourcePos);
 	return { textEditor, targetPos };
@@ -31,8 +30,22 @@ async function openFileWithCursor(annotated: string): Promise<{
 function testCase(content: string, command: string) {
 	return async () => {
 		const { textEditor, targetPos } = await openFileWithCursor(content);
-		await vscode.commands.executeCommand(command);
-		assert.deepStrictEqual(targetPos, textEditor.selection.active);
+		const commands = new Map(Object.entries({
+			'goPastNextScope': () => myExtension.goPastSiblingScope(textEditor, false, false),
+			'goPastPreviousScope': () => myExtension.goPastSiblingScope(textEditor, false, true),
+			'selectPastNextScope': () => myExtension.goPastSiblingScope(textEditor, true, false),
+			'selectPastPreviousScope': () => myExtension.goPastSiblingScope(textEditor, true, true),
+			'goToUpScope': () => myExtension.goToOuterScope(textEditor, false, true),
+			'goToDownScope': () => myExtension.goToOuterScope(textEditor, false, false),
+			'selectToUpScope': () => myExtension.goToOuterScope(textEditor, true, true),
+			'selectToDownScope': () => myExtension.goToOuterScope(textEditor, true, false)
+		}));
+		// We cannot use vscode.commands.executeCommand because that creates a different TextEditor.
+		const action = commands.get(command);
+		assert.notStrictEqual(action, undefined);
+		if (!action) { return; }
+		await action();
+		assert.deepStrictEqual(textEditor.selection.active, targetPos);
 	};
 }
 
@@ -43,34 +56,34 @@ suite('Extension Test Suite', () => {
 		vscode.ConfigurationTarget.Global, true);
 	test('Basic parentheses navigation: up from between parens', testCase(
 		`(^(@()))`,
-		'navi-parens.goToUpScope'
+		'goToUpScope'
 	));
 	test('Basic parentheses navigation: down from between parens', testCase(
 		`((@())^)`,
-		'navi-parens.goToDownScope'
+		'goToDownScope'
 	));
 	test('Basic parentheses navigation: up no-change', testCase(
-		`(((@^)))`,
-		'navi-parens.goToUpScope'
+		`^@((()))`,
+		'goToUpScope'
 	));
 	test('Basic parentheses navigation: down no-change', testCase(
 		`((()))@^`,
-		'navi-parens.goToDownScope'
+		'goToDownScope'
 	));
 	test('Basic parentheses navigation: left no-change', testCase(
 		`((^@()))`,
-		'navi-parens.goPastPreviousScope'
+		'goPastPreviousScope'
 	));
 	test('Basic parentheses navigation: right no-change', testCase(
-		`((^@()))`,
-		'navi-parens.goPastNextScope'
+		`((()@^))`,
+		'goPastNextScope'
 	));
 	test('Basic parentheses navigation: left', testCase(
 		`(^(())@)`,
-		'navi-parens.goPastPreviousScope'
+		'goPastPreviousScope'
 	));
 	test('Basic parentheses navigation: right', testCase(
 		`(@(())^)`,
-		'navi-parens.goPastNextScope'
+		'goPastNextScope'
 	));
 });
