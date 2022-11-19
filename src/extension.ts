@@ -1,4 +1,3 @@
-import assert = require('assert');
 import * as vscode from 'vscode';
 
 interface DocumentNavigationState {
@@ -90,8 +89,7 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 			state.rootSymbols = 
 				await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
 					'vscode.executeDocumentSymbolProvider', uri);			
-		} else if (vscode.workspace.getConfiguration().get<string>("navi-parens.symbolProvider") ===
-				"None") {
+		} else if (symbolSource === "None") {
 			state.rootSymbols = [];
 		} else {
 			console.error('TODO: Not implemented yet.');
@@ -439,6 +437,29 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 	}
 }
 
+function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
+	if (event.affectsConfiguration('navi-parens.symbolProvider')) {
+		for (const kv of documentStates) {
+			kv[1].needsUpdate = true;
+		}
+	}
+	const configuration = vscode.workspace.getConfiguration();
+	if (event.affectsConfiguration('navi-parens.closingBrackets')) {
+		const closingBracketsConfig = configuration.get<string[]>("navi-parens.closingBrackets");
+		if (closingBracketsConfig) {
+			closingBrackets = closingBracketsConfig;
+		}
+		allBrackets = openingBrackets.concat(closingBrackets);
+	}
+	if (event.affectsConfiguration('navi-parens.openingBrackets')) {
+		const openingBracketsConfig = configuration.get<string[]>("navi-parens.openingBrackets");
+		if (openingBracketsConfig) {
+			openingBrackets = openingBracketsConfig;
+		}
+		allBrackets = openingBrackets.concat(closingBrackets);
+	}
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, the extension "navi-parens" is being activated!');
 
@@ -452,7 +473,7 @@ export function activate(context: vscode.ExtensionContext) {
 		openingBrackets = openingBracketsConfig;
 	}
 	allBrackets = openingBrackets.concat(closingBrackets);
-	
+	vscode.workspace.onDidChangeConfiguration(configurationChangeUpdate);
 
 	vscode.workspace.onDidChangeTextDocument(event => {
 		const uri = event.document.uri;
