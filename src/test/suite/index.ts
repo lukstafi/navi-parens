@@ -8,6 +8,7 @@ export function run(): Promise<void> {
 		ui: 'tdd',
 		color: true
 	});
+	mocha.timeout(60000);  // DEBUG:
 
 	const testsRoot = path.resolve(__dirname, '..');
 

@@ -85,8 +85,22 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 		state.leftVisibleRange = false;
 	}
 	if (state.needsUpdate) {
-		state.rootSymbols = 
-			await vscode.commands.executeCommand<vscode.DocumentSymbol[]>('vscode.executeDocumentSymbolProvider', uri);
+		const symbolSource = vscode.workspace.getConfiguration().get<string>("navi-parens.symbolProvider");
+		if (symbolSource === "Semantic") {
+			state.rootSymbols = 
+				await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+					'vscode.executeDocumentSymbolProvider', uri);			
+		} else if (vscode.workspace.getConfiguration().get<string>("navi-parens.symbolProvider") ===
+				"None") {
+			state.rootSymbols = [];
+		} else {
+			console.error('TODO: Not implemented yet.');
+			state.rootSymbols = [];
+		}
+		if (state.rootSymbols === undefined) {
+			console.error('vscode.executeDocumentSymbolProvider returned `undefined`');
+			state.rootSymbols = [];
+		}
 		state.lastSymbolAndAncestors = [];
 		state.jumpToBracketCache.clear();
 		state.needsUpdate = false;
@@ -442,7 +456,8 @@ export function activate(context: vscode.ExtensionContext) {
 		if (state) { state.needsUpdate = true; }
 	}, null, context.subscriptions);
 
-	function newCommand(command: string, callback: (textEditor: vscode.TextEditor, ...args: any[]) => void) {
+	function newCommand(
+			command: string, callback: (textEditor: vscode.TextEditor, ...args: any[]) => void) {
 		context.subscriptions.push(vscode.commands.registerTextEditorCommand(command, callback));
 	}
 

@@ -65,6 +65,13 @@
           "default": "true",
           "scope": "application"
         },
+        "navi-parens.symbolProvider": {
+          "markdownDescription": "Where the non-bracket structure information comes from. If `Semantic`, uses VSCode symbol providers. If `Indentation`, generates symbols from indentation. If `None`, there are no symbols",
+          "type": "string",
+          "enum": ["Semantic", "Indentation", "None"],
+          "default": "Semantic",
+          "scope": "language-overridable"
+        },
         "navi-parens.closingBrackets": {
           "description": "The superset of supported closing delimiters (the default should be enough)",
           "type": "array",
