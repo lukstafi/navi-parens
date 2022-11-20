@@ -14,8 +14,9 @@ Commands:
 * `selectToPreviousScope`: `shift+ctrl+alt+j` Select to the previous same-level opening bracket/scope
 * `selectToUpScope`: `shift+ctrl+alt+i` Select till outside the opening of the current level
 * `selectToDownScope`: `shift+ctrl+alt+k` Select till outside the closing of the current level
-* `toggleBracketScopeProvider`: `ctrl+alt+p` Switch between "semantic" and "raw" bracket scope logic
-* `toggleIndentScopeMode`: `ctrl+shift+alt+p` Switch between "semantic" and "indentation" scope logic
+* `cycleBracketScopeMode`: `ctrl+alt+p` Cycle through the bracket scope logic (`ctrl+shift+\`, delimiter counting)
+* `cycleBlockScopeMode`: `ctrl+shift+alt+p` Cycle through block scope logic (symbols, indentation, none)
+
 
 Extra key bindings:
 * `insertCursorAtEndOfEachLineSelected`: rebound from `shift+alt+i` to `shift+alt+p`
@@ -64,7 +65,7 @@ This extension contributes the following settings:
 ** `None`: same behavior as if there were no symbol definitions in text.
 ** `ctrl+shift+alt+p` toggles between `Semantic` and `Indentation`.
 * `navi-parens.bracketScopeProvider`: an enum selecting how to get the bracket structure information.
-** `Semantic`: uses `editor.action.jumpToBracket` (i.e. `ctrl+shift+\`). The default.
+** `JumpToBracket`: uses `editor.action.jumpToBracket` (i.e. `ctrl+shift+\`). The default.
 ** `Raw`: only the bracket characters are considered, without context.
 ** `ctrl+shift+alt+p` toggles between `Semantic` and `Raw`.
 * `navi-parens.closingBrackets`: the superset of supported closing delimiters.
@@ -97,6 +98,8 @@ Currently, navigating scopes with multicharacter closing brackets might not work
 Currently, interaction of brackets with definitions can be undesirable in e.g. JavaScript with definitions inside a `for` loop header or `if` condition. I plan to fix it. (TODO: what's the status?)
 
 If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
+
+TODO: minimize state update on switching between symbol providers.
 
 
 ## Release Notes

@@ -65,11 +65,18 @@
           "default": "true",
           "scope": "application"
         },
-        "navi-parens.symbolProvider": {
+        "navi-parens.blockScopeMode": {
           "markdownDescription": "Where the non-bracket structure information comes from. If `Semantic`, uses VSCode symbol providers. If `Indentation`, generates symbols from indentation. If `None`, there are no symbols",
           "type": "string",
           "enum": ["Semantic", "Indentation", "None"],
           "default": "Semantic",
+          "scope": "language-overridable"
+        },
+        "navi-parens.bracketScopeMode": {
+          "markdownDescription": "What algorithm decides on bracket-based navigation. If `JumpToBracket`, uses the built-in `ctrl+shift+\\` command. If `Raw`, matches any of the opening with any of the closing brackets disregarding other context. If `None`, there is no bracket-based navigation",
+          "type": "string",
+          "enum": ["JumpToBracket", "Raw", "None"],
+          "default": "JumpToBracket",
           "scope": "language-overridable"
         },
         "navi-parens.closingBrackets": {
@@ -82,6 +89,18 @@
           "description": "The superset of supported opening delimiters (the default should be enough)",
           "type": "array",
           "default": ["(", "[", "{", "<"],
+          "scope": "language-overridable"
+        },
+        "navi-parens.closingBracketsRaw": {
+          "markdownDescription": "The closing delimiters for the `Raw` `bracketScopeMode`",
+          "type": "array",
+          "default": [")", "]", "}"],
+          "scope": "language-overridable"
+        },
+        "navi-parens.openingBracketsRaw": {
+          "markdownDescription": "The closing delimiters for the `Raw` `bracketScopeMode`",
+          "type": "array",
+          "default": ["(", "[", "{"],
           "scope": "language-overridable"
         }
       }

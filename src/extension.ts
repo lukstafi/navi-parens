@@ -84,7 +84,7 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 		state.leftVisibleRange = false;
 	}
 	if (state.needsUpdate) {
-		const symbolSource = vscode.workspace.getConfiguration().get<string>("navi-parens.symbolProvider");
+		const symbolSource = vscode.workspace.getConfiguration().get<string>("navi-parens.blockScopeMode");
 		if (symbolSource === "Semantic") {
 			state.rootSymbols = 
 				await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
@@ -438,7 +438,7 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 }
 
 function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
-	if (event.affectsConfiguration('navi-parens.symbolProvider')) {
+	if (event.affectsConfiguration('navi-parens.blockScopeMode')) {
 		for (const kv of documentStates) {
 			kv[1].needsUpdate = true;
 		}
