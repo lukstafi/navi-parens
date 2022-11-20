@@ -150,6 +150,15 @@ function nextPosition(doc: vscode.TextDocument, pos: vscode.Position) {
 	return rightPos;
 }
 
+function previousPosition(doc: vscode.TextDocument, pos: vscode.Position) {
+	let leftPos = doc.positionAt(doc.offsetAt(pos) - 1);
+	if (leftPos.isEqual(pos)) {
+		console.assert(false, 'Should not be possible, but maybe endline glitch.');
+		leftPos = doc.positionAt(doc.offsetAt(pos) - 2);
+	}
+	return leftPos;
+}
+
 /** Returns the position outside of the outer scope bracket, opening if `before` is true otherwise closing.
  * If there is no outer scope, returns `null`.
  */
@@ -302,15 +311,20 @@ async function findOuterBracket(
 	}
 }
 
-export async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
+export async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, before: boolean, near: boolean) {
 	// State update might interact with the UI, save UI state early.
 	const savedSelection = textEditor.selection;
 	const pos = savedSelection.active;
 	let state = await updateStateForPosition(textEditor);
-	const symbolRange = state.lastSymbolAndAncestors.pop()?.range;
+	const symbol = state.lastSymbolAndAncestors.pop();
 	let result = await findOuterBracket(textEditor, before, pos);
-	if (!!symbolRange) {
-		const symbolResult = before ? symbolRange.start : symbolRange.end;
+	const doc = textEditor.document;
+	if (near && !!result) {
+		result = before ? nextPosition(doc, result) : previousPosition(doc, result);
+	}
+	if (!!symbol) {
+		const symbolResult = before ? (near ? nextPosition(doc, symbol.selectionRange.end) : symbol.range.start) :
+			(near ? previousPosition(doc, symbol.range.end) : symbol.range.end);
 		if (!result) {
 			result = symbolResult;
 		} else if (before && result.isBefore(symbolResult)) {
@@ -490,10 +504,14 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.goPastPreviousScope', textEditor => goPastSiblingScope(textEditor, false, true));
 	newCommand('navi-parens.selectPastNextScope', textEditor => goPastSiblingScope(textEditor, true, false));
 	newCommand('navi-parens.selectPastPreviousScope', textEditor => goPastSiblingScope(textEditor, true, true));
-	newCommand('navi-parens.goToUpScope', textEditor => goToOuterScope(textEditor, false, true));
-	newCommand('navi-parens.goToDownScope', textEditor => goToOuterScope(textEditor, false, false));
-	newCommand('navi-parens.selectToUpScope', textEditor => goToOuterScope(textEditor, true, true));
-	newCommand('navi-parens.selectToDownScope', textEditor => goToOuterScope(textEditor, true, false));
+	newCommand('navi-parens.goToUpScope', textEditor => goToOuterScope(textEditor, false, true, false));
+	newCommand('navi-parens.goToDownScope', textEditor => goToOuterScope(textEditor, false, false, false));
+	newCommand('navi-parens.selectToUpScope', textEditor => goToOuterScope(textEditor, true, true, false));
+	newCommand('navi-parens.selectToDownScope', textEditor => goToOuterScope(textEditor, true, false, false));
+	newCommand('navi-parens.goToBeginScope', textEditor => goToOuterScope(textEditor, false, true, true));
+	newCommand('navi-parens.goToEndScope', textEditor => goToOuterScope(textEditor, false, false, true));
+	newCommand('navi-parens.selectToBeginScope', textEditor => goToOuterScope(textEditor, true, true, true));
+	newCommand('navi-parens.selectToEndScope', textEditor => goToOuterScope(textEditor, true, false, true));
 }
 
 export function deactivate() {}

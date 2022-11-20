@@ -10,13 +10,18 @@ Commands:
 * `goPastPreviousScope`: `ctrl+alt+j` Go to the previous same-level opening bracket/scope
 * `goToUpScope`: `ctrl+alt+i` Go outside the opening of the current level
 * `goToDownScope`: `ctrl+alt+k` Go outside the closing of the current level
+* `goToBeginScope`: `ctrl+alt+a` Go near the opening of the current level but stay inside scope
+* `goToEndScope`: `ctrl+alt+k` Go near the closing of the current level but stay inside scope
 * `selectToNextScope`: `shift+ctrl+alt+l` Select past the next same-level closing bracket/scope
 * `selectToPreviousScope`: `shift+ctrl+alt+j` Select to the previous same-level opening bracket/scope
 * `selectToUpScope`: `shift+ctrl+alt+i` Select till outside the opening of the current level
 * `selectToDownScope`: `shift+ctrl+alt+k` Select till outside the closing of the current level
+* `selectToBeginScope`: `shift+ctrl+alt+a` Select to near the opening of the current level but stay inside scope
+* `selectToEndScope`: `shift+ctrl+alt+k` Select to near the closing of the current level but stay inside scope
 * `cycleBracketScopeMode`: `ctrl+alt+p` Cycle through the bracket scope logic (`ctrl+shift+\`, delimiter counting)
 * `cycleBlockScopeMode`: `ctrl+shift+alt+p` Cycle through block scope logic (symbols, indentation, none)
 
+The meaning of "near the beginning/end of a scope" is mode-specific.
 
 Extra key bindings:
 * `insertCursorAtEndOfEachLineSelected`: rebound from `shift+alt+i` to `shift+alt+p`
@@ -24,10 +29,16 @@ Extra key bindings:
 * `cursorLeft`: `alt+j`
 * `cursorUp`: `alt+i`
 * `cursorDown`: `alt+k`
+* `cursorHome`: `alt+a`
+* `cursorEnd`: `alt+e`
 * `cursorRightSelect`: `shift+alt+l`
 * `cursorLeftSelect`: `shift+alt+j`
 * `cursorUpSelect`: `shift+alt+i`
 * `cursorDownSelect`: `shift+alt+k`
+* `cursorHomeSelect`: `shift+alt+a`
+* `cursorEndSelect`: `shift+alt+e`
+
+To former Emacsers, I suggest mapping `Caps Lock` to `Alt` to facilitate using the above bindings.
 
 Navi Parens combines two sources of structure information:
 * Brackets, braces, parentheses.

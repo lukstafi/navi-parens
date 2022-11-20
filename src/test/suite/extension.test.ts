@@ -35,10 +35,14 @@ function testCase(content: string, command: string) {
 			'goPastPreviousScope': () => myExtension.goPastSiblingScope(textEditor, false, true),
 			'selectPastNextScope': () => myExtension.goPastSiblingScope(textEditor, true, false),
 			'selectPastPreviousScope': () => myExtension.goPastSiblingScope(textEditor, true, true),
-			'goToUpScope': () => myExtension.goToOuterScope(textEditor, false, true),
-			'goToDownScope': () => myExtension.goToOuterScope(textEditor, false, false),
-			'selectToUpScope': () => myExtension.goToOuterScope(textEditor, true, true),
-			'selectToDownScope': () => myExtension.goToOuterScope(textEditor, true, false)
+			'goToUpScope': () => myExtension.goToOuterScope(textEditor, false, true, false),
+			'goToDownScope': () => myExtension.goToOuterScope(textEditor, false, false, false),
+			'selectToUpScope': () => myExtension.goToOuterScope(textEditor, true, true, false),
+			'selectToDownScope': () => myExtension.goToOuterScope(textEditor, true, false, false),
+			'goToBeginScope': () => myExtension.goToOuterScope(textEditor, false, true, true),
+			'goToEndScope': () => myExtension.goToOuterScope(textEditor, false, false, true),
+			'selectToBeginScope': () => myExtension.goToOuterScope(textEditor, true, true, false),
+			'selectToEndScope': () => myExtension.goToOuterScope(textEditor, true, false, false)
 		}));
 		// We cannot use vscode.commands.executeCommand because that creates a different TextEditor.
 		const action = commands.get(command);
@@ -85,5 +89,21 @@ suite('Extension Test Suite', () => {
 	test('Basic parentheses navigation: right', testCase(
 		`(@(())^)`,
 		'goPastNextScope'
+	));
+	test('Basic parentheses navigation: beginning from between parens', testCase(
+		`((^()@()))`,
+		'goToBeginScope'
+	));
+	test('Basic parentheses navigation: end from between parens', testCase(
+		`((()@()^))`,
+		'goToEndScope'
+	));
+	test('Basic parentheses navigation: beginning no-change', testCase(
+		`((^@()))`,
+		'goToBeginScope'
+	));
+	test('Basic parentheses navigation: end no-change', testCase(
+		`((()@^))`,
+		'goToEndScope'
 	));
 });
