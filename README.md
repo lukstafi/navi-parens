@@ -59,7 +59,7 @@ This extension contributes the following settings:
 ** If `false`:
 *** bind `cursorUpSelect` to `ctrl+shift+alt+o`
 *** bind `cursorUp` to both `alt+i` and `ctrl+alt+o`.
-* `navi-parens.symbolProvider`: an enum selecting where the non-bracket structure information comes from.
+* `navi-parens.blockScopeMode`: an enum selecting where the non-bracket structure information comes from.
 ** `Semantic`: the semantic analyzers integrated with VSCode. The default.
 ** `Indentation`: Navi Parens constructs symbols based on indentation. Details below.
 ** `None`: same behavior as if there were no symbol definitions in text.

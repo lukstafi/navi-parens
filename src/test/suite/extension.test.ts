@@ -52,7 +52,7 @@ function testCase(content: string, command: string) {
 suite('Extension Test Suite', () => {
 	vscode.window.showInformationMessage('Start all tests.');
 	// TODO: enable symbol providers -- debug why they don't work in tests.
-	vscode.workspace.getConfiguration().update("navi-parens.symbolProvider", "None",
+	vscode.workspace.getConfiguration().update("navi-parens.blockScopeMode", "None",
 		vscode.ConfigurationTarget.Global, true);
 	test('Basic parentheses navigation: up from between parens', testCase(
 		`(^(@()))`,
