@@ -172,6 +172,16 @@
         "when": "editorTextFocus"
       },
       {
+        "command": "cursorWordLeft",
+        "key": "alt+h",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorWordEndRight",
+        "key": "alt+;",
+        "when": "editorTextFocus"
+      },
+      {
         "command": "cursorRightSelect",
         "key": "shift+alt+l",
         "when": "editorTextFocus"
@@ -204,6 +214,16 @@
       {
         "command": "cursorEndSelect",
         "key": "shift+alt+e",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorWordLeftSelect",
+        "key": "shift+alt+h",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorWordEndRightSelect",
+        "key": "shift+alt+;",
         "when": "editorTextFocus"
       },
       {

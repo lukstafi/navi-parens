@@ -1,7 +1,7 @@
 # navi-parens README
 
 Navi Parens is a Visual Studio Code extension that provides structured code navigation similar to what's available in Emacs.
-Over time it might also include some other functionality and configuration that I find useful.
+It also provides additional key bindings for moving the cursor without "fingers leaving the home row".
 
 ## Features
 
@@ -31,12 +31,16 @@ Extra key bindings:
 * `cursorDown`: `alt+k`
 * `cursorHome`: `alt+a`
 * `cursorEnd`: `alt+e`
+* `cursorWordLeft`: `alt+h`
+* `cursorWordEndRight`: `alt+;`
 * `cursorRightSelect`: `shift+alt+l`
 * `cursorLeftSelect`: `shift+alt+j`
 * `cursorUpSelect`: `shift+alt+i`
 * `cursorDownSelect`: `shift+alt+k`
 * `cursorHomeSelect`: `shift+alt+a`
 * `cursorEndSelect`: `shift+alt+e`
+* `cursorWordLeftSelect`: `shift+alt+h`
+* `cursorWordEndRightSelect`: `shift+alt+;`
 
 To former Emacsers, I suggest mapping `Caps Lock` to `Alt` to facilitate using the above bindings.
 
