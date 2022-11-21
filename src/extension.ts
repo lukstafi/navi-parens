@@ -36,6 +36,10 @@ function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
 	return range.contains(pos) && !range.start.isEqual(pos) && !range.end.isEqual(pos);
 }
 
+function strP(pos: vscode.Position): string {
+	return `${pos.line},${pos.character}`;
+}
+
 /** Computes the resulting cursor position of `editor.action.jumpToBracket` from the given position.
  * Uses a global cache. Does not restore the selection state, to minimize the overall UI interactions.
  */
@@ -153,7 +157,7 @@ function nextPosition(doc: vscode.TextDocument, pos: vscode.Position) {
 function previousPosition(doc: vscode.TextDocument, pos: vscode.Position) {
 	let leftPos = doc.positionAt(doc.offsetAt(pos) - 1);
 	if (leftPos.isEqual(pos)) {
-		console.assert(false, 'Should not be possible, but maybe endline glitch.');
+		console.assert(false, `previousPosition at ${strP(pos)} -- maybe endline glitch?`);
 		leftPos = doc.positionAt(doc.offsetAt(pos) - 2);
 	}
 	return leftPos;
@@ -176,7 +180,8 @@ async function findOuterBracket(
 				let jumpBack = await jumpToBracket(textEditor, result);
 				if (jumpBack.isBefore(pos)) { return jumpBack; }
 				else {
-					console.assert(false, 'editor.action.jumpToBracket skipped over its own opening delimiter.');
+					console.assert(false, `editor.action.jumpToBracket skipped to ${strP(jumpBack)}` +
+					  ' over its own opening delimiter.');
 					return null;
 				}
 			} else {
@@ -193,7 +198,8 @@ async function findOuterBracket(
 				return null;
 			}
 		} else {
-			console.assert(result.isEqual(pos), 'editor.action.jumpToBracket jumped to a non-delimiter.');
+			console.assert(result.isEqual(pos),
+				`editor.action.jumpToBracket jumped to a non-delimiter at ${strP(result)}.`);
 			return null;
 		}
 	}
@@ -210,13 +216,14 @@ async function findOuterBracket(
 					if (before) {	return backJump;}
 					 else { return endJump.translate(0, 1); }
 				} else {
-					console.assert(false, 'editor.action.jumpToBracket skipped over its own opening delimiter.');
+					console.assert(false,
+						`editor.action.jumpToBracket skipped over its own opening delimiter to ${strP(backJump)}.`);
 					return null;
 				}
 			} else {
 				// Either editor.action.jumpToBracket was no-op or jumped to a beginning scope.
 				console.assert(endJump.isEqual(pos) || openingBrackets.includes(characterAtPoint(doc, endJump)), 
-					'editor.action.jumpToBracket jumped to a non-delimiter.');
+					`editor.action.jumpToBracket jumped to a non-delimiter at ${strP(endJump)}.`);
 				return null;
 			}
 		} else {
@@ -226,7 +233,8 @@ async function findOuterBracket(
 					if (backJump.isBefore(pos) && openingBrackets.includes(characterAtPoint(doc, backJump))) {
 						return backJump;
 					} else {
-						console.assert(false, 'editor.action.jumpToBracket skipped over its own opening delimiter.');
+						console.assert(false,
+							`editor.action.jumpToBracket skipped over its own opening delimiter to ${strP(backJump)}.`);
 						return null;
 					}
 				} else {
@@ -240,7 +248,8 @@ async function findOuterBracket(
 						return pos.translate(0, 1);
 					}
 				} else {
-					console.assert(endJump.isAfter(pos), 'editor.action.jumpToBracket jumped backward from non-delimiter.');
+					console.assert(endJump.isAfter(pos),
+						`editor.action.jumpToBracket jumped backward from non-delimiter to ${endJump}.`);
 					return null;
 				}
 			}
@@ -255,11 +264,12 @@ async function findOuterBracket(
 			return null;
 		}
 		console.assert(closingBrackets.includes(characterAtPoint(doc, endJump)),
-			'editor.action.jumpToBracket jumped to non-bracket.');
+			`editor.action.jumpToBracket jumped to non-bracket at ${strP(endJump)}.`);
 		if (before) {
 			const backJump = await jumpToBracket(textEditor, endJump);
 			if (!backJump.isBefore(pos)) {
-				console.assert(false, 'editor.action.jumpToBracket back jump did not return.');
+				console.assert(false,
+					`editor.action.jumpToBracket back jump to ${strP(backJump)} did not return before cursor.`);
 				return null;
 			}
 			return backJump;
@@ -280,7 +290,7 @@ async function findOuterBracket(
 			return await findOuterBracket(textEditor, before, endJump.translate(0, 1));
 		} else if (backJump.isBefore(pos)) {
 			console.assert(openingBrackets.includes(characterAtPoint(doc, backJump)),
-				'editor.action.jumpToBracket weird behavior.');
+				`editor.action.jumpToBracket weird behavior: back jump to ${backJump}.`);
 			if (before) {
 				return backJump;
 			} else {
@@ -327,7 +337,7 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
 	let result = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
 		bracketsMode === "Raw" ? await findOuterBracketRaw(textEditor, before, pos) : null;
-	console.assert(!!result || bracketsMode === "None", "Unknown Bracket Scope Mode.");
+	console.assert(!!result || bracketsMode === "None", `Unknown Bracket Scope Mode ${bracketsMode}.`);
 	const doc = textEditor.document;
 	if (near && !!result) {
 		result = before ? nextPosition(doc, result) : previousPosition(doc, result);
@@ -390,8 +400,10 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 		gap = before ? new vscode.Range(fullRange.start, pos) : new vscode.Range(pos, fullRange.end);
 	}
 	if (stack.length > 0) {
-		gap = gap.intersection(stack[stack.length - 1].range);
-		console.assert(gap, 'Unexpected defined-symbol scope at cursor.');
+		const symbolRange = stack[stack.length - 1].range;
+		gap = gap.intersection(symbolRange);
+		console.assert(gap,
+			`Unexpected defined-symbol scope at cursor: ${strP(symbolRange.start)}--${strP(symbolRange.end)}.`);
 	}
 	if (!gap) {	return;	}
 	const gapText = doc.getText(gap);
@@ -439,7 +451,7 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 		if (candidate) { targetPos = before ? candidate.start : candidate.end; }
 	} else {
 		if (!otherBrackets.includes(characterAtPoint(doc, targetPos))) {
-			console.assert(false, 'jumpToBracket weird behavior when skipping a scope. Bailing out.');
+			console.assert(false, `jumpToBracket jumped to ${targetPos} when skipping a scope. Bailing out.`);
 			targetPos = null;
 		}
 		if (!before && !!targetPos) { targetPos = targetPos.translate(0, 1); }
@@ -459,6 +471,10 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 	} else if (state.leftVisibleRange) {
 		textEditor.revealRange(state.lastVisibleRange);
 	}
+}
+
+export async function goToEmptyLine(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
+
 }
 
 function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
@@ -491,7 +507,7 @@ function cycleBracketScopeMode(_textEditor: vscode.TextEditor) {
 		bracketsMode === "JumpToBracket" ? "Raw" : (bracketsMode === "Raw" ? "None" : null)
 	);
 	if (!newMode) {
-		console.assert(false, "Unknown setting for `navi-parens.bracketScopeMode`.");
+		console.assert(false, `Unknown setting for navi-parens.bracketScopeMode: ${bracketsMode}.`);
 		newMode = "None";
 	}
 	configuration.update("navi-parens.bracketScopeMode", newMode,
@@ -505,7 +521,7 @@ function cycleBlockScopeMode(_textEditor: vscode.TextEditor) {
 		blocksMode === "Semantic" ? "Indentation" : (blocksMode === "Indentation" ? "None" : null)
 	);
 	if (!newMode) {
-		console.assert(false, "Unknown setting for `navi-parens.blockScopeMode`.");
+		console.assert(false, `Unknown setting for navi-parens.blockScopeMode: ${blocksMode}.`);
 		newMode = "None";
 	}
 	configuration.update("navi-parens.blockScopeMode", newMode,
