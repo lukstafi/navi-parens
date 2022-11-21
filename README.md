@@ -3,6 +3,10 @@
 Navi Parens is a Visual Studio Code extension that provides structured code navigation similar to what's available in Emacs.
 It also provides additional key bindings for moving the cursor without "fingers leaving the home row".
 
+## Keywords
+
+VSCode, Emacs, Structured Code Navigation, Home Row Cursor Movement
+
 ## Features
 
 Commands:
@@ -12,12 +16,16 @@ Commands:
 * `goToDownScope`: `ctrl+alt+k` Go outside the closing of the current level
 * `goToBeginScope`: `ctrl+alt+a` Go near the opening of the current level but stay inside scope
 * `goToEndScope`: `ctrl+alt+k` Go near the closing of the current level but stay inside scope
+* `goToPreviousEmptyLine`: `ctrl+alt+h` Go to the previous line with only whitespace (or empty)
+* `goToNextEmptyLine`: `ctrl+alt+;` Go to the next line with only whitespace (or empty)
 * `selectToNextScope`: `shift+ctrl+alt+l` Select past the next same-level closing bracket/scope
 * `selectToPreviousScope`: `shift+ctrl+alt+j` Select to the previous same-level opening bracket/scope
 * `selectToUpScope`: `shift+ctrl+alt+i` Select till outside the opening of the current level
 * `selectToDownScope`: `shift+ctrl+alt+k` Select till outside the closing of the current level
 * `selectToBeginScope`: `shift+ctrl+alt+a` Select to near the opening of the current level but stay inside scope
 * `selectToEndScope`: `shift+ctrl+alt+k` Select to near the closing of the current level but stay inside scope
+* `selectToPreviousEmptyLine`: `shift+ctrl+alt+h` Select to the previous line with only whitespace (or empty)
+* `selectToNextEmptyLine`: `shift+ctrl+alt+;` Select to the next line with only whitespace (or empty)
 * `cycleBracketScopeMode`: `ctrl+alt+p` Cycle through the bracket scope logic (`ctrl+shift+\`, delimiter counting)
 * `cycleBlockScopeMode`: `shift+ctrl+alt+p` Cycle through block scope logic (symbols, indentation, none)
 

@@ -474,7 +474,21 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 }
 
 export async function goToEmptyLine(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
-
+	const doc = textEditor.document;
+	const pos = textEditor.selection.active;
+	const direction = before ? -1 : 1;
+	let targetPos = null;
+	for (let line = pos.line + direction; 0 <= line && line < doc.lineCount; line += direction) {
+		const text = doc.lineAt(line);
+		if (text.isEmptyOrWhitespace) { 
+			targetPos = new vscode.Position(line, 0);
+			break;
+		 }
+	}
+	if (!targetPos) { return; }
+	const anchor = select ? textEditor.selection.anchor : targetPos;
+	textEditor.selection = new vscode.Selection(anchor, targetPos);
+	textEditor.revealRange(textEditor.selection);
 }
 
 function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
@@ -568,6 +582,10 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.selectToEndScope', textEditor => goToOuterScope(textEditor, true, false, true));
 	newCommand('navi-parens.cycleBracketScopeMode', cycleBracketScopeMode);
 	newCommand('navi-parens.cycleBlockScopeMode', cycleBlockScopeMode);
+	newCommand('navi-parens.goToPreviousEmptyLine', textEditor => goToEmptyLine(textEditor, false, true));
+	newCommand('navi-parens.goToNextEmptyLine', textEditor => goToEmptyLine(textEditor, false, false));
+	newCommand('navi-parens.selectToPreviousEmptyLine', textEditor => goToEmptyLine(textEditor, true, true));
+	newCommand('navi-parens.selectToNextEmptyLine', textEditor => goToEmptyLine(textEditor, true, false));
 }
 
 export function deactivate() {}

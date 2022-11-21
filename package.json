@@ -23,6 +23,8 @@
     "onCommand:navi-parens.selectToDownScope",
     "onCommand:navi-parens.selectToBeginScope",
     "onCommand:navi-parens.selectToEndScope",
+    "onCommand:navi-parens.goToPreviousEmptyLine",
+    "onCommand:navi-parens.goToNextEmptyLine",
     "onCommand:navi-parens.cycleBracketScopeMode",
     "onCommand:navi-parens.cycleBlockScopeMode"
   ],
@@ -54,6 +56,14 @@
         "title": "Go To End Scope: Go near the closing of the current level but stay inside scope"
       },
       {
+        "command": "navi-parens.goToPreviousEmptyLine",
+        "title": "Go To Previous Empty Line: Go to the previous line with only whitespace (or empty)"
+      },
+      {
+        "command": "navi-parens.goToNextEmptyLine",
+        "title": "Go To Next Empty Line: Go to the next line with only whitespace (or empty)"
+      },
+      {
         "command": "navi-parens.selectPastNextScope",
         "title": "Select To Next Scope: Select past the next same-level closing bracket/scope"
       },
@@ -76,6 +86,14 @@
       {
         "command": "navi-parens.selectToEndScope",
         "title": "Select To End Scope: Select to near the closing of the current level but stay inside scope"
+      },
+      {
+        "command": "navi-parens.selectToPreviousEmptyLine",
+        "title": "Select To Previous Empty Line: Select to the previous line with only whitespace (or empty)"
+      },
+      {
+        "command": "navi-parens.selectToNextEmptyLine",
+        "title": "Select To Next Empty Line: Select to the next line with only whitespace (or empty)"
       },
       {
         "command": "navi-parens.cycleBracketScopeMode",
@@ -267,6 +285,16 @@
         "when": "editorTextFocus"
       },
       {
+        "command": "navi-parens.goToPreviousEmptyLine",
+        "key": "ctrl+alt+h",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.goToNextEmptyLine",
+        "key": "ctrl+alt+;",
+        "when": "editorTextFocus"
+      },
+      {
         "command": "navi-parens.selectPastNextScope",
         "key": "shift+ctrl+alt+l",
         "when": "editorTextFocus"
@@ -294,6 +322,16 @@
       {
         "command": "navi-parens.selectToEndScope",
         "key": "shift+ctrl+alt+e",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.selectToPreviousEmptyLine",
+        "key": "shift+ctrl+alt+h",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.selectToNextEmptyLine",
+        "key": "shift+ctrl+alt+;",
         "when": "editorTextFocus"
       },
       {
