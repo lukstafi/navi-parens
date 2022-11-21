@@ -19,7 +19,7 @@ Commands:
 * `selectToBeginScope`: `shift+ctrl+alt+a` Select to near the opening of the current level but stay inside scope
 * `selectToEndScope`: `shift+ctrl+alt+k` Select to near the closing of the current level but stay inside scope
 * `cycleBracketScopeMode`: `ctrl+alt+p` Cycle through the bracket scope logic (`ctrl+shift+\`, delimiter counting)
-* `cycleBlockScopeMode`: `ctrl+shift+alt+p` Cycle through block scope logic (symbols, indentation, none)
+* `cycleBlockScopeMode`: `shift+ctrl+alt+p` Cycle through block scope logic (symbols, indentation, none)
 
 The meaning of "near the beginning/end of a scope" is mode-specific.
 
@@ -79,7 +79,7 @@ This extension contributes the following settings:
 ** `Indentation`: Navi Parens constructs symbols based on indentation. Details below.
 ** `None`: same behavior as if there were no symbol definitions in text.
 ** `ctrl+shift+alt+p` toggles between `Semantic` and `Indentation`.
-* `navi-parens.bracketScopeProvider`: an enum selecting how to get the bracket structure information.
+* `navi-parens.bracketScopeMode`: an enum selecting how to get the bracket structure information.
 ** `JumpToBracket`: uses `editor.action.jumpToBracket` (i.e. `ctrl+shift+\`). The default.
 ** `Raw`: only the bracket characters are considered, without context.
 ** `ctrl+shift+alt+p` toggles between `Semantic` and `Raw`.

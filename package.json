@@ -22,7 +22,9 @@
     "onCommand:navi-parens.selectToUpScope",
     "onCommand:navi-parens.selectToDownScope",
     "onCommand:navi-parens.selectToBeginScope",
-    "onCommand:navi-parens.selectToEndScope"
+    "onCommand:navi-parens.selectToEndScope",
+    "onCommand:navi-parens.cycleBracketScopeMode",
+    "onCommand:navi-parens.cycleBlockScopeMode"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -74,6 +76,14 @@
       {
         "command": "navi-parens.selectToEndScope",
         "title": "Select To End Scope: Select to near the closing of the current level but stay inside scope"
+      },
+      {
+        "command": "navi-parens.cycleBracketScopeMode",
+        "title": "Cycle Bracket Scope Mode: switch the algorithm navigating delimiters"
+      },
+      {
+        "command": "navi-parens.cycleBlockScopeMode",
+        "title": "Cycle Bracket Scope Mode: switch the algorithm navigating code blocks"
       }
     ],
     "configuration": {
@@ -284,6 +294,16 @@
       {
         "command": "navi-parens.selectToEndScope",
         "key": "shift+ctrl+alt+e",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.cycleBracketScopeMode",
+        "key": "ctrl+alt+p",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.cycleBlockScopeMode",
+        "key": "shift+ctrl+alt+p",
         "when": "editorTextFocus"
       }
     ]

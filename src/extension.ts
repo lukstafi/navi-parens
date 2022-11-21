@@ -311,13 +311,23 @@ async function findOuterBracket(
 	}
 }
 
+async function findOuterBracketRaw(
+	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): Promise<vscode.Position | null> {
+		// TODO:
+	return null;
+}
+
 export async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, before: boolean, near: boolean) {
 	// State update might interact with the UI, save UI state early.
 	const savedSelection = textEditor.selection;
 	const pos = savedSelection.active;
 	let state = await updateStateForPosition(textEditor);
 	const symbol = state.lastSymbolAndAncestors.pop();
-	let result = await findOuterBracket(textEditor, before, pos);
+	const configuration = vscode.workspace.getConfiguration();
+	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	let result = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
+		bracketsMode === "Raw" ? await findOuterBracketRaw(textEditor, before, pos) : null;
+	console.assert(!!result || bracketsMode === "None", "Unknown Bracket Scope Mode.");
 	const doc = textEditor.document;
 	if (near && !!result) {
 		result = before ? nextPosition(doc, result) : previousPosition(doc, result);
@@ -474,6 +484,34 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 	}
 }
 
+function cycleBracketScopeMode(_textEditor: vscode.TextEditor) {
+	const configuration = vscode.workspace.getConfiguration();
+	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	let newMode = bracketsMode === "None" ? "JumpToBracket" : (
+		bracketsMode === "JumpToBracket" ? "Raw" : (bracketsMode === "Raw" ? "None" : null)
+	);
+	if (!newMode) {
+		console.assert(false, "Unknown setting for `navi-parens.bracketScopeMode`.");
+		newMode = "None";
+	}
+	configuration.update("navi-parens.bracketScopeMode", newMode,
+		vscode.ConfigurationTarget.Global, true);
+}
+
+function cycleBlockScopeMode(_textEditor: vscode.TextEditor) {
+	const configuration = vscode.workspace.getConfiguration();
+	const blocksMode = configuration.get<string>("navi-parens.blockScopeMode");
+	let newMode = blocksMode === "None" ? "Semantic" : (
+		blocksMode === "Semantic" ? "Indentation" : (blocksMode === "Indentation" ? "None" : null)
+	);
+	if (!newMode) {
+		console.assert(false, "Unknown setting for `navi-parens.blockScopeMode`.");
+		newMode = "None";
+	}
+	configuration.update("navi-parens.blockScopeMode", newMode,
+		vscode.ConfigurationTarget.Global, true);
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, the extension "navi-parens" is being activated!');
 
@@ -512,6 +550,8 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.goToEndScope', textEditor => goToOuterScope(textEditor, false, false, true));
 	newCommand('navi-parens.selectToBeginScope', textEditor => goToOuterScope(textEditor, true, true, true));
 	newCommand('navi-parens.selectToEndScope', textEditor => goToOuterScope(textEditor, true, false, true));
+	newCommand('navi-parens.cycleBracketScopeMode', cycleBracketScopeMode);
+	newCommand('navi-parens.cycleBlockScopeMode', cycleBlockScopeMode);
 }
 
 export function deactivate() {}
