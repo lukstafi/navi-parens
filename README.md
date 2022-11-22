@@ -50,8 +50,6 @@ Extra key bindings:
 * `cursorWordLeftSelect`: `shift+alt+h`
 * `cursorWordEndRightSelect`: `shift+alt+;`
 
-To former Emacsers, I suggest mapping `Caps Lock` to `Alt` to facilitate using the above bindings.
-
 Navi Parens combines two sources of structure information:
 * Brackets, braces, parentheses.
 * Code blocks.
@@ -123,6 +121,13 @@ Currently, interaction of brackets with definitions can be undesirable in e.g. J
 If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
 
 TODO: minimize state update on switching between symbol providers.
+
+## Notes from a former Emacser
+
+Coming from Emacs, I appreciate and suggest:
+* Using the Breadcrumbs navigation (semantic outline) on top of editors.
+* Using the Go Forward `alt+right arrow` and Go Back `alt+left arrow`.
+* Mapping `Caps Lock` to `alt` (rather than `ctrl`) to facilitate using the above bindings.
 
 
 ## Release Notes
