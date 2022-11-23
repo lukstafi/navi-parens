@@ -324,8 +324,8 @@ async function findOuterBracket(
 	}
 }
 
-async function findOuterBracketRaw(
-	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): Promise<vscode.Position | null> {
+function findOuterBracketRaw(
+	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): vscode.Position | null {
 	// TODO: optimize by passing in a search limit range, if any.
 	const doc = textEditor.document;
 	const direction = before ? -1 : 1;
@@ -337,6 +337,7 @@ async function findOuterBracketRaw(
 		const offsetPos = doc.positionAt(offset);
 		// \r\n endline.
 		if (doc.offsetAt(offsetPos) !== offset) { continue; }
+		// TODO: probably redundant.
 		if (before && offsetPos.character === 0) {
 			continue;
 		}
@@ -377,11 +378,10 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 	const savedSelection = textEditor.selection;
 	const pos = savedSelection.active;
 	let state = await updateStateForPosition(textEditor);
-	const symbol = state.lastSymbolAndAncestors.pop();
 	const configuration = vscode.workspace.getConfiguration();
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
 	let result = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
-		bracketsMode === "Raw" ? await findOuterBracketRaw(textEditor, before, pos) : null;
+		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos) : null;
 	console.assert(!!result || bracketsMode === "None", `Unknown Bracket Scope Mode ${bracketsMode}.`);
 	const doc = textEditor.document;
 	if (near && !!result) {
@@ -390,13 +390,13 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 	const blockMode = configuration.get<string>("navi-parens.blockScopeMode");
 	if (blockMode === "Semantic") {
 		const symbol = state.lastSymbolAndAncestors.pop();
-	if (!!symbol) {
-		const symbolResult = before ? (near ? nextPosition(doc, symbol.selectionRange.end) : symbol.range.start) :
-			(near ? previousPosition(doc, symbol.range.end) : symbol.range.end);
+		if (!!symbol) {
+			const symbolResult = before ? (near ? nextPosition(doc, symbol.selectionRange.end) : symbol.range.start) :
+				(near ? previousPosition(doc, symbol.range.end) : symbol.range.end);
 			if (!result || (before && result.isBefore(symbolResult)) || (!before && result.isAfter(symbolResult))) {
-			result = symbolResult;
+				result = symbolResult;
+			}
 		}
-	}
 	} else if (blockMode === "Indentation") {
 		const blockResult = findOuterIndentation(textEditor, before, pos);
 		if (blockResult) {
@@ -449,6 +449,7 @@ async function findSiblingBracket(
 			(before ? offsetPos.isBefore(searchLimit) : offsetPos.isAfter(searchLimit))) {
 			return false;
 		}
+		// TODO: this condition is probably redundant.
 		if (before && offsetPos.character === 0) {
 			continue;
 		}
