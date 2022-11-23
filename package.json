@@ -34,6 +34,8 @@
     "onCommand:navi-parens.selectToEndScope",
     "onCommand:navi-parens.goToPreviousEmptyLine",
     "onCommand:navi-parens.goToNextEmptyLine",
+    "onCommand:navi-parens.selectToPreviousEmptyLine",
+    "onCommand:navi-parens.selectToNextEmptyLine",
     "onCommand:navi-parens.cycleBracketScopeMode",
     "onCommand:navi-parens.cycleBlockScopeMode"
   ],
