@@ -26,7 +26,7 @@ Commands:
 * `selectToEndScope`: `shift+ctrl+alt+k` Select to near the closing of the current level but stay inside scope
 * `selectToPreviousEmptyLine`: `shift+ctrl+alt+h` Select to the previous line with only whitespace (or empty)
 * `selectToNextEmptyLine`: `shift+ctrl+alt+;` Select to the next line with only whitespace (or empty)
-* `cycleBracketScopeMode`: `ctrl+alt+p` Cycle through the bracket scope logic (`ctrl+shift+\`, delimiter counting)
+* `cycleBracketScopeMode`: `ctrl+alt+p` Cycle through the bracket scope logic (`ctrl+shift+\`, delimiter counting, none)
 * `cycleBlockScopeMode`: `shift+ctrl+alt+p` Cycle through block scope logic (symbols, indentation, none)
 
 The meaning of "near the beginning/end of a scope" is mode-specific.
@@ -60,6 +60,7 @@ Each of the sources comes in two variants.
 
 An indentation scope comprises a less-indented line followed by at least one more-indented line.
 
+The `Raw` mode for bracket scopes is useful for navigating within comments or string literals, and does not cause "jitter" like the `JumpToBracket` mode does. However, it is less reliable since it will count brackets even if they were not intended as delimiters.
 
 ## TODO: provide some animations
 
@@ -90,16 +91,16 @@ This extension contributes the following settings:
 ** `Raw`: only the bracket characters are considered, without context.
 ** `ctrl+shift+alt+p` toggles between `Semantic` and `Raw`.
 * `navi-parens.closingBrackets`: the superset of supported closing delimiters.
-** Defaults to `[")", "]", "}", ">"]`. The default setting might be sufficient for all use cases.
+** Defaults to `[")", "]", "}", ">"]`.
 ** Can be language specific.
 * `navi-parens.openingBrackets`: the superset of supported opening delimiters.
-** Defaults to `["(", "[", "{", "<"]`. The default setting might be sufficient for all use cases.
+** Defaults to `["(", "[", "{", "<"]`.
 ** Can be language specific.
 * `navi-parens.closingBracketsForRaw`: the closing delimiters for `bracketScopeProvider.Raw`.
-** Defaults to `[")", "]", "}"]`. The default setting might be sufficient for all use cases.
+** Defaults to `[")", "]", "}"]`.
 ** Can be language specific.
 * `navi-parens.openingBracketsForRaw`: the opening delimiters for `bracketScopeProvider.Raw`.
-** Defaults to `["(", "[", "{"]`. The default setting might be sufficient for all use cases.
+** Defaults to `["(", "[", "{"]`.
 ** Can be language specific.
 
 
@@ -132,20 +133,20 @@ Coming from Emacs, I appreciate and suggest:
 
 ## Release Notes
 
-### 1.0
+### 0.9
 
 Initial release of Navi Parens. The main missing features are multiple cursors support and multicharacter delimiters support.
 
 ## Planned Releases
 
+### 1.0
+
+First stable release. Bug fixes.
+
 ### 1.1
 
-Bug fixes.
+Multicharacter delimiters support.
 
 ### 2.0
 
-Multiple cursors support. Multicharacter delimiters support.
-
-### 2.1
-
-Bug fixes.
+Multiple cursors support.
