@@ -178,17 +178,17 @@
       {
         "command": "cursorRight",
         "key": "alt+l",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorLeft",
         "key": "alt+j",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorUp",
         "key": "alt+i",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "list.focusUp",
@@ -213,12 +213,12 @@
       {
         "command": "cursorUp",
         "key": "ctrl+alt+o",
-        "when": "editorTextFocus && !config.navi-parens.rebind"
+        "when": "textInputFocus && !config.navi-parens.rebind"
       },
       {
         "command": "cursorDown",
         "key": "alt+k",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "list.focusDown",
@@ -243,67 +243,67 @@
       {
         "command": "cursorHome",
         "key": "alt+a",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorEnd",
         "key": "alt+e",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorWordLeft",
         "key": "alt+h",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorWordEndRight",
         "key": "alt+;",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorRightSelect",
         "key": "shift+alt+l",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorLeftSelect",
         "key": "shift+alt+j",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorUpSelect",
         "key": "shift+alt+i",
-        "when": "editorTextFocus && config.navi-parens.rebind"
+        "when": "textInputFocus && config.navi-parens.rebind"
       },
       {
         "command": "cursorUpSelect",
         "key": "ctrl+shift+alt+o",
-        "when": "editorTextFocus && !config.navi-parens.rebind"
+        "when": "textInputFocus && !config.navi-parens.rebind"
       },
       {
         "command": "cursorDownSelect",
         "key": "shift+alt+k",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorHomeSelect",
         "key": "shift+alt+a",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorEndSelect",
         "key": "shift+alt+e",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorWordLeftSelect",
         "key": "shift+alt+h",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "cursorWordEndRightSelect",
         "key": "shift+alt+;",
-        "when": "editorTextFocus"
+        "when": "textInputFocus"
       },
       {
         "command": "navi-parens.goPastNextScope",
