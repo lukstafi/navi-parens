@@ -32,6 +32,8 @@ let openingBrackets: string[] = ["(", "[", "{", "<"];
 let closingBracketsRaw: string[] = [")", "]", "}"];
 let openingBracketsRaw: string[] = ["(", "[", "{"];
 
+let naviStatusBarItem: vscode.StatusBarItem;
+
 /** From Navi Parens perspective, positions on the border of a scope are outside of the scope. */
 function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
 	return range.contains(pos) && !range.start.isEqual(pos) && !range.end.isEqual(pos);
@@ -538,6 +540,15 @@ export async function goToEmptyLine(textEditor: vscode.TextEditor, select: boole
 	textEditor.revealRange(textEditor.selection);
 }
 
+function updateStatusBarItem(blockScopeMode: string | undefined, bracketScopeMode: string | undefined): void {
+	const blockMode = blockScopeMode === 'Semantic' ? 'SEM' :
+		(blockScopeMode === 'Indentation' ? 'IND' : (blockScopeMode === 'None' ? 'NON' : '---'));
+	const bracketMode = bracketScopeMode === 'JumpToBracket' ? 'JTB' :
+		(bracketScopeMode === 'Raw' ? 'RAW' : (bracketScopeMode === 'None' ? 'NON' : '---'));
+	naviStatusBarItem.text = `Navi: ${blockMode}/${bracketMode}`;
+	naviStatusBarItem.show();
+}
+
 function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 	if (event.affectsConfiguration('navi-parens.blockScopeMode')) {
 		for (const kv of documentStates) {
@@ -556,6 +567,12 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		if (openingBracketsConfig) {
 			openingBrackets = openingBracketsConfig;
 		}
+	}
+	if (event.affectsConfiguration('navi-parens.blockScopeMode') ||
+		event.affectsConfiguration('navi-parens.bracketScopeMode')
+	) {
+		updateStatusBarItem(configuration.get<string>('navi-parens.blockScopeMode'),
+			configuration.get<string>('navi-parens.bracketScopeMode'));
 	}
 }
 
@@ -630,6 +647,21 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.goToNextEmptyLine', textEditor => goToEmptyLine(textEditor, false, false));
 	newCommand('navi-parens.selectToPreviousEmptyLine', textEditor => goToEmptyLine(textEditor, true, true));
 	newCommand('navi-parens.selectToNextEmptyLine', textEditor => goToEmptyLine(textEditor, true, false));
+
+	// Register a command that is invoked when the status bar item is selected
+	const naviCommandId = 'navi-parens.showScopeModes';
+	const blockMode = configuration.get<string>('navi-parens.blockScopeMode');
+	const bracketMode = configuration.get<string>('navi-parens.bracketScopeMode');
+	context.subscriptions.push(vscode.commands.registerCommand(naviCommandId, () => {
+		vscode.window.showInformationMessage('Navi Parens: ' + blockMode + '/' + bracketMode +
+			' (`ctrl+shift+alt+p` changes block scope mode / ' +
+			'`ctrl+alt+p` changes bracket scope mode).');
+	}));
+	// Create a new status bar item.
+	naviStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	naviStatusBarItem.command = naviCommandId;
+	context.subscriptions.push(naviStatusBarItem);
+	updateStatusBarItem(blockMode, bracketMode);
 }
 
 export function deactivate() {}
