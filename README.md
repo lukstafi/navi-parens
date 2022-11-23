@@ -35,8 +35,8 @@ Extra key bindings:
 * `insertCursorAtEndOfEachLineSelected`: rebound from `shift+alt+i` to `shift+alt+p`
 * `cursorRight`: `alt+l`
 * `cursorLeft`: `alt+j`
-* `cursorUp`: `alt+i`
-* `cursorDown`: `alt+k`
+* `cursorUp`, `list.focusUp`, `selectPrevCodeAction`, `selectPrevSuggestion`, `selectPrevParameterHint`: `alt+i`
+* `cursorDown`, `list.focusDown`, `selectNextCodeAction`, `selectNextSuggestion`, `selectNextParameterHint`: `alt+k`
 * `cursorHome`: `alt+a`
 * `cursorEnd`: `alt+e`
 * `cursorWordLeft`: `alt+h`

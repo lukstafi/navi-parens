@@ -191,6 +191,26 @@
         "when": "editorTextFocus"
       },
       {
+        "command": "list.focusUp",
+        "key": "alt+i",
+        "when": "listFocus && !inputFocus"
+      },
+      {
+        "command": "selectPrevCodeAction",
+        "key": "alt+i",
+        "when": "codeActionMenuVisible"
+      },
+      {
+        "command": "selectPrevSuggestion",
+        "key": "alt+i",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+      },
+      {
+        "command": "showPrevParameterHint",
+        "key": "alt+i",
+        "when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
+      },
+      {
         "command": "cursorUp",
         "key": "ctrl+alt+o",
         "when": "editorTextFocus && !config.navi-parens.rebind"
@@ -199,6 +219,26 @@
         "command": "cursorDown",
         "key": "alt+k",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "list.focusDown",
+        "key": "alt+k",
+        "when": "listFocus && !inputFocus"
+      },
+      {
+        "command": "selectNextCodeAction",
+        "key": "alt+k",
+        "when": "codeActionMenuVisible"
+      },
+      {
+        "command": "selectNextSuggestion",
+        "key": "alt+k",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+      },
+      {
+        "command": "showNextParameterHint",
+        "key": "alt+k",
+        "when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
       },
       {
         "command": "cursorHome",
