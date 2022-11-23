@@ -351,6 +351,27 @@ async function findOuterBracketRaw(
 	return null;
 }
 
+function findOuterIndentation(
+	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): vscode.Position | null {
+	// TODO: optimize by passing in a search limit range, if any.
+	const doc = textEditor.document;
+	const direction = before ? -1 : 1;
+	let entryIndent = -1;
+	for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction) {
+		const line = doc.lineAt(lineNo);
+		if (line.isEmptyOrWhitespace) { continue; }
+		// TODO: handle tabs.
+		const indentation = line.firstNonWhitespaceCharacterIndex;
+		if (entryIndent < 0) { entryIndent = indentation; }
+		else if (indentation < entryIndent) {
+			return new vscode.Position(lineNo, indentation);
+			// Alternatively if !before, we could try the following unless it leads to no-change.
+			// return doc.positionAt(doc.offsetAt(new vscode.Position(lineNo, 0)) - 2);
+		}
+	}
+	return null;
+}
+
 export async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, before: boolean, near: boolean) {
 	// State update might interact with the UI, save UI state early.
 	const savedSelection = textEditor.selection;
@@ -366,17 +387,24 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 	if (near && !!result) {
 		result = before ? nextPosition(doc, result) : previousPosition(doc, result);
 	}
+	const blockMode = configuration.get<string>("navi-parens.blockScopeMode");
+	if (blockMode === "Semantic") {
+		const symbol = state.lastSymbolAndAncestors.pop();
 	if (!!symbol) {
 		const symbolResult = before ? (near ? nextPosition(doc, symbol.selectionRange.end) : symbol.range.start) :
 			(near ? previousPosition(doc, symbol.range.end) : symbol.range.end);
-		if (!result) {
-			result = symbolResult;
-		} else if (before && result.isBefore(symbolResult)) {
-			result = symbolResult;
-		} else if (!before && result.isAfter(symbolResult)) {
+			if (!result || (before && result.isBefore(symbolResult)) || (!before && result.isAfter(symbolResult))) {
 			result = symbolResult;
 		}
 	}
+	} else if (blockMode === "Indentation") {
+		const blockResult = findOuterIndentation(textEditor, before, pos);
+		if (blockResult) {
+			if (!result || (before && result.isBefore(blockResult)) || (!before && result.isAfter(blockResult))) {
+				result = blockResult;
+			}
+		}
+	} else { console.assert(blockMode === "None", `Unknown Block Scope Mode ${blockMode}.`); }
 	if (!result) {
 		textEditor.selection = savedSelection;
 		if (state.leftVisibleRange) {
