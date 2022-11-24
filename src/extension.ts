@@ -762,10 +762,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Register a command that is invoked when the status bar item is selected
 	const naviCommandId = 'navi-parens.showScopeModes';
-	const blockMode = configuration.get<string>('navi-parens.blockScopeMode');
-	const bracketMode = configuration.get<string>('navi-parens.bracketScopeMode');
 	context.subscriptions.push(vscode.commands.registerCommand(naviCommandId, () => {
-		vscode.window.showInformationMessage('Navi Parens: ' + blockMode + '/' + bracketMode +
+		const configuration = vscode.workspace.getConfiguration();
+		vscode.window.showInformationMessage('Navi Parens: ' +
+			configuration.get<string>('navi-parens.blockScopeMode') + '/' +
+			configuration.get<string>('navi-parens.bracketScopeMode') +
 			' (`ctrl+shift+alt+p` changes block scope mode / ' +
 			'`ctrl+alt+p` changes bracket scope mode).');
 	}));
@@ -773,7 +774,8 @@ export function activate(context: vscode.ExtensionContext) {
 	naviStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	naviStatusBarItem.command = naviCommandId;
 	context.subscriptions.push(naviStatusBarItem);
-	updateStatusBarItem(blockMode, bracketMode);
+	updateStatusBarItem(configuration.get<string>('navi-parens.blockScopeMode'),
+		configuration.get<string>('navi-parens.bracketScopeMode'));
 }
 
 export function deactivate() {}
