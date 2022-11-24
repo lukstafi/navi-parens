@@ -44,75 +44,93 @@
     "commands": [
       {
         "command": "navi-parens.goPastNextScope",
-        "title": "Go To Next Scope: Go past the next same-level closing bracket/scope"
+        "title": "Go To Next Scope: Go past the next same-level closing bracket/scope",
+        "shortTitle": "Go To Next Scope"
       },
       {
         "command": "navi-parens.goPastPreviousScope",
-        "title": "Go To Previous Scope: Go to the previous same-level opening bracket/scope"
+        "title": "Go To Previous Scope: Go to the previous same-level opening bracket/scope",
+        "shortTitle": "Go To Previous Scope"
       },
       {
         "command": "navi-parens.goToUpScope",
-        "title": "Go To Up Scope: Go outside the opening of the current level"
+        "title": "Go To Up Scope: Go outside the opening of the current level",
+        "shortTitle": "Go To Up Scope"
       },
       {
         "command": "navi-parens.goToDownScope",
-        "title": "Go To Down Scope: Go outside the closing of the current level"
+        "title": "Go To Down Scope: Go outside the closing of the current level",
+        "shortTitle": "Go To Down Scope"
       },
       {
         "command": "navi-parens.goToBeginScope",
-        "title": "Go To Begin Scope: Go near the opening of the current level but stay inside scope"
+        "title": "Go To Begin Scope: Go near the opening of the current level but stay inside scope",
+        "shortTitle": "Go To Begin Scope"
       },
       {
         "command": "navi-parens.goToEndScope",
-        "title": "Go To End Scope: Go near the closing of the current level but stay inside scope"
+        "title": "Go To End Scope: Go near the closing of the current level but stay inside scope",
+        "shortTitle": "Go To End Scope"
       },
       {
         "command": "navi-parens.goToPreviousEmptyLine",
-        "title": "Go To Previous Empty Line: Go to the previous line with only whitespace (or empty)"
+        "title": "Go To Previous Empty Line: Go to the previous line with only whitespace (or empty)",
+        "shortTitle": "Go To Previous Empty Line"
       },
       {
         "command": "navi-parens.goToNextEmptyLine",
-        "title": "Go To Next Empty Line: Go to the next line with only whitespace (or empty)"
+        "title": "Go To Next Empty Line: Go to the next line with only whitespace (or empty)",
+        "shortTitle": "Go To Next Empty Line"
       },
       {
         "command": "navi-parens.selectPastNextScope",
-        "title": "Select To Next Scope: Select past the next same-level closing bracket/scope"
+        "title": "Select To Next Scope: Select past the next same-level closing bracket/scope",
+        "shortTitle": "Select To Next Scope"
       },
       {
         "command": "navi-parens.selectPastPreviousScope",
-        "title": "Select To Previous Scope: Select to the previous same-level opening bracket/scope"
+        "title": "Select To Previous Scope: Select to the previous same-level opening bracket/scope",
+        "shortTitle": "Select To Previous Scope"
       },
       {
         "command": "navi-parens.selectToUpScope",
-        "title": "Slect To Up Scope: Select till outside the opening of the current level"
+        "title": "Slect To Up Scope: Select till outside the opening of the current level",
+        "shortTitle": "Slect To Up Scope"
       },
       {
         "command": "navi-parens.selectToDownScope",
-        "title": "Select To Down Scope: Select till outside the closing of the current level"
+        "title": "Select To Down Scope: Select till outside the closing of the current level",
+        "shortTitle": "Select To Down Scope"
       },
       {
         "command": "navi-parens.selectToBeginScope",
-        "title": "Slect To Begin Scope: Select to near the opening of the current level but stay inside scope"
+        "title": "Slect To Begin Scope: Select to near the opening of the current level but stay inside scope",
+        "shortTitle": "Slect To Begin Scope"
       },
       {
         "command": "navi-parens.selectToEndScope",
-        "title": "Select To End Scope: Select to near the closing of the current level but stay inside scope"
+        "title": "Select To End Scope: Select to near the closing of the current level but stay inside scope",
+        "shortTitle": "Select To End Scope"
       },
       {
         "command": "navi-parens.selectToPreviousEmptyLine",
-        "title": "Select To Previous Empty Line: Select to the previous line with only whitespace (or empty)"
+        "title": "Select To Previous Empty Line: Select to the previous line with only whitespace (or empty)",
+        "shortTitle": "Select To Previous Empty Line"
       },
       {
         "command": "navi-parens.selectToNextEmptyLine",
-        "title": "Select To Next Empty Line: Select to the next line with only whitespace (or empty)"
+        "title": "Select To Next Empty Line: Select to the next line with only whitespace (or empty)",
+        "shortTitle": "Select To Next Empty Line"
       },
       {
         "command": "navi-parens.cycleBracketScopeMode",
-        "title": "Cycle Bracket Scope Mode: switch the algorithm navigating delimiters"
+        "title": "Cycle Bracket Scope Mode: switch the algorithm navigating delimiters",
+        "shortTitle": "Cycle Bracket Scope Mode"
       },
       {
         "command": "navi-parens.cycleBlockScopeMode",
-        "title": "Cycle Bracket Scope Mode: switch the algorithm navigating code blocks"
+        "title": "Cycle Block Scope Mode: switch the algorithm navigating code blocks",
+        "shortTitle": "Cycle Block Scope Mode"
       }
     ],
     "configuration": {
@@ -388,12 +406,12 @@
       {
         "command": "navi-parens.cycleBracketScopeMode",
         "key": "ctrl+alt+p",
-        "when": "editorTextFocus"
+        "when": ""
       },
       {
         "command": "navi-parens.cycleBlockScopeMode",
         "key": "shift+ctrl+alt+p",
-        "when": "editorTextFocus"
+        "when": ""
       }
     ]
   },
