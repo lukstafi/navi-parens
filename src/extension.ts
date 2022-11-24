@@ -353,22 +353,33 @@ function findOuterBracketRaw(
 }
 
 function findOuterIndentation(
-	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): vscode.Position | null {
+	textEditor: vscode.TextEditor, before: boolean, near: boolean, pos: vscode.Position): vscode.Position | null {
 	// TODO: optimize by passing in a search limit range, if any.
 	const doc = textEditor.document;
 	const direction = before ? -1 : 1;
 	let entryIndent = -1;
+	let previousNo = -1;
+	let previousIndent = -1;
 	for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction) {
 		const line = doc.lineAt(lineNo);
 		if (line.isEmptyOrWhitespace) { continue; }
-		// TODO: handle tabs.
+		// TODO: handle tabs?
 		const indentation = line.firstNonWhitespaceCharacterIndex;
 		if (entryIndent < 0) { entryIndent = indentation; }
 		else if (indentation < entryIndent) {
-			return new vscode.Position(lineNo, indentation);
-			// Alternatively if !before, we could try the following unless it leads to no-change.
-			// return doc.positionAt(doc.offsetAt(new vscode.Position(lineNo, 0)) - 2);
+			if (near) {
+				if (before) {
+					return new vscode.Position(previousNo, previousIndent);
+				} else {
+					// Return end of the previous line.
+					return doc.positionAt(doc.offsetAt(new vscode.Position(previousNo + 1, 0)) - 1);
+				}
+			} else {
+				return new vscode.Position(lineNo, indentation);
+			}
 		}
+		previousNo = lineNo;
+		previousIndent = indentation;
 	}
 	return null;
 }
@@ -398,7 +409,7 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 			}
 		}
 	} else if (blockMode === "Indentation") {
-		const blockResult = findOuterIndentation(textEditor, before, pos);
+		const blockResult = findOuterIndentation(textEditor, before, near, pos);
 		if (blockResult) {
 			if (!result || (before && result.isBefore(blockResult)) || (!before && result.isAfter(blockResult))) {
 				result = blockResult;
@@ -494,6 +505,25 @@ async function findSiblingBracket(
 	}
 	return false;
 }
+
+// function findSiblingIndentation(
+// 	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): vscode.Selection | boolean {
+// 	// TODO: optimize by passing in a search limit range, if any.
+// 	const doc = textEditor.document;
+// 	const direction = before ? -1 : 1;
+// 	let entryIndent = -1;
+// 	for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction) {
+// 		const line = doc.lineAt(lineNo);
+// 		if (line.isEmptyOrWhitespace) { continue; }
+// 		// TODO: handle tabs.
+// 		const indentation = line.firstNonWhitespaceCharacterIndex;
+// 		if (entryIndent < 0) { entryIndent = indentation; }
+// 		else if (indentation < entryIndent) {
+// 			return new vscode.Position(lineNo, indentation);
+// 		}
+// 	}
+// 	return null;
+// }
 
 export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
 	// State update might interact with the UI, save UI state early.
