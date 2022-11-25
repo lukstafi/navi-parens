@@ -520,7 +520,6 @@ function findSiblingIndentation(
 	const doc = textEditor.document;
 	const direction = before ? -1 : 1;
 	let noIndent = -1;
-	let entryIndent = -1;
 	let entryNo = -1;
 	let updated = false;
 	for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction) {
@@ -528,20 +527,18 @@ function findSiblingIndentation(
 		if (line.isEmptyOrWhitespace) { continue; }
 		// TODO: handle tabs?
 		const indentation = line.firstNonWhitespaceCharacterIndex;
-		// For the purposes of skipping, the near side of the scope is defined differently than the far side:
-		// start-of-indented line rather than start-of-unindented line.
 		if (noIndent < 0) {
 			noIndent = indentation;
 		}
 		else if (updated && indentation <= noIndent) {
-			const entryPos = new vscode.Position(entryNo, entryIndent);
+			// Return end of the previous line.
+			const entryPos = new vscode.Position(entryNo, noIndent);
 			const leavePos = new vscode.Position(lineNo, indentation);
 			return new vscode.Selection(entryPos, leavePos);
 		} else if (!updated && indentation > noIndent) {
 			updated = true;
-			entryIndent = indentation;
-			entryNo = lineNo;
-		} else if (indentation < entryIndent) { return true;  }
+			entryNo = lineNo - direction;
+		} else if (indentation < noIndent) { return true;  }
 	}
 	return false;
 }
