@@ -62,11 +62,28 @@ An indentation scope comprises a less-indented line followed by at least one mor
 
 The `Raw` mode for bracket scopes is useful for navigating within comments or string literals, and does not cause "jitter" like the `JumpToBracket` mode does. However, it is less reliable since it will count brackets even if they were not intended as delimiters.
 
-## TODO: provide some animations
+## Some use cases
 
-Image paths are relative to this README file.
+First Navi Parens-specific command activates the scope navigation modes indicator.
 
-\!\[feature X\]\(animations/feature-x.png\)
+\!\[feature X\]\(animations/activation.gif\)
+
+Navigation with `Semantic` mode.
+
+\!\[feature X\]\(animations/semantic.gif\)
+
+Navigation with `Indentation` mode.
+
+\!\[feature X\]\(animations/indentation.gif\)
+
+Navigation with `Jump To Bracket` with block modes disabled.
+
+\!\[feature X\]\(animations/jumptobracket.gif\)
+
+Navigation with `Raw` bracket mode.
+
+\!\[feature X\]\(animations/rawbrackets.gif\)
+
 
 ## Extension Settings
 
