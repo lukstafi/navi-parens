@@ -66,23 +66,23 @@ The `Raw` mode for bracket scopes is useful for navigating within comments or st
 
 First Navi Parens-specific command activates the scope navigation modes indicator.
 
-\!\[feature X\]\(animations/activation.gif\)
+![feature X](animations/activation.gif)
 
 Navigation with `Semantic` mode.
 
-\!\[feature X\]\(animations/semantic.gif\)
+![feature X](animations/semantic.gif)
 
 Navigation with `Indentation` mode.
 
-\!\[feature X\]\(animations/indentation.gif\)
+![feature X](animations/indentation.gif)
 
 Navigation with `Jump To Bracket` with block modes disabled.
 
-\!\[feature X\]\(animations/jumptobracket.gif\)
+![feature X](animations/jumptobracket.gif)
 
 Navigation with `Raw` bracket mode.
 
-\!\[feature X\]\(animations/rawbrackets.gif\)
+![feature X](animations/rawbrackets.gif)
 
 
 ## Extension Settings
