@@ -99,17 +99,11 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 		state.leftVisibleRange = false;
 	}
 	if (state.needsUpdate) {
-		const symbolSource = vscode.workspace.getConfiguration().get<string>("navi-parens.blockScopeMode");
-		if (symbolSource === "Semantic") {
+		// Always call the SymbolProvider, therefore do not set needsUpdate on mode change:
+		// the JTB cache is a precious resource that should only be cleared on edit.
 			state.rootSymbols = 
 				await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
 					'vscode.executeDocumentSymbolProvider', uri);			
-		} else if (symbolSource === "None") {
-			state.rootSymbols = [];
-		} else {
-			console.error('TODO: Not implemented yet.');
-			state.rootSymbols = [];
-		}
 		if (state.rootSymbols === undefined) {
 			console.error('vscode.executeDocumentSymbolProvider returned `undefined`');
 			state.rootSymbols = [];
@@ -659,11 +653,6 @@ function updateStatusBarItem(blockScopeMode: string | undefined, bracketScopeMod
 }
 
 function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
-	if (event.affectsConfiguration('navi-parens.blockScopeMode')) {
-		for (const kv of documentStates) {
-			kv[1].needsUpdate = true;
-		}
-	}
 	const configuration = vscode.workspace.getConfiguration();
 	if (event.affectsConfiguration('navi-parens.closingBrackets')) {
 		const closingBracketsConfig = configuration.get<string[]>("navi-parens.closingBrackets");
