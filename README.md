@@ -154,11 +154,15 @@ Coming from Emacs, I appreciate and suggest:
 
 Initial release of Navi Parens. The main missing features are multiple cursors support and multicharacter delimiters support.
 
-## Planned Releases
-
 ### 1.0
 
-First stable release. Bug fixes.
+* When the block scope and the brackets scope are overlapping, consistently prefer the farther-out target position.
+* Optimization: don't invalidate Jump-To-Bracket cache on block mode change.
+* Emacs functionality: recenter the view (middle-to-cursor, top-to-cursor, bottom-to-cursor) `alt+.`.
+* More Emacs-inspired key bindings: delete `alt+d`, delete word `ctrl+alt+d`.
+
+
+## Planned Releases
 
 ### 1.1
 
