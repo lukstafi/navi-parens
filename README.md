@@ -160,6 +160,8 @@ Initial release of Navi Parens. The main missing features are multiple cursors s
 * Optimization: don't invalidate Jump-To-Bracket cache on block mode change.
 * Emacs functionality: recenter the view (middle-to-cursor, top-to-cursor, bottom-to-cursor) `alt+.`.
 * More Emacs-inspired key bindings: delete `alt+d`, delete word `ctrl+alt+d`.
+* Make the Navi-Parens-bound "move past next/previous word" consistently move past an alphanumeric word, rather than using the built-in `ctrl+rightArrow` / `ctrl+leftArrow` functionality.
+* Add more tests.
 
 
 ## Planned Releases
