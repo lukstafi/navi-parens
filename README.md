@@ -138,6 +138,8 @@ When navigating down out of a scope with both indentation and bracket scopes ena
 
 ![Indentation block scope vs brackets scope](animations/indentation-vs-brackets-outer.gif)
 
+Some Navi Parens commands will misbehave if they are executed before a document editor is fully initialized. Specifically, the `Semantic` and `JumpToBrackets` modes require the corresponding initializations, while the `Indentation` and `Raw` modes are good-to-go right away since they only look at the text of a document.
+
 ## Notes from a former Emacser
 
 Coming from Emacs, I appreciate and suggest:

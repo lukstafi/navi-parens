@@ -388,7 +388,17 @@ async function findSiblingBracket(
 				if (!updated) { jumpPos = lookingAtPos; }
 				++nesting; updated = true;
 			} else {
+				// Let's be defensive, the behavior of Jump To Bracket is surprising at times.
 				let targetPos = await jumpToBracket(textEditor, lookingAtPos);
+				if (isNearer(before, targetPos, lookingAtPos)) {
+					console.assert(false,
+						`Jump To Bracket from ${strP(targetPos)} to ${strP(lookingAtPos)} violates expectations.`);
+					return null;
+				}
+				if (targetPos.isEqual(lookingAtPos)) {
+					// No bracket scopes left to the right.
+					if (before) { continue; } else { return null; }
+				}
 				// Verify it was an active delimiter by backjumping.
 				jumpPos = await jumpToBracket(textEditor, targetPos);
 				if (jumpPos.isEqual(lookingAtPos)) {
@@ -403,7 +413,11 @@ async function findSiblingBracket(
 				--nesting; updated = true;
 			} else {
 				// Verify it is an active outer scope delimiter. If yes, bail out.
-				let endJump = await jumpToBracket(textEditor, lookingAtPos);
+				const endJump = await jumpToBracket(textEditor, lookingAtPos);
+				if (endJump.isEqual(lookingAtPos)) {
+					// No bracket scopes left to the right. No need to back-jump, it's not a valid delimiter.
+					if (before) { continue; } else { return null; }
+				}
 				if (before) {
 					const backJump = await jumpToBracket(textEditor, endJump);
 					if (backJump.isEqual(lookingAtPos)) { return null; }
