@@ -43,6 +43,10 @@ function strP(pos: vscode.Position): string {
 	return `${pos.line},${pos.character}`;
 }
 
+function strR(range: vscode.Range) {
+	return `[${strP(range.start)}--${strP(range.end)}]`;
+}
+
 function isNearer(before: boolean, nearerPos: vscode.Position, fartherPos: vscode.Position) {
 	if (before) {
 		return nearerPos.isAfter(fartherPos);
@@ -227,16 +231,16 @@ function findOuterBracketRaw(
 			const offsetPos = doc.positionAt(offset);
 			// \r\n endline.
 			if (doc.offsetAt(offsetPos) !== offset) { continue; }
-			// TODO: probably redundant.
-			if (before && offsetPos.character === 0) {
+			// In case there is nothing to the left to look at.
+			if (direction[side] === -1 && offsetPos.character === 0) {
 				continue;
 			}
-			const lookingAtPos = before ? offsetPos.translate(0, -1) : offsetPos;
+			const lookingAtPos = offsetPos.translate(0, Math.min(direction[side], 0));
 			const lookingAt = characterAtPoint(doc, lookingAtPos);
 			if (incrBrackets[side].includes(lookingAt)) { ++nesting; }
 			else if (decrBrackets[side].includes(lookingAt)) { --nesting; }
 			if (nesting === -1) {
-				selection[side] = direction[side] === -1 ? offsetPos : offsetPos.translate(0, 1);
+				selection[side] = offsetPos.translate(0, direction[side]);
 				break;
 			}
 		}
@@ -451,6 +455,7 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 	const configuration = vscode.workspace.getConfiguration();
 	const blockMode = configuration.get<string>("navi-parens.blockScopeMode");
 	const pos = textEditor.selection.active;
+	console.assert(true, `Sibling from sel: ${strR(textEditor.selection)}`);
 	let blockScope: vscode.Selection | null = null;
 	let scopeLimit: vscode.Range | null = null;
 	if (blockMode === "Semantic") {
@@ -504,7 +509,11 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 		} else {
 			targetPos = isNearer(before, blockScope.active, bracketScope.active) ? blockScope.active : bracketScope.active;
 		}
-	} // else if
+	} else if (blockScope) {
+		targetPos = blockScope.active;
+	} else if (bracketScope) {
+		targetPos = bracketScope.active;
+	}
 
 	if (!targetPos) {
 		textEditor.selection = savedSelection;

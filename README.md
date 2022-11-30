@@ -122,15 +122,11 @@ This extension contributes the following settings:
 
 
 
-## Technical Details and Known Issues
-
-TODO? As an optimization, the defined-symbols are only recomputed on edit when the cursor needs to leave its current line.
+## Quirks, Technical Details and Known Issues
 
 Currently, multiple cursors are not supported.
 
 I ignore defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.
-
-To simplify the implementation, navigating up or down a scope advances the cursor if possible. This is usually the desired behavior, but reduces a bit the flexibility of navigating scopes with empty (closing) delimiters. (TODO: is this still true?)
 
 Currently, navigating scopes with multicharacter closing brackets might not work well.
 
@@ -138,7 +134,7 @@ Currently, interaction of brackets with definitions can be undesirable in e.g. J
 
 If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
 
-TODO: minimize state update on switching between symbol providers.
+When navigating down out of a scope with both indentation and bracket scopes enabled, where the scope brackets are both the first non-white characters on their lines (as often happens with braces in JSON files), the behavior can be a bit unintuitive: the cursor can end up before the closing bracket/brace. That is because we jump out of the indentation scope, since it is contained (not just overlapping) in the brackets scope. We remain within the brackets scope. It is the intended behavior.
 
 ## Notes from a former Emacser
 
