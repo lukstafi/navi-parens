@@ -66,23 +66,23 @@ The `Raw` mode for bracket scopes is useful for navigating within comments or st
 
 First Navi Parens-specific command activates the scope navigation modes indicator.
 
-![feature X](animations/activation.gif)
+![activation](animations/activation.gif)
 
 Navigation with `Semantic` mode.
 
-![feature X](animations/semantic.gif)
+![Semantic](animations/semantic.gif)
 
 Navigation with `Indentation` mode.
 
-![feature X](animations/indentation.gif)
+![Indentation](animations/indentation.gif)
 
 Navigation with `Jump To Bracket` with block modes disabled.
 
-![feature X](animations/jumptobracket.gif)
+![Jump To Bracket bracket scope mode](animations/jumptobracket.gif)
 
 Navigation with `Raw` bracket mode.
 
-![feature X](animations/rawbrackets.gif)
+![Raw bracket scope mode](animations/rawbrackets.gif)
 
 
 ## Extension Settings
@@ -135,6 +135,8 @@ Currently, interaction of brackets with definitions can be undesirable in e.g. J
 If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
 
 When navigating down out of a scope with both indentation and bracket scopes enabled, where the scope brackets are both the first non-white characters on their lines (as often happens with braces in JSON files), the behavior can be a bit unintuitive: the cursor can end up before the closing bracket/brace. That is because we jump out of the indentation scope, since it is contained (not just overlapping) in the brackets scope. We remain within the brackets scope. It is the intended behavior.
+
+![Indentation block scope vs brackets scope](animations/indentation-vs-brackets-outer.gif)
 
 ## Notes from a former Emacser
 
