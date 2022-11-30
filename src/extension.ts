@@ -300,50 +300,47 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 	let state = await updateStateForPosition(textEditor);
 	const configuration = vscode.workspace.getConfiguration();
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
-	let bracketsSelection = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
+	let bracketScope = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
 		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos) : null;
 	const doc = textEditor.document;
-	if (near && bracketsSelection) {
-		const bs = nextPosition(doc, bracketsSelection.start);
-		const be = previousPosition(doc, bracketsSelection.end);
-		bracketsSelection = before ? new vscode.Selection(be, bs) : new vscode.Selection(bs, be);
+	if (near && bracketScope) {
+		const bs = nextPosition(doc, bracketScope.start);
+		const be = previousPosition(doc, bracketScope.end);
+		bracketScope = before ? new vscode.Selection(be, bs) : new vscode.Selection(bs, be);
 	}
 	const blockMode = configuration.get<string>("navi-parens.blockScopeMode");
-	let blockSelection = null;
+	let blockScope = null;
 	if (blockMode === "Semantic") {
 		const symbol = state.lastSymbolAndAncestors.pop();
 		if (!!symbol && !near) {
-			blockSelection = before ? new vscode.Selection(symbol.range.end, symbol.range.start) :
+			blockScope = before ? new vscode.Selection(symbol.range.end, symbol.range.start) :
 				new vscode.Selection(symbol.range.start, symbol.range.end);
 		} else if (!!symbol && near) {
 			const allBrackets = openingBrackets.concat(closingBrackets);
 			const re = symbol.range.end;
 			const rangeEnd = allBrackets.includes(characterAtPoint(doc, re)) ? previousPosition(doc, re) : re;
-			blockSelection = before ? new vscode.Selection(rangeEnd, symbol.selectionRange.end) :
+			blockScope = before ? new vscode.Selection(rangeEnd, symbol.selectionRange.end) :
 				new vscode.Selection(symbol.selectionRange.end, rangeEnd);
 		}
-		if (blockSelection && before) {
-			blockSelection = new vscode.Selection(blockSelection.active, blockSelection.anchor);
-		}
 	} else if (blockMode === "Indentation") {
-		blockSelection = findOuterIndentation(textEditor, before, near, pos);
+		blockScope = findOuterIndentation(textEditor, before, near, pos);
 	} else { console.assert(blockMode === "None", `Unknown Block Scope Mode ${blockMode}.`); }
 	// If one scope includes the other, pick the nearer target, otherwise pick the farther target.
 	let result = null;
-	if (blockSelection && bracketsSelection) {
-		if (blockSelection.contains(bracketsSelection)) {
-			result = bracketsSelection.active;
-		} else if (bracketsSelection.contains(blockSelection)) {
-			result = blockSelection.active;
-		} else if (isNearer(before, blockSelection.active, bracketsSelection.active)) {
-			result = bracketsSelection.active;
+	if (blockScope && bracketScope) {
+		if (blockScope.contains(bracketScope)) {
+			result = bracketScope.active;
+		} else if (bracketScope.contains(blockScope)) {
+			result = blockScope.active;
+		} else if (isNearer(before, blockScope.active, bracketScope.active)) {
+			result = bracketScope.active;
 		} else {
-			result = blockSelection.active;
+			result = blockScope.active;
 		}
-	} else if (blockSelection) {
-		result = blockSelection.active;
-	} else if (bracketsSelection) {
-		result = bracketsSelection.active;
+	} else if (blockScope) {
+		result = blockScope.active;
+	} else if (bracketScope) {
+		result = bracketScope.active;
 	}
 	if (!result) {
 		textEditor.selection = savedSelection;
