@@ -15,7 +15,7 @@ Commands:
 * `goToUpScope`: `ctrl+alt+i` Go outside the opening of the current level
 * `goToDownScope`: `ctrl+alt+k` Go outside the closing of the current level
 * `goToBeginScope`: `ctrl+alt+a` Go near the opening of the current level but stay inside scope
-* `goToEndScope`: `ctrl+alt+k` Go near the closing of the current level but stay inside scope
+* `goToEndScope`: `ctrl+alt+e` Go near the closing of the current level but stay inside scope
 * `goToPreviousEmptyLine`: `ctrl+alt+h` Go to the previous line with only whitespace (or empty)
 * `goToNextEmptyLine`: `ctrl+alt+;` Go to the next line with only whitespace (or empty)
 * `selectToNextScope`: `shift+ctrl+alt+l` Select past the next same-level closing bracket/scope
@@ -23,7 +23,7 @@ Commands:
 * `selectToUpScope`: `shift+ctrl+alt+i` Select till outside the opening of the current level
 * `selectToDownScope`: `shift+ctrl+alt+k` Select till outside the closing of the current level
 * `selectToBeginScope`: `shift+ctrl+alt+a` Select to near the opening of the current level but stay inside scope
-* `selectToEndScope`: `shift+ctrl+alt+k` Select to near the closing of the current level but stay inside scope
+* `selectToEndScope`: `shift+ctrl+alt+e` Select to near the closing of the current level but stay inside scope
 * `selectToPreviousEmptyLine`: `shift+ctrl+alt+h` Select to the previous line with only whitespace (or empty)
 * `selectToNextEmptyLine`: `shift+ctrl+alt+;` Select to the next line with only whitespace (or empty)
 * `cycleBracketScopeMode`: `ctrl+alt+p` Cycle through the bracket scope logic (`ctrl+shift+\`, delimiter counting, none)
