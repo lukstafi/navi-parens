@@ -154,7 +154,8 @@ Initial release of Navi Parens. The main missing features are multiple cursors s
 
 ### 1.0
 
-* When the block scope and the brackets scope are overlapping, consistently prefer the farther-out target position.
+* Bug fixes, yay! And simpler code.
+* When the block scope and the brackets scope are non-containing overlapping, consistently prefer the farther-out target position.
 * Optimization: don't invalidate Jump-To-Bracket cache on block mode change.
 * Emacs functionality: recenter the view (middle-to-cursor, top-to-cursor, bottom-to-cursor) `alt+.`.
 * More Emacs-inspired key bindings: delete `alt+d`, delete word `ctrl+alt+d`.

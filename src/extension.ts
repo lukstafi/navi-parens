@@ -184,17 +184,17 @@ async function findOuterBracket(
 	// rather than current position, to minimize jumpToBracket calls.
 	let from = pos;
 	const allBrackets = openingBrackets.concat(closingBrackets);
-	let leftPos = pos.translate(0, -1);
+	let leftPos = pos.character === 0 ? null : doc.validatePosition(pos.translate(0, -1));
 	if (openingBrackets.includes(characterAtPoint(doc, pos))) {
-		if (leftPos !== pos && !allBrackets.includes(characterAtPoint(doc, leftPos))) {
+		if (leftPos && leftPos !== pos && !allBrackets.includes(characterAtPoint(doc, leftPos))) {
 			let leftLeft = leftPos.translate(0, -1);
 			if (!allBrackets.includes(characterAtPoint(doc, leftLeft))) {
 				from = leftPos;
 			}
 		}
 	}
-	if (leftPos !== pos && closingBrackets.includes(characterAtPoint(doc, leftPos))) {
-		let rightPos = pos.translate(0, 1);
+	if (leftPos && leftPos !== pos && closingBrackets.includes(characterAtPoint(doc, leftPos))) {
+		let rightPos = doc.validatePosition(pos.translate(0, 1));
 		if (rightPos !== pos && !allBrackets.includes(characterAtPoint(doc, rightPos))) {
 			let rightRight = rightPos.translate(0, 1);
 			if (!allBrackets.includes(characterAtPoint(doc, rightRight))) {
@@ -212,7 +212,15 @@ async function findOuterBracket(
 		if (jumpPos.isAfter(pos) && jumpBack.isBefore(pos)) { return new vscode.Selection(jumpBack, jumpPos); }
 		if (jumpBack.isAfter(pos) && jumpPos.isBefore(pos)) { return new vscode.Selection(jumpPos, jumpBack); }
 	}
-	if (jumpPos.isAfter(pos) && jumpPos.isAfter(from)) { return findOuterBracket(textEditor, before, jumpPos); }
+	const rightwardPos = jumpPos.isBefore(jumpBack) ? jumpBack : jumpPos;
+	if (rightwardPos.isAfter(pos) && rightwardPos.isAfter(from)) {
+		// Note that rightwardPos will be at the closing bracket inside the sibling scope, moving out of it.
+		const landedAt = characterAtPoint(doc, rightwardPos);
+		console.assert(closingBrackets.includes(landedAt),
+			`Unexpected landing of Jump To Bracket at position ${rightwardPos} -- character "${landedAt}".`);
+		const nextPos = rightwardPos.translate(0, 1);
+		return findOuterBracket(textEditor, before, nextPos);
+	}
 	return null;
 }
 
@@ -373,7 +381,6 @@ async function findSiblingBracket(
 		const offsetPos = doc.positionAt(offset);
 		// \r\n endline.
 		if (doc.offsetAt(offsetPos) !== offset) { continue; }
-		// TODO: this condition is probably redundant.
 		if (before && offsetPos.character === 0) {
 			continue;
 		}
@@ -389,7 +396,8 @@ async function findSiblingBracket(
 				jumpPos = await jumpToBracket(textEditor, targetPos);
 				if (jumpPos.isEqual(lookingAtPos)) {
 					targetPos = before ? targetPos : targetPos.translate(0, 1);
-					return new vscode.Selection(jumpPos, targetPos);
+					const entryPos = before ? jumpPos.translate(0, 1) : jumpPos;
+					return new vscode.Selection(entryPos, targetPos);
 				}
 			}
 		}
@@ -412,7 +420,8 @@ async function findSiblingBracket(
 				console.assert(false, 'findSiblingBracket anchor not initialized.');
 				return null;
 			}
-			return new vscode.Selection(jumpPos, offsetPos.translate(0, direction));
+			const entryPos = before ? jumpPos.translate(0, 1) : jumpPos;
+			return new vscode.Selection(entryPos, offsetPos.translate(0, direction));
 		}
 		if (updated && nesting < 0) { return null; }
 	}
@@ -450,6 +459,7 @@ function findSiblingIndentation(
 
 export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
 	// State update might interact with the UI, save UI state early.
+	// FIXME: ensure selection is not broken by JTB mode.
 	const savedSelection = textEditor.selection;
 	let state = await updateStateForPosition(textEditor);
 	const configuration = vscode.workspace.getConfiguration();
