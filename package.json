@@ -3,7 +3,8 @@
   "publisher": "lukstafi",
   "displayName": "Navi Parens",
   "description": "Navigate structured code with convenient key shortcuts.",
-  "version": "0.9.0",
+  "icon": "iconSmall.png",
+  "version": "0.9.9",
   "engines": {
     "vscode": "^1.73.0"
   },
