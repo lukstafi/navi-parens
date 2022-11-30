@@ -325,6 +325,16 @@
         "when": "textInputFocus"
       },
       {
+        "key": "alt+d",
+        "command": "deleteRight",
+        "when": "textInputFocus"
+      },
+      {
+        "key": "ctrl+alt+d",
+        "command": "deleteWordRight",
+        "when": "textInputFocus"
+      },    
+      {
         "command": "navi-parens.goPastNextScope",
         "key": "ctrl+alt+l",
         "when": "editorTextFocus"
