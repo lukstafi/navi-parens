@@ -349,7 +349,7 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 		}
 		return;	
 	}
-	const anchor = select ? textEditor.selection.anchor : result;
+	const anchor = select ? savedSelection.anchor : result;
 	textEditor.selection = new vscode.Selection(anchor, result);
 	if (!state.lastVisibleRange.contains(textEditor.selection)) {
 		textEditor.revealRange(textEditor.selection);
@@ -470,7 +470,6 @@ function findSiblingIndentation(
 
 export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
 	// State update might interact with the UI, save UI state early.
-	// FIXME: ensure selection is not broken by JTB mode.
 	const savedSelection = textEditor.selection;
 	let state = await updateStateForPosition(textEditor);
 	const configuration = vscode.workspace.getConfiguration();
@@ -543,7 +542,7 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 		}
 		return;
 	}
-	const anchor = select ? textEditor.selection.anchor : targetPos;
+	const anchor = select ? savedSelection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
 	// jumpToBracket could have moved the screen.
 	if (!state.lastVisibleRange.contains(textEditor.selection)) {

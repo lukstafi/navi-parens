@@ -18,6 +18,7 @@
 - When the block scope and the brackets scope are non-containing overlapping, consistently prefer the farther-out target position.
 - Many bug fixes.
 - Simpler implementation of the scoping logic.
+- Selection preservation for the `Select` commands.
 
 ### Changed
 
