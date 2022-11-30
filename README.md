@@ -49,6 +49,8 @@ Extra key bindings:
 * `cursorEndSelect`: `shift+alt+e`
 * `cursorWordLeftSelect`: `shift+alt+h`
 * `cursorWordEndRightSelect`: `shift+alt+;`
+* `deleteRight`: `alt+d`
+* `deleteWordRight`: `ctrl+alt+d`
 
 Navi Parens combines two sources of structure information:
 * Brackets, braces, parentheses.
@@ -130,8 +132,6 @@ I ignore defined-symbols that are out-of-order with respect to the syntactic str
 
 Currently, navigating scopes with multicharacter closing brackets might not work well.
 
-Currently, interaction of brackets with definitions can be undesirable in e.g. JavaScript with definitions inside a `for` loop header or `if` condition. I plan to fix it. (TODO: what's the status?)
-
 If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
 
 When navigating down out of a scope with both indentation and bracket scopes enabled, where the scope brackets are both the first non-white characters on their lines (as often happens with braces in JSON files), the behavior can be a bit unintuitive: the cursor can end up before the closing bracket/brace. That is because we jump out of the indentation scope, since it is contained (not just overlapping) in the brackets scope. We remain within the brackets scope. It is the intended behavior.
@@ -150,22 +150,26 @@ Coming from Emacs, I appreciate and suggest:
 
 ## Release Notes
 
+See the changelog file for a detailed list of features and changes!
+
 ### 0.9
 
 Initial release of Navi Parens. The main missing features are multiple cursors support and multicharacter delimiters support.
 
-### 1.0
+### 0.9.9
 
 * Bug fixes, yay! And simpler code.
 * When the block scope and the brackets scope are non-containing overlapping, consistently prefer the farther-out target position.
 * Optimization: don't invalidate Jump-To-Bracket cache on block mode change.
-* Emacs functionality: recenter the view (middle-to-cursor, top-to-cursor, bottom-to-cursor) `alt+.`.
 * More Emacs-inspired key bindings: delete `alt+d`, delete word `ctrl+alt+d`.
-* Make the Navi-Parens-bound "move past next/previous word" consistently move past an alphanumeric word, rather than using the built-in `ctrl+rightArrow` / `ctrl+leftArrow` functionality.
-* Add more tests.
-
 
 ## Planned Releases
+
+### 1.0.0
+
+* Emacs functionality: recenter the view (middle-to-cursor, top-to-cursor, bottom-to-cursor) `alt+.`.
+* Make the Navi-Parens-bound "move past next/previous word" consistently move past an alphanumeric word, rather than using the built-in `ctrl+rightArrow` / `ctrl+leftArrow` functionality.
+* Add more tests.
 
 ### 1.1
 
