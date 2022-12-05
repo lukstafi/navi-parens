@@ -178,7 +178,7 @@ function previousPosition(doc: vscode.TextDocument, pos: vscode.Position) {
 async function findOuterBracket(
 		textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): Promise<vscode.Selection | null> {
 	const doc = textEditor.document;
-	// TODO: the rules do not handle multicharacter brackets.
+	// TODO(3): the rules do not handle multicharacter brackets.
 
 	// If we are touching a bracket from the outside and there's a non-bracket-adjacent spot beside, jump from it
 	// rather than current position, to minimize jumpToBracket calls.
@@ -269,7 +269,7 @@ function findOuterIndentation(
 			for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction[side]) {
 			const line = doc.lineAt(lineNo);
 			if (line.isEmptyOrWhitespace) { continue; }
-			// TODO: handle tabs/spaces?
+			// TODO(4): handle tabs/spaces?
 			const indentation = line.firstNonWhitespaceCharacterIndex;
 			if (entryIndent < 0) { entryIndent = indentation; }
 			else if (indentation < entryIndent) {
@@ -450,7 +450,7 @@ function findSiblingIndentation(
 	for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction) {
 		const line = doc.lineAt(lineNo);
 		if (line.isEmptyOrWhitespace) { continue; }
-		// TODO: handle tabs?
+		// TODO(4): handle tabs?
 		const indentation = line.firstNonWhitespaceCharacterIndex;
 		if (noIndent < 0) {
 			noIndent = indentation;
