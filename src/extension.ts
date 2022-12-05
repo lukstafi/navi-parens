@@ -187,8 +187,8 @@ async function findOuterBracket(
 	let leftPos = pos.character === 0 ? null : doc.validatePosition(pos.translate(0, -1));
 	if (openingBrackets.includes(characterAtPoint(doc, pos))) {
 		if (leftPos && leftPos !== pos && !allBrackets.includes(characterAtPoint(doc, leftPos))) {
-			let leftLeft = leftPos.translate(0, -1);
-			if (!allBrackets.includes(characterAtPoint(doc, leftLeft))) {
+			let leftLeft = leftPos.character === 0 ? null : doc.validatePosition(leftPos.translate(0, -1));
+			if (leftLeft && !allBrackets.includes(characterAtPoint(doc, leftLeft))) {
 				from = leftPos;
 			}
 		}
@@ -205,12 +205,22 @@ async function findOuterBracket(
 	// In all cases, we need both ends of a scope, both verified via Jump To Bracket.
 	let jumpPos = await jumpToBracket(textEditor, from);
 	let jumpBack = await jumpToBracket(textEditor, jumpPos);
-	if (before) {
-		if (jumpPos.isBefore(pos) && jumpBack.isAfterOrEqual(pos)) { return new vscode.Selection(jumpBack, jumpPos); }
-		if (jumpBack.isBefore(pos) && jumpPos.isAfterOrEqual(pos)) { return new vscode.Selection(jumpPos, jumpBack); }
-	} else {
-		if (jumpPos.isAfter(pos) && jumpBack.isBefore(pos)) { return new vscode.Selection(jumpBack, jumpPos); }
-		if (jumpBack.isAfter(pos) && jumpPos.isBefore(pos)) { return new vscode.Selection(jumpPos, jumpBack); }
+	if (jumpPos.isBefore(pos) && jumpBack.isAfterOrEqual(pos)) {
+		console.assert(from.isEqual(jumpBack) &&
+			openingBrackets.includes(characterAtPoint(doc, jumpBack)),
+			`Unexpected Jump To Bracket behavior with jumps ${from} -> ${jumpPos} -> ${jumpBack}.`);
+		if (before) {
+			return new vscode.Selection(jumpBack.translate(0, 1), jumpPos);
+		} else {
+			return new vscode.Selection(jumpPos, jumpBack.translate(0, 1));
+		}
+	}
+	if (jumpBack.isBefore(pos) && jumpPos.isAfter(pos)) {
+		if (before) {
+			return new vscode.Selection(jumpPos.translate(0, 1), jumpBack);
+		} else {
+			return new vscode.Selection(jumpBack, jumpPos.translate(0, 1));
+		}
 	}
 	const rightwardPos = jumpPos.isBefore(jumpBack) ? jumpBack : jumpPos;
 	if (rightwardPos.isAfter(pos) && rightwardPos.isAfter(from)) {

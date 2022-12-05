@@ -3,7 +3,13 @@
 
 ## [Unreleased]
 
-- ...
+### Added
+
+- Run tests as pre-commits; setup using Husky.
+
+### Fixed
+
+- Fixed and further simplified the implementation of Go To Up/Down Scope.
 
 ## [0.9.9] -- 2022-11-30
 
