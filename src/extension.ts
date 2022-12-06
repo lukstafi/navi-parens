@@ -193,7 +193,8 @@ async function findOuterBracket(
 			}
 		}
 	}
-	if (leftPos && leftPos !== pos && closingBrackets.includes(characterAtPoint(doc, leftPos))) {
+	if (leftPos && leftPos !== pos && closingBrackets.includes(characterAtPoint(doc, leftPos)) &&
+			!allBrackets.includes(characterAtPoint(doc, pos))) {
 		let rightPos = doc.validatePosition(pos.translate(0, 1));
 		if (rightPos !== pos && !allBrackets.includes(characterAtPoint(doc, rightPos))) {
 			let rightRight = rightPos.translate(0, 1);
@@ -206,9 +207,11 @@ async function findOuterBracket(
 	let jumpPos = await jumpToBracket(textEditor, from);
 	let jumpBack = await jumpToBracket(textEditor, jumpPos);
 	if (jumpPos.isBefore(pos) && jumpBack.isAfterOrEqual(pos)) {
-		console.assert(from.isEqual(jumpBack) &&
-			openingBrackets.includes(characterAtPoint(doc, jumpBack)),
-			`Unexpected Jump To Bracket behavior with jumps ${from} -> ${jumpPos} -> ${jumpBack}.`);
+		if (!(from.isEqual(jumpBack) &&
+				closingBrackets.includes(characterAtPoint(doc, jumpBack)))) {
+			console.assert(false,
+				`Unexpected Jump To Bracket behavior with jumps ${strP(from)} -> ${strP(jumpPos)} -> ${strP(jumpBack)}.`);
+		}
 		if (before) {
 			return new vscode.Selection(jumpBack.translate(0, 1), jumpPos);
 		} else {
@@ -227,7 +230,7 @@ async function findOuterBracket(
 		// Note that rightwardPos will be at the closing bracket inside the sibling scope, moving out of it.
 		const landedAt = characterAtPoint(doc, rightwardPos);
 		console.assert(closingBrackets.includes(landedAt),
-			`Unexpected landing of Jump To Bracket at position ${rightwardPos} -- character "${landedAt}".`);
+			`Unexpected landing of Jump To Bracket at position ${strP(rightwardPos)} -- character "${landedAt}".`);
 		const nextPos = rightwardPos.translate(0, 1);
 		return findOuterBracket(textEditor, before, nextPos);
 	}

@@ -27,7 +27,7 @@ async function openFileWithCursor(annotated: string): Promise<{
 	return { textEditor, targetPos };
 }
 
-function testCase(content: string, command: string) {
+function testCase(content: string, command: string, mode: string) {
 	return async () => {
 		const { textEditor, targetPos } = await openFileWithCursor(content);
 		const commands = new Map(Object.entries({
@@ -44,6 +44,22 @@ function testCase(content: string, command: string) {
 			'selectToBeginScope': () => myExtension.goToOuterScope(textEditor, true, true, false),
 			'selectToEndScope': () => myExtension.goToOuterScope(textEditor, true, false, false)
 		}));
+		// TODO(2): enable symbol providers -- debug why they don't work in tests.
+		const modes = new Map([
+			['IND/JTB', ['Indentation', 'JumpToBracket']],
+			['IND/RAW', ['Indentation', 'Raw']],
+			['NON/JTB', ['None', 'JumpToBracket']],
+			['NON/RAW', ['None', 'Raw']],
+			['IND/NON', ['Indentation', 'None']]
+		]);
+		const modePair = modes.get(mode);
+		assert.notStrictEqual(modePair, undefined);
+		if (!modePair) { return; }
+		const [blockMode, bracketMode] = modePair;
+		vscode.workspace.getConfiguration().update("navi-parens.blockScopeMode", blockMode,
+			vscode.ConfigurationTarget.Global, true);
+			vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketMode,
+			vscode.ConfigurationTarget.Global, true);
 		// We cannot use vscode.commands.executeCommand because that creates a different TextEditor.
 		const action = commands.get(command);
 		assert.notStrictEqual(action, undefined);
@@ -55,55 +71,54 @@ function testCase(content: string, command: string) {
 
 suite('Extension Test Suite', () => {
 	vscode.window.showInformationMessage('Start all tests.');
-	// TODO(2): enable symbol providers -- debug why they don't work in tests.
-	vscode.workspace.getConfiguration().update("navi-parens.blockScopeMode", "None",
-		vscode.ConfigurationTarget.Global, true);
-	test('Basic parentheses navigation: up from between parens', testCase(
-		`(^(@()))`,
-		'goToUpScope'
-	));
-	test('Basic parentheses navigation: down from between parens', testCase(
-		`((@())^)`,
-		'goToDownScope'
-	));
-	test('Basic parentheses navigation: up no-change', testCase(
-		`^@((()))`,
-		'goToUpScope'
-	));
-	test('Basic parentheses navigation: down no-change', testCase(
-		`((()))@^`,
-		'goToDownScope'
-	));
-	test('Basic parentheses navigation: left no-change', testCase(
-		`((^@()))`,
-		'goPastPreviousScope'
-	));
-	test('Basic parentheses navigation: right no-change', testCase(
-		`((()@^))`,
-		'goPastNextScope'
-	));
-	test('Basic parentheses navigation: left', testCase(
-		`(^(())@)`,
-		'goPastPreviousScope'
-	));
-	test('Basic parentheses navigation: right', testCase(
-		`(@(())^)`,
-		'goPastNextScope'
-	));
-	test('Basic parentheses navigation: beginning from between parens', testCase(
-		`((^()@()))`,
-		'goToBeginScope'
-	));
-	test('Basic parentheses navigation: end from between parens', testCase(
-		`((()@()^))`,
-		'goToEndScope'
-	));
-	test('Basic parentheses navigation: beginning no-change', testCase(
-		`((^@()))`,
-		'goToBeginScope'
-	));
-	test('Basic parentheses navigation: end no-change', testCase(
-		`((()@^))`,
-		'goToEndScope'
-	));
+	for (const mode of ['IND/RAW', 'IND/JTB']) {
+		test('Basic parentheses navigation: up from between parens', testCase(
+			`(^(@()))`,
+			'goToUpScope', mode
+		));
+		test('Basic parentheses navigation: down from between parens', testCase(
+			`((@())^)`,
+			'goToDownScope', mode
+		));
+		test('Basic parentheses navigation: up no-change', testCase(
+			`^@((()))`,
+			'goToUpScope', mode
+		));
+		test('Basic parentheses navigation: down no-change', testCase(
+			`((()))@^`,
+			'goToDownScope', mode
+		));
+		test('Basic parentheses navigation: left no-change', testCase(
+			`((^@()))`,
+			'goPastPreviousScope', mode
+		));
+		test('Basic parentheses navigation: right no-change', testCase(
+			`((()@^))`,
+			'goPastNextScope', mode
+		));
+		test('Basic parentheses navigation: left', testCase(
+			`(^(())@)`,
+			'goPastPreviousScope', mode
+		));
+		test('Basic parentheses navigation: right', testCase(
+			`(@(())^)`,
+			'goPastNextScope', mode
+		));
+		test('Basic parentheses navigation: beginning from between parens', testCase(
+			`((^()@()))`,
+			'goToBeginScope', mode
+		));
+		test('Basic parentheses navigation: end from between parens', testCase(
+			`((()@()^))`,
+			'goToEndScope', mode
+		));
+		test('Basic parentheses navigation: beginning no-change', testCase(
+			`((^@()))`,
+			'goToBeginScope', mode
+		));
+		test('Basic parentheses navigation: end no-change', testCase(
+			`((()@^))`,
+			'goToEndScope', mode
+		));
+	}
 });
