@@ -281,7 +281,7 @@ function findOuterIndentation(
 		let previousIndent = -1;
 		for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction[side]) {
 			const line = doc.lineAt(lineNo);
-			if (line.isEmptyOrWhitespace) { continue; }
+			if (line.isEmptyOrWhitespace && lineNo < doc.lineCount - 1 && lineNo > 0) { continue; }
 			// TODO(4): handle tabs/spaces?
 			const indentation = line.firstNonWhitespaceCharacterIndex;
 			if (entryIndent < 0) { entryIndent = indentation; }
@@ -459,13 +459,13 @@ function findSiblingIndentation(
 	let updated = false;
 	for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction) {
 		const line = doc.lineAt(lineNo);
-		if (line.isEmptyOrWhitespace) { continue; }
+		if (line.isEmptyOrWhitespace && lineNo < doc.lineCount - 1 && lineNo > 0) { continue; }
 		// TODO(4): handle tabs?
 		const indentation = line.firstNonWhitespaceCharacterIndex;
 		if (noIndent < 0) {
 			noIndent = indentation;
 		}
-		else if (updated && indentation <= noIndent) {
+		else if (updated && indentation === noIndent) {
 			// Return end of the previous line.
 			const entryPos = new vscode.Position(entryNo, noIndent);
 			const leavePos = new vscode.Position(lineNo, indentation);

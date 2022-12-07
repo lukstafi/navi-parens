@@ -288,6 +288,16 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToBeginScope', mode, 'python'
 		));
+		test('Basic syntax navigation: begin scope using IND 2 ' + mode, testCase(
+			`
+			for item in range:
+				^if condition:
+					pass
+				@elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python'
+		));
 		test('Basic syntax navigation: end scope using IND ' + mode, testCase(
 			`
 			for item in range:
@@ -329,7 +339,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastNextScope', mode, 'python'
 		));
-		test('Basic syntax navigation: next scope using IND 3 ' + mode, testCase(
+		test('Basic syntax navigation: next scope using IND 5 ' + mode, testCase(
 			`
 			for item@ in range:
 				if condition:
@@ -337,7 +347,17 @@ suite('Extension Test Suite', () => {
 				elif condition:
 					pass
 			^`,
-			'goPastNextScope', mode, 'python', true
+			'goPastNextScope', mode, 'python'
+		));
+		test('Basic syntax navigation: next scope using IND 3 ' + mode, testCase(
+			`
+			@for item in range:
+				if condition:
+					pass
+				elif condition:
+					pass
+			^`,
+			'goPastNextScope', mode, 'python'
 		));
 
 		test('Basic syntax navigation: next scope using IND no-change ' + mode, testCase(
@@ -348,7 +368,18 @@ suite('Extension Test Suite', () => {
 				@^elif condition:
 					pass
 			`,
-			'goToBeginScope', mode, 'python'
+			'goPastNextScope', mode, 'python'
+		));
+		test('Basic syntax navigation: next scope using IND no-change 2 ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					pass
+				@^elif condition:
+					pass
+			pass
+			`,
+			'goPastNextScope', mode, 'python'
 		));
 
 		test('Basic syntax navigation: previous scope using IND ' + mode, testCase(
