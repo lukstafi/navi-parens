@@ -614,7 +614,7 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 	}
 }
 
-function cycleBracketScopeMode(_textEditor: vscode.TextEditor) {
+async function cycleBracketScopeMode(_textEditor: vscode.TextEditor) {
 	const configuration = vscode.workspace.getConfiguration();
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
 	let newMode = bracketsMode === "None" ? "JumpToBracket" : (
@@ -624,11 +624,11 @@ function cycleBracketScopeMode(_textEditor: vscode.TextEditor) {
 		console.assert(false, `Unknown setting for navi-parens.bracketScopeMode: ${bracketsMode}.`);
 		newMode = "None";
 	}
-	configuration.update("navi-parens.bracketScopeMode", newMode,
+	await configuration.update("navi-parens.bracketScopeMode", newMode,
 		vscode.ConfigurationTarget.Global, true);
 }
 
-function cycleBlockScopeMode(_textEditor: vscode.TextEditor) {
+async function cycleBlockScopeMode(_textEditor: vscode.TextEditor) {
 	const configuration = vscode.workspace.getConfiguration();
 	const blocksMode = configuration.get<string>("navi-parens.blockScopeMode");
 	let newMode = blocksMode === "None" ? "Semantic" : (
@@ -638,7 +638,7 @@ function cycleBlockScopeMode(_textEditor: vscode.TextEditor) {
 		console.assert(false, `Unknown setting for navi-parens.blockScopeMode: ${blocksMode}.`);
 		newMode = "None";
 	}
-	configuration.update("navi-parens.blockScopeMode", newMode,
+	await configuration.update("navi-parens.blockScopeMode", newMode,
 		vscode.ConfigurationTarget.Global, true);
 }
 
