@@ -166,7 +166,7 @@ suite('Extension Test Suite', () => {
 			'goToUpScope', mode, 'typescript'
 		));
 		test('Basic syntax navigation: down bracket scope 2 ' + mode, testCase(
-			// The farther end-point (due to non-inclusive overlap) is the nicer one here, good for us.
+			// The bracket scope does not include the indentation scope, always prefer the bracket scope.
 			`
 			for (let index = 0; index < array.length; index++) {
 				const element = array@[index];

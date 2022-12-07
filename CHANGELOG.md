@@ -1,15 +1,27 @@
 # Change Log
 
-
 ## [Unreleased]
+
+- ...
+
+## [1.0.0] -- 2022-12-07
 
 ### Added
 
 - Run tests as pre-commits; setup using Husky.
+- More test coverage and better test failure errors.
+- Commands `goPastNextWord`, `goPastPreviousWord` that consistently move past an alphanumeric word, rather than using the built-in `cursorWordLeft` / `cursorWordEndRight`.
+
 
 ### Fixed
 
 - Fixed and further simplified the implementation of Go To Up/Down Scope.
+- Fixed and further simplified the interaction of block scopes and bracket scopes.
+- Fixed indentation detection bugs.
+
+### Changed
+
+- Bracket scope is preferred when block and bracket scopes overlap without one including the other -- except for `Go To Begin/End Scope`, where nearer end of the two scopes is selected.
 
 ## [0.9.9] -- 2022-11-30
 
