@@ -60,7 +60,7 @@ Each of the sources comes in two variants.
 * The bracket scopes come from either a judicious use of the built-in `Go to Bracket` command, or just looking for the delimiter characters.
 * The block scopes come from either semantic symbol providers, as in the outline view, where the corresponding scope is the full range of a definition; or from indentation.
 
-An indentation scope comprises a less-indented line followed by at least one more-indented line.
+An indentation scope comprises a less-indented line followed by at least one more-indented line. The first, less-indented line is a big opening delimiter for the indentation scope: none of it is inside the scope, and only the first non-whitespace position and earlier are outside the scope. The closing delimiter is the whitespace from the end of the last indented line to before the first non-whitespace position of the less-indented following line.
 
 The `Raw` mode for bracket scopes is useful for navigating within comments or string literals, and does not cause "jitter" like the `JumpToBracket` mode does. However, it is less reliable since it will count brackets even if they were not intended as delimiters.
 
@@ -137,6 +137,7 @@ If Navi Parens logs assertion failure, maybe the language has delimiters other t
 When navigating down out of a scope with both indentation and bracket scopes enabled, where the scope brackets are both the first non-white characters on their lines (as often happens with braces in JSON files), the behavior can be a bit unintuitive: the cursor can end up before the closing bracket/brace. That is because we jump out of the indentation scope, since it is contained (not just overlapping) in the brackets scope. We remain within the brackets scope. It is the intended behavior.
 
 ![Indentation block scope vs brackets scope](animations/indentation-vs-brackets-outer.gif)
+On the other hand, when the overlap is without inclusion, we prefer the bracket scope for navigating out of a scope.
 
 Some Navi Parens commands will misbehave if they are executed before a document editor is fully initialized. Specifically, the `Semantic` and `JumpToBrackets` modes require the corresponding initializations, while the `Indentation` and `Raw` modes are good-to-go right away since they only look at the text of a document.
 

@@ -279,7 +279,7 @@ function findOuterIndentation(
 		let entryIndent = -1;
 		let previousNo = -1;
 		let previousIndent = -1;
-			for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction[side]) {
+		for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction[side]) {
 			const line = doc.lineAt(lineNo);
 			if (line.isEmptyOrWhitespace) { continue; }
 			// TODO(4): handle tabs/spaces?
@@ -341,14 +341,10 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 	// If one scope includes the other, pick the nearer target, otherwise pick the farther target.
 	let result = null;
 	if (blockScope && bracketScope) {
-		if (blockScope.contains(bracketScope)) {
-			result = bracketScope.active;
-		} else if (bracketScope.contains(blockScope)) {
+		if (bracketScope.contains(blockScope) || (near && isNearer(before, blockScope.active, bracketScope.active))) {
 			result = blockScope.active;
-		} else if (isNearer(before, blockScope.active, bracketScope.active)) {
-			result = bracketScope.active;
 		} else {
-			result = blockScope.active;
+			result = bracketScope.active;
 		}
 	} else if (blockScope) {
 		result = blockScope.active;
@@ -452,7 +448,8 @@ async function findSiblingBracket(
 	return null;
 }
 
-/** Like findSiblingBracket, but for indentation blocks. */
+/** Like findSiblingBracket, but for indentation blocks. Note that it can return a scope that strictly
+ *  includes the point (due to the "wide delimiters" view of indentation scopes). */
 function findSiblingIndentation(
 	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): vscode.Selection | null {
 	const doc = textEditor.document;
@@ -536,7 +533,10 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 	}
 	
 	let targetPos = null;
-	if (blockScope && bracketScope) {
+	if (blockScope && bracketScope &&
+		blockScope.contains(pos) && blockScope.intersection(bracketScope) !== undefined) {
+		targetPos = bracketScope.active;
+	} else if (blockScope && bracketScope) {
 		if (blockScope.intersection(bracketScope) !== undefined) {
 			targetPos = isNearer(before, blockScope.active, bracketScope.active) ? bracketScope.active : blockScope.active;
 		} else {
