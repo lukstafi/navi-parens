@@ -156,16 +156,17 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToDownScope', mode, 'typescript'
 		));
-		test('Basic syntax navigation: up bracket scope 2 ' + mode, testCase(
-			// The bracket scope and indentation scope overap non-inclusively, so the farther end-point is taken.
+		test('Basic syntax navigation: up bracket-overlap IND scope ' + mode, testCase(
+			// The bracket scope does not include the indentation scope, always prefer the bracket scope.
 			`
-			^for (let index = 0; index < array.length; index++) {
+			for (let index = 0; index < array.length; index++) ^{
 				const element = array@[index];
 			}
 			`,
 			'goToUpScope', mode, 'typescript'
 		));
 		test('Basic syntax navigation: down bracket scope 2 ' + mode, testCase(
+			// The farther end-point (due to non-inclusive overlap) is the nicer one here, good for us.
 			`
 			for (let index = 0; index < array.length; index++) {
 				const element = array@[index];
@@ -173,6 +174,17 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToDownScope', mode, 'typescript'
 		));
+		test('Basic syntax navigation: down inside-bracket IND scope ' + mode, testCase(
+			// The bracket scope strictly includes the indentation scope here, so the arguably-worse end-point is correct.
+			`
+			{
+				let index = 0;
+				const element = array@[index];
+			^}
+			`,
+			'goToDownScope', mode, 'typescript'
+		));
+
 		test('Basic syntax navigation: up bracket scope nested ' + mode, testCase(
 			`
 			for (let index = 0; index < array.length; index++) {
@@ -190,12 +202,14 @@ suite('Extension Test Suite', () => {
 			'goToDownScope', mode, 'typescript'
 		));
 		test('Basic syntax navigation: next bracket scope ' + mode, testCase(
+			// As a special case, when the cursor is already inside the block scope (cannot happen for
+			// the bracket scope), we go past the bracket end scope.
 			`
 			fo@r (let index = 0; index < array.length; index++)^ {
 				const element = array[index];
 			}
 			`,
-			'goPastNextScope', mode, 'typescript', true
+			'goPastNextScope', mode, 'typescript'
 		));
 		test('Basic syntax navigation: previous bracket scope ' + mode, testCase(
 			`
@@ -222,22 +236,29 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'typescript'
 		));
 		test('Basic syntax navigation: begin scope with IND ' + mode, testCase(
-			`
-			for (let index = 0; index < array.length; index++) {^
-				const element = @array[index];
-			}
-			`,
-			'goToBeginScope', mode, 'typescript', true
-		));
-		test('Basic syntax navigation: end scope with IND ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which here comes from indentation.
+			// (For indentation the less-indented line is a big delimiter, its start is outside but it is not inside.)
 			`
 			for (let index = 0; index < array.length; index++) {
-				const element = @array[index];
-			^}
+				^const element = @array[index];
+			}
 			`,
-			'goToEndScope', mode, 'typescript', true
+			'goToBeginScope', mode, 'typescript'
 		));
+		test('Basic syntax navigation: end scope with IND ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			for (let index = 0; index < array.length; index++) {
+				const element = @array[index];^
+			}
+			`,
+			'goToEndScope', mode, 'typescript'
+		));
+	}
+	{
+		const mode = 'IND/NON';
 		test('Basic syntax navigation: up scope using IND ' + mode, testCase(
+			// The less-indented non-whitespace-starting-part line is like a big start delimiter for the scope.
 			`
 			for item in range:
 				^if condition:
@@ -288,6 +309,16 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToBeginScope', mode, 'python', true
 		));
+		test('Basic syntax navigation: next scope using IND 4 ' + mode, testCase(
+			`
+			for item in range:
+				if co@ndition:
+					pass
+				^elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python', true
+		));
 		test('Basic syntax navigation: next scope using IND 2 ' + mode, testCase(
 			`
 			for item in range:
@@ -298,15 +329,26 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToBeginScope', mode, 'python', true
 		));
-		test('Basic syntax navigation: next scope using IND no-change ' + mode, testCase(
+		test('Basic syntax navigation: next scope using IND 3 ' + mode, testCase(
 			`
-			for item in range:
-				@^if condition:
+			for item@ in range:
+				if condition:
 					pass
 				elif condition:
 					pass
-			`,
+			^`,
 			'goToBeginScope', mode, 'python', true
+		));
+
+		test('Basic syntax navigation: next scope using IND no-change ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					pass
+				@^elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python'
 		));
 
 		test('Basic syntax navigation: previous scope using IND ' + mode, testCase(
@@ -328,7 +370,7 @@ suite('Extension Test Suite', () => {
 				const element = @array[index];
 			}
 			`,
-			'goToBeginScope', mode, 'typescript', true
+			'goToBeginScope', mode, 'typescript'
 		));
 		test('Basic syntax navigation: end scope without block scopes ' + mode, testCase(
 			`
@@ -336,7 +378,7 @@ suite('Extension Test Suite', () => {
 				const element = @array[index];
 			^}
 			`,
-			'goToEndScope', mode, 'typescript', true
+			'goToEndScope', mode, 'typescript'
 		));
 		test('Basic syntax navigation: up bracket scope without block scopes ' + mode, testCase(
 			`
@@ -344,7 +386,7 @@ suite('Extension Test Suite', () => {
 				const element = array@[index];
 			}
 			`,
-			'goToUpScope', mode, 'typescript', true
+			'goToUpScope', mode, 'typescript'
 		));
 	}
 });
