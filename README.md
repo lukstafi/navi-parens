@@ -126,11 +126,13 @@ This extension contributes the following settings:
 
 ## Quirks, Technical Details and Known Issues
 
+See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts) for diverse behavior examples.
+
 Currently, multiple cursors are not supported.
 
 I ignore defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.
 
-Currently, navigating scopes with multicharacter closing brackets might not work well.
+Currently, navigating scopes with multicharacter closing brackets might not work well (issue [#3](https://github.com/lukstafi/navi-parens/issues/3)).
 
 If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
 
@@ -141,7 +143,9 @@ On the other hand, when the overlap is without inclusion, we prefer the bracket 
 
 Some Navi Parens commands will misbehave if they are executed before a document editor is fully initialized. Specifically, the `Semantic` and `JumpToBrackets` modes require the corresponding initializations, while the `Indentation` and `Raw` modes are good-to-go right away since they only look at the text of a document.
 
-As of v0.9.9, the indentation scope logic is not tailored for code mixing tab characters and spaces.
+The indentation scope logic is not tailored for code mixing tab characters and spaces (issue [#4](https://github.com/lukstafi/navi-parens/issues/4)).
+
+Whitespace-only lines are ignored in computing indentation scopes, which might leave to undesired behavior when you navigate out of a newly-opened line.
 
 ## Notes from a former Emacser
 
