@@ -307,7 +307,7 @@ suite('Extension Test Suite', () => {
 				^elif condition:
 					pass
 			`,
-			'goToBeginScope', mode, 'python', true
+			'goPastNextScope', mode, 'python'
 		));
 		test('Basic syntax navigation: next scope using IND 4 ' + mode, testCase(
 			`
@@ -317,7 +317,7 @@ suite('Extension Test Suite', () => {
 				^elif condition:
 					pass
 			`,
-			'goToBeginScope', mode, 'python', true
+			'goPastNextScope', mode, 'python'
 		));
 		test('Basic syntax navigation: next scope using IND 2 ' + mode, testCase(
 			`
@@ -327,7 +327,7 @@ suite('Extension Test Suite', () => {
 				^elif condition:
 					pass
 			`,
-			'goToBeginScope', mode, 'python', true
+			'goPastNextScope', mode, 'python'
 		));
 		test('Basic syntax navigation: next scope using IND 3 ' + mode, testCase(
 			`
@@ -337,7 +337,7 @@ suite('Extension Test Suite', () => {
 				elif condition:
 					pass
 			^`,
-			'goToBeginScope', mode, 'python', true
+			'goPastNextScope', mode, 'python', true
 		));
 
 		test('Basic syntax navigation: next scope using IND no-change ' + mode, testCase(
@@ -359,7 +359,7 @@ suite('Extension Test Suite', () => {
 				elif@ condition:
 					pass
 			`,
-			'goToEndScope', mode, 'python', true
+			'goPastPreviousScope', mode, 'python'
 		));
 
 	}
