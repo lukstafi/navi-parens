@@ -72,9 +72,9 @@ function testCase(content: string, command: string, mode: string, language: stri
 		assert.notStrictEqual(modePair, undefined);
 		if (!modePair) { return; }
 		const [blockMode, bracketMode] = modePair;
-		vscode.workspace.getConfiguration().update("navi-parens.blockScopeMode", blockMode,
+		await vscode.workspace.getConfiguration().update("navi-parens.blockScopeMode", blockMode,
 			vscode.ConfigurationTarget.Global, true);
-		vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketMode,
+		await vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketMode,
 			vscode.ConfigurationTarget.Global, true);
 		// We cannot use vscode.commands.executeCommand because that creates a different TextEditor.
 		const action = commands.get(command);
