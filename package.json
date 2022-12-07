@@ -35,8 +35,12 @@
     "onCommand:navi-parens.selectToEndScope",
     "onCommand:navi-parens.goToPreviousEmptyLine",
     "onCommand:navi-parens.goToNextEmptyLine",
+    "onCommand:navi-parens.goPastPreviousWord",
+    "onCommand:navi-parens.goPastNextWord",
     "onCommand:navi-parens.selectToPreviousEmptyLine",
     "onCommand:navi-parens.selectToNextEmptyLine",
+    "onCommand:navi-parens.selectPastPreviousWord",
+    "onCommand:navi-parens.selectPastNextWord",
     "onCommand:navi-parens.cycleBracketScopeMode",
     "onCommand:navi-parens.cycleBlockScopeMode"
   ],
@@ -84,6 +88,16 @@
         "shortTitle": "Go To Next Empty Line"
       },
       {
+        "command": "navi-parens.goPastPreviousWord",
+        "title": "Go Past Previous Word: Go to the beginning of the current/previous word",
+        "shortTitle": "Go Past Previous Word"
+      },
+      {
+        "command": "navi-parens.goPastNextWord",
+        "title": "Go Past Next Word: Go to the end of the current/next word",
+        "shortTitle": "Go Past Next Word"
+      },
+      {
         "command": "navi-parens.selectPastNextScope",
         "title": "Select To Next Scope: Select past the next same-level closing bracket/scope",
         "shortTitle": "Select To Next Scope"
@@ -122,6 +136,16 @@
         "command": "navi-parens.selectToNextEmptyLine",
         "title": "Select To Next Empty Line: Select to the next line with only whitespace (or empty)",
         "shortTitle": "Select To Next Empty Line"
+      },
+      {
+        "command": "navi-parens.selectPastPreviousWord",
+        "title": "Select Past Previous Word: select to the beginning of the previous word",
+        "shortTitle": "Select Past Previous Word"
+      },
+      {
+        "command": "navi-parens.selectPastNextWord",
+        "title": "Select Past Next Word: select to the end of the next word",
+        "shortTitle": "Select Past Next Word"
       },
       {
         "command": "navi-parens.cycleBracketScopeMode",
@@ -407,6 +431,16 @@
         "when": "editorTextFocus"
       },
       {
+        "command": "navi-parens.goPastPreviousWord",
+        "key": "alt+h",
+        "when": "textInputFocus"
+      },
+      {
+        "command": "navi-parens.goPastNextWord",
+        "key": "alt+;",
+        "when": "textInputFocus"
+      },
+      {
         "command": "navi-parens.selectPastNextScope",
         "key": "shift+ctrl+alt+l",
         "when": "editorTextFocus"
@@ -445,6 +479,16 @@
         "command": "navi-parens.selectToNextEmptyLine",
         "key": "shift+ctrl+alt+;",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.selectPastPreviousWord",
+        "key": "shift+alt+h",
+        "when": "textInputFocus"
+      },
+      {
+        "command": "navi-parens.selectPastNextWord",
+        "key": "shift+alt+;",
+        "when": "textInputFocus"
       },
       {
         "command": "navi-parens.cycleBracketScopeMode",

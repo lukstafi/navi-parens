@@ -58,7 +58,11 @@ function testCase(content: string, command: string, mode: string, language: stri
 			'goToBeginScope': () => myExtension.goToOuterScope(textEditor, false, true, true),
 			'goToEndScope': () => myExtension.goToOuterScope(textEditor, false, false, true),
 			'selectToBeginScope': () => myExtension.goToOuterScope(textEditor, true, true, false),
-			'selectToEndScope': () => myExtension.goToOuterScope(textEditor, true, false, false)
+			'selectToEndScope': () => myExtension.goToOuterScope(textEditor, true, false, false),
+			'goPastNextWord': () => myExtension.goPastWord(textEditor, false, false),
+			'goPastPreviousWord': () => myExtension.goPastWord(textEditor, false, true),
+			'selectPastNextWord': () => myExtension.goPastWord(textEditor, true, false),
+			'selectPastPreviousWord': () => myExtension.goPastWord(textEditor, true, true),
 		}));
 		// TODO(2): enable symbol providers -- perhaps add mocks.
 		const modes = new Map([
@@ -66,7 +70,8 @@ function testCase(content: string, command: string, mode: string, language: stri
 			['IND/RAW', ['Indentation', 'Raw']],
 			['NON/JTB', ['None', 'JumpToBracket']],
 			['NON/RAW', ['None', 'Raw']],
-			['IND/NON', ['Indentation', 'None']]
+			['IND/NON', ['Indentation', 'None']],
+			['NON/NON', ['None', 'None']],
 		]);
 		const modePair = modes.get(mode);
 		assert.notStrictEqual(modePair, undefined);
@@ -420,4 +425,99 @@ suite('Extension Test Suite', () => {
 			'goToUpScope', mode, 'typescript'
 		));
 	}
+	test('Word navigation: previous word same line', testCase(
+		`
+		^word1 @word2
+		`,
+		'goPastPreviousWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: next word same line', testCase(
+		`
+		word1@ word2^
+		`,
+		'goPastNextWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: previous word same line bof', testCase(
+		`^word1 @word2`,
+		'goPastPreviousWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: next word same line eof', testCase(
+		`word1@ word2^`,
+		'goPastNextWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: beginning of word', testCase(
+		`
+		word1 ^wor@d2
+		`,
+		'goPastPreviousWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: end of word', testCase(
+		`
+		wo@rd1^ word2
+		`,
+		'goPastNextWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: beginning of word bof', testCase(
+		`^wor@d2`,
+		'goPastPreviousWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: end of word eof', testCase(
+		`wo@rd1^`,
+		'goPastNextWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: previous word other line', testCase(
+		`
+		^word1
+		 @word2
+		`,
+		'goPastPreviousWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: next word other line', testCase(
+		`
+		word1@
+		 word2^
+		`,
+		'goPastNextWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: previous word same line punctuation', testCase(
+		`
+		.^word1, !@word2
+		`,
+		'goPastPreviousWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: next word same line punctuation', testCase(
+		`
+		word1@, !word2^;
+		`,
+		'goPastNextWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: previous word other line punctuation', testCase(
+		`
+		.^word1;
+		 .@word2;
+		`,
+		'goPastPreviousWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: next word other line punctuation', testCase(
+		`
+		.word1@;
+		 .word2^;
+		`,
+		'goPastNextWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: previous word other line punctuation 2', testCase(
+		`
+		.^word1;
+		 .@,word2;
+		`,
+		'goPastPreviousWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: next word other line punctuation 2', testCase(
+		`
+		.word1,@;
+		 .word2^;
+		`,
+		'goPastNextWord', 'NON/NON', 'typescript'
+	));
+
 });

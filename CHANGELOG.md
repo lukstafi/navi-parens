@@ -4,13 +4,13 @@
 
 - ...
 
-## [1.0.0] -- 2022-12-07
+## [1.0.0] -- 2022-12-08
 
 ### Added
 
 - Run tests as pre-commits; setup using Husky.
 - More test coverage and better test failure errors.
-- Commands `goPastNextWord`, `goPastPreviousWord` that consistently move past an alphanumeric word, rather than using the built-in `cursorWordLeft` / `cursorWordEndRight`.
+- Commands `goPastNextWord`, `goPastPreviousWord` that consistently move past a (unicode/alphanumeric/configurable) word, rather than using the built-in `cursorWordLeft` / `cursorWordEndRight`.
 
 
 ### Fixed

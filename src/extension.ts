@@ -1,3 +1,4 @@
+import { assert } from 'console';
 import * as vscode from 'vscode';
 
 interface DocumentNavigationState {
@@ -583,6 +584,32 @@ export async function goToEmptyLine(textEditor: vscode.TextEditor, select: boole
 	textEditor.revealRange(textEditor.selection);
 }
 
+export async function goPastWord(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
+	const doc = textEditor.document;
+	const pos = textEditor.selection.active;
+	const direction = before ? -1 : 1;
+	const regexStr = vscode.workspace.getConfiguration().get<string>('navi-parens.pastWordRegex');
+	assert(regexStr, 'Missing setting navi-parens.pastWordRegex');
+	if (!regexStr) { return; }
+	const wordCharRegex = new RegExp(regexStr, 'gu');
+	let targetPos = null;
+	let previouslyLookingAt = null;
+	const lastOffset = doc.offsetAt(doc.validatePosition(new vscode.Position(doc.lineCount, 0)));
+	for (let offset = doc.offsetAt(pos); 0 <= offset && offset < lastOffset; offset += direction) {
+		const lookingAtPos = doc.positionAt(offset).translate(0, Math.min(direction, 0));
+		const lookingAt = characterAtPoint(doc, lookingAtPos);
+		if (previouslyLookingAt && previouslyLookingAt.match(wordCharRegex) && !lookingAt.match(wordCharRegex)) { 
+			targetPos = doc.positionAt(offset);
+			break;
+		}
+		previouslyLookingAt = lookingAt;
+	}
+	if (!targetPos) { return; }
+	const anchor = select ? textEditor.selection.anchor : targetPos;
+	textEditor.selection = new vscode.Selection(anchor, targetPos);
+	textEditor.revealRange(textEditor.selection);
+}
+
 function updateStatusBarItem(blockScopeMode: string | undefined, bracketScopeMode: string | undefined): void {
 	const blockMode = blockScopeMode === 'Semantic' ? 'SEM' :
 		(blockScopeMode === 'Indentation' ? 'IND' : (blockScopeMode === 'None' ? 'NON' : '---'));
@@ -683,8 +710,12 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.cycleBlockScopeMode', cycleBlockScopeMode);
 	newCommand('navi-parens.goToPreviousEmptyLine', textEditor => goToEmptyLine(textEditor, false, true));
 	newCommand('navi-parens.goToNextEmptyLine', textEditor => goToEmptyLine(textEditor, false, false));
+	newCommand('navi-parens.goPastPreviousWord', textEditor => goPastWord(textEditor, false, true));
+	newCommand('navi-parens.goPastNextWord', textEditor => goPastWord(textEditor, false, false));
 	newCommand('navi-parens.selectToPreviousEmptyLine', textEditor => goToEmptyLine(textEditor, true, true));
 	newCommand('navi-parens.selectToNextEmptyLine', textEditor => goToEmptyLine(textEditor, true, false));
+	newCommand('navi-parens.selectPastPreviousWord', textEditor => goPastWord(textEditor, true, true));
+	newCommand('navi-parens.selectPastNextWord', textEditor => goPastWord(textEditor, true, false));
 
 	// Register a command that is invoked when the status bar item is selected
 	const naviCommandId = 'navi-parens.showScopeModes';
