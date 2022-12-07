@@ -74,7 +74,7 @@ function testCase(content: string, command: string, mode: string, language: stri
 		const [blockMode, bracketMode] = modePair;
 		vscode.workspace.getConfiguration().update("navi-parens.blockScopeMode", blockMode,
 			vscode.ConfigurationTarget.Global, true);
-			vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketMode,
+		vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketMode,
 			vscode.ConfigurationTarget.Global, true);
 		// We cannot use vscode.commands.executeCommand because that creates a different TextEditor.
 		const action = commands.get(command);
@@ -139,6 +139,212 @@ suite('Extension Test Suite', () => {
 			`((()@^))`,
 			'goToEndScope', mode, 'typescript'
 		));
+		// Simple syntaxes.
+		test('Basic syntax navigation: up bracket scope ' + mode, testCase(
+			`
+			for ^(let index = 0; index @< array.length; index++) {
+				const element = array[index];
+			}
+			`,
+			'goToUpScope', mode, 'typescript'
+		));
+		test('Basic syntax navigation: down bracket scope ' + mode, testCase(
+			`
+			for (let index = 0; index @< array.length; index++)^ {
+				const element = array[index];
+			}
+			`,
+			'goToDownScope', mode, 'typescript'
+		));
+		test('Basic syntax navigation: up bracket scope 2 ' + mode, testCase(
+			// The bracket scope and indentation scope overap non-inclusively, so the farther end-point is taken.
+			`
+			^for (let index = 0; index < array.length; index++) {
+				const element = array@[index];
+			}
+			`,
+			'goToUpScope', mode, 'typescript'
+		));
+		test('Basic syntax navigation: down bracket scope 2 ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) {
+				const element = array@[index];
+			}^
+			`,
+			'goToDownScope', mode, 'typescript'
+		));
+		test('Basic syntax navigation: up bracket scope nested ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) {
+				const element = array^[@index];
+			}
+			`,
+			'goToUpScope', mode, 'typescript'
+		));
+		test('Basic syntax navigation: down bracket scope nested ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) {
+				const element = array[in@dex]^;
+			}
+			`,
+			'goToDownScope', mode, 'typescript'
+		));
+		test('Basic syntax navigation: next bracket scope ' + mode, testCase(
+			`
+			fo@r (let index = 0; index < array.length; index++)^ {
+				const element = array[index];
+			}
+			`,
+			'goPastNextScope', mode, 'typescript', true
+		));
+		test('Basic syntax navigation: previous bracket scope ' + mode, testCase(
+			`
+			for ^(let index = 0; index < array.length; index++) @{
+				const element = array[index];
+			}
+			`,
+			'goPastPreviousScope', mode, 'typescript'
+		));
+		test('Basic syntax navigation: next bracket scope inside ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) {
+				c@onst element = array[index]^;
+			}
+			`,
+			'goPastNextScope', mode, 'typescript'
+		));
+		test('Basic syntax navigation: previous bracket scope inside ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) {
+				const element = array^[index];
+	@		}
+			`,
+			'goPastPreviousScope', mode, 'typescript'
+		));
+		test('Basic syntax navigation: begin scope with IND ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) {^
+				const element = @array[index];
+			}
+			`,
+			'goToBeginScope', mode, 'typescript', true
+		));
+		test('Basic syntax navigation: end scope with IND ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) {
+				const element = @array[index];
+			^}
+			`,
+			'goToEndScope', mode, 'typescript', true
+		));
+		test('Basic syntax navigation: up scope using IND ' + mode, testCase(
+			`
+			for item in range:
+				^if condition:
+					pa@ss
+				elif condition:
+					pass
+			`,
+			'goToUpScope', mode, 'python'
+		));
+		test('Basic syntax navigation: down scope using IND ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					pa@ss
+				^elif condition:
+					pass
+			`,
+			'goToDownScope', mode, 'python'
+		));
+		test('Basic syntax navigation: begin scope using IND ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					^pa@ss
+				elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python'
+		));
+		test('Basic syntax navigation: end scope using IND ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					pa@ss^
+				elif condition:
+					pass
+			`,
+			'goToEndScope', mode, 'python'
+		));
+		test('Basic syntax navigation: next scope using IND ' + mode, testCase(
+			`
+			for item in range:
+				pa@ss
+				if condition:
+					pass
+				^elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python', true
+		));
+		test('Basic syntax navigation: next scope using IND 2 ' + mode, testCase(
+			`
+			for item in range:
+			@	if condition:
+					pass
+				^elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python', true
+		));
+		test('Basic syntax navigation: next scope using IND no-change ' + mode, testCase(
+			`
+			for item in range:
+				@^if condition:
+					pass
+				elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python', true
+		));
+
+		test('Basic syntax navigation: previous scope using IND ' + mode, testCase(
+			`
+			for item in range:
+				^if condition:
+					pass
+				elif@ condition:
+					pass
+			`,
+			'goToEndScope', mode, 'python', true
+		));
+
+	}
+	for (const mode of ['NON/RAW', 'NON/JTB']) {
+		test('Basic syntax navigation: begin scope without block scopes ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) {^
+				const element = @array[index];
+			}
+			`,
+			'goToBeginScope', mode, 'typescript', true
+		));
+		test('Basic syntax navigation: end scope without block scopes ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) {
+				const element = @array[index];
+			^}
+			`,
+			'goToEndScope', mode, 'typescript', true
+		));
+		test('Basic syntax navigation: up bracket scope without block scopes ' + mode, testCase(
+			`
+			for (let index = 0; index < array.length; index++) ^{
+				const element = array@[index];
+			}
+			`,
+			'goToUpScope', mode, 'typescript', true
 		));
 	}
 });
