@@ -206,6 +206,12 @@
             "{"
           ],
           "scope": "language-overridable"
+        },
+        "navi-parens.pastWordRegex": {
+          "markdownDescription": "Where the non-bracket structure information comes from. If `Semantic`, uses VSCode symbol providers. If `Indentation`, generates symbols from indentation. If `None`, there are no symbols",
+          "type": "string",
+          "default": "\\p{General_Category=Letter}|[0-9]|_",
+          "scope": "language-overridable"
         }
       }
     },

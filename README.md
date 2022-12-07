@@ -28,6 +28,10 @@ Commands:
 * `selectToNextEmptyLine`: `shift+ctrl+alt+;` Select to the next line with only whitespace (or empty)
 * `cycleBracketScopeMode`: `ctrl+alt+p` Cycle through the bracket scope logic (`ctrl+shift+\`, delimiter counting, none)
 * `cycleBlockScopeMode`: `shift+ctrl+alt+p` Cycle through block scope logic (symbols, indentation, none)
+* `goPastNextWord`: `alt+;` Go past the curent/next word, ignoring language-specific rules
+* `goPastPreviousWord`: `alt+h` Go past the previous word / beginning of current, ignoring language-specific rules
+* `selectPastNextWord`: `shift+alt+;` Select past the current/next word, ignoring language-specific rules
+* `selectPastPreviousWord`: `shift+alt+h` Select past the previous word / beginning of current, ignoring language-specific rules
 
 The meaning of "near the beginning/end of a scope" is mode-specific.
 
@@ -39,16 +43,12 @@ Extra key bindings:
 * `cursorDown`, `list.focusDown`, `selectNextCodeAction`, `selectNextSuggestion`, `selectNextParameterHint`: `alt+k`
 * `cursorHome`: `alt+a`
 * `cursorEnd`: `alt+e`
-* `cursorWordLeft`: `alt+h`
-* `cursorWordEndRight`: `alt+;`
 * `cursorRightSelect`: `shift+alt+l`
 * `cursorLeftSelect`: `shift+alt+j`
 * `cursorUpSelect`: `shift+alt+i`
 * `cursorDownSelect`: `shift+alt+k`
 * `cursorHomeSelect`: `shift+alt+a`
 * `cursorEndSelect`: `shift+alt+e`
-* `cursorWordLeftSelect`: `shift+alt+h`
-* `cursorWordEndRightSelect`: `shift+alt+;`
 * `deleteRight`: `alt+d`
 * `deleteWordRight`: `ctrl+alt+d`
 
@@ -92,35 +92,38 @@ Navigation with `Raw` bracket mode.
 This extension contributes the following settings:
 
 * `navi-parens.rebind`: How to deal with the `shift+alt+i` binding conflict.
-** Defaults to `true`.
-** If `true`:
-*** rebind `insertCursorAtEndOfEachLineSelected` from `shift+alt+i` to `shift+alt+p`
-*** bind `cursorUpSelect` to `shift+alt+i`
-*** do not make bindings for `ctrl+alt+o`.
-** If `false`:
-*** bind `cursorUpSelect` to `ctrl+shift+alt+o`
-*** bind `cursorUp` to both `alt+i` and `ctrl+alt+o`.
+  * Defaults to `true`.
+  * If `true`:
+    * rebind `insertCursorAtEndOfEachLineSelected` from `shift+alt+i` to `shift+alt+p`
+    * bind `cursorUpSelect` to `shift+alt+i`
+    * do not make bindings for `ctrl+alt+o`.
+  * If `false`:
+    * bind `cursorUpSelect` to `ctrl+shift+alt+o`
+    * bind `cursorUp` to both `alt+i` and `ctrl+alt+o`.
 * `navi-parens.blockScopeMode`: an enum selecting where the non-bracket structure information comes from.
-** `Semantic`: the semantic analyzers integrated with VSCode. The default.
-** `Indentation`: Navi Parens constructs symbols based on indentation. Details below.
-** `None`: same behavior as if there were no symbol definitions in text.
-** `ctrl+shift+alt+p` toggles between `Semantic` and `Indentation`.
+  * `Semantic`: the semantic analyzers integrated with VSCode. The default.
+  * `Indentation`: Navi Parens constructs symbols based on indentation. Details below.
+  * `None`: same behavior as if there were no symbol definitions in text.
+  * `ctrl+shift+alt+p` toggles between `Semantic` and `Indentation`.
 * `navi-parens.bracketScopeMode`: an enum selecting how to get the bracket structure information.
-** `JumpToBracket`: uses `editor.action.jumpToBracket` (i.e. `ctrl+shift+\`). The default.
-** `Raw`: only the bracket characters are considered, without context.
-** `ctrl+shift+alt+p` toggles between `Semantic` and `Raw`.
+  * `JumpToBracket`: uses `editor.action.jumpToBracket` (i.e. `ctrl+shift+\`). The default.
+  * `Raw`: only the bracket characters are considered, without context.
+  * `ctrl+shift+alt+p` toggles between `Semantic` and `Raw`.
 * `navi-parens.closingBrackets`: the superset of supported closing delimiters.
-** Defaults to `[")", "]", "}", ">"]`.
-** Can be language specific.
+  * Defaults to `[")", "]", "}", ">"]`.
+  * Can be language specific.
 * `navi-parens.openingBrackets`: the superset of supported opening delimiters.
-** Defaults to `["(", "[", "{", "<"]`.
-** Can be language specific.
+  * Defaults to `["(", "[", "{", "<"]`.
+  * Can be language specific.
 * `navi-parens.closingBracketsForRaw`: the closing delimiters for `bracketScopeProvider.Raw`.
-** Defaults to `[")", "]", "}"]`.
-** Can be language specific.
+  * Defaults to `[")", "]", "}"]`.
+  * Can be language specific.
 * `navi-parens.openingBracketsForRaw`: the opening delimiters for `bracketScopeProvider.Raw`.
-** Defaults to `["(", "[", "{"]`.
-** Can be language specific.
+  * Defaults to `["(", "[", "{"]`.
+  * Can be language specific.
+* `navi-parens.pastWordRegex`: the regular expression defining words by which the `alt+h`/`alt+;` commands navigate.
+  * Defaults to `"\\p{General_Category=Letter}|[0-9]|_"`.
+  * Can be language specific.
 
 
 
@@ -157,11 +160,13 @@ Coming from Emacs, I appreciate and suggest:
 
 ## Release Notes
 
-See the changelog file for a detailed list of features and changes!
+See the ![changelog file](CHANGELOG.md) for a detailed list of features and changes!
+
+The main features that are still missing are multiple cursors support and multicharacter delimiters support.
 
 ### 0.9
 
-Initial release of Navi Parens. The main missing features are multiple cursors support and multicharacter delimiters support.
+Initial release of Navi Parens.
 
 ### 0.9.9
 
@@ -172,6 +177,5 @@ Initial release of Navi Parens. The main missing features are multiple cursors s
 
 ### 1.0.0
 
-* Bug fixes. No, this time for real.
+* Bug fixes. No, this time for real. Better test coverage with enforced tests.
 * Make the Navi-Parens-bound "move past next/previous word" consistently move past an alphanumeric word, rather than using the built-in `ctrl+rightArrow` / `ctrl+leftArrow` functionality.
-* 
