@@ -298,6 +298,47 @@ suite('Extension Test Suite', () => {
 			'goPastNextScope', mode, 'typescript'
 		));
 	}
+	for (const mode of ['IND/JTB', 'NON/JTB']) {
+		test('Bracket syntax navigation: previous scope other line with comments ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) {
+			element = f(
+				array^[index], // (comment), (comment)
+				g@(index));
+		}
+		`,
+			'goPastPreviousScope', mode, 'typescript'
+		));
+		test('Bracket syntax navigation: next scope other line with comments ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) {
+			element = f(
+				array[index]@, // (comment), (comment)
+				g(index)^, index);
+		}
+		`,
+			'goPastNextScope', mode, 'typescript'
+		));
+		// Note that the less-indented line is still part of the "far" indent scope.
+		test('Bracket syntax navigation: previous scope other line with comments 2 ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) {
+			element = f(array^[index], // (comment), (comment)
+				g@(index));
+		}
+		`,
+			'goPastPreviousScope', mode, 'typescript'
+		));
+		test('Bracket syntax navigation: next scope other line with comments 2 ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) {
+			element = f(array[index]@, // (comment), (comment)
+				g(index)^, index);
+		}
+		`,
+			'goPastNextScope', mode, 'typescript'
+		));
+	}
 	{
 		const mode = 'IND/NON';
 		test('Basic syntax navigation: up scope using IND ' + mode, testCase(

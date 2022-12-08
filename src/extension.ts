@@ -398,12 +398,10 @@ async function findSiblingBracket(
 				if (!updated) { jumpPos = lookingAtPos; }
 				++nesting; updated = true;
 			} else {
-				// Let's be defensive, the behavior of Jump To Bracket is surprising at times.
+				// Check whether it is a real delimiter vs. e.g. in a comment.
 				let targetPos = await jumpToBracket(textEditor, lookingAtPos);
 				if (isNearer(before, targetPos, lookingAtPos)) {
-					console.assert(false,
-						`Jump To Bracket from ${strP(targetPos)} to ${strP(lookingAtPos)} violates expectations.`);
-					return null;
+					continue;
 				}
 				if (targetPos.isEqual(lookingAtPos)) {
 					// No bracket scopes left to the right.
