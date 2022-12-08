@@ -443,7 +443,7 @@ suite('Extension Test Suite', () => {
 	));
 	test('Word navigation: next word same line eof', testCase(
 		`word1@ word2^`,
-		'goPastNextWord', 'NON/NON', 'typescript', true
+		'goPastNextWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: beginning of word', testCase(
 		`
@@ -463,19 +463,55 @@ suite('Extension Test Suite', () => {
 	));
 	test('Word navigation: end of word eof', testCase(
 		`wo@rd1^`,
-		'goPastNextWord', 'NON/NON', 'typescript', true
+		'goPastNextWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: no-change bof', testCase(
+		` ^@word2`,
+		'goPastPreviousWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: no-change eof', testCase(
+		`word1@^ `,
+		'goPastNextWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: previous word other line', testCase(
 		`
 		^word1
 		 @word2
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript', true
+		'goPastPreviousWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: next word other line', testCase(
 		`
 		word1@
 		 word2^
+		`,
+		'goPastNextWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: no-change previous other line', testCase(
+		`
+		...
+		 ^@word2
+		`,
+		'goPastPreviousWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: no-change next other line', testCase(
+		`
+		word1@^
+		 ...
+		`,
+		'goPastNextWord', 'NON/NON', 'typescript'
+	));
+	test('Word navigation: previous word no space other line', testCase(
+		`
+		word1
+^word2@
+		`,
+		'goPastPreviousWord', 'NON/NON', 'typescript', true
+	));
+	test('Word navigation: next word no space other line', testCase(
+		`
+		@word1^
+word2
 		`,
 		'goPastNextWord', 'NON/NON', 'typescript'
 	));
@@ -496,7 +532,7 @@ suite('Extension Test Suite', () => {
 		.^word1;
 		 .@word2;
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript', true
+		'goPastPreviousWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: next word other line punctuation', testCase(
 		`
@@ -510,7 +546,7 @@ suite('Extension Test Suite', () => {
 		.^word1;
 		 .@,word2;
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript', true
+		'goPastPreviousWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: next word other line punctuation 2', testCase(
 		`

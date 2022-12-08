@@ -594,17 +594,32 @@ export async function goPastWord(textEditor: vscode.TextEditor, select: boolean,
 	const wordCharRegex = new RegExp(regexStr, 'gu');
 	let targetPos = null;
 	let previouslyLookingAt = null;
+	let previousOffsetPos = null;
 	const lastOffset = doc.offsetAt(doc.validatePosition(new vscode.Position(doc.lineCount, 0)));
-	for (let offset = doc.offsetAt(pos); 0 <= offset && offset < lastOffset; offset += direction) {
-		const lookingAtPos = doc.positionAt(offset).translate(0, Math.min(direction, 0));
+	for (let offset = doc.offsetAt(pos) + direction; 0 <= offset && offset <= lastOffset; offset += direction) {
+		let offsetPos = doc.positionAt(offset);
+		// Beginning-of-line and end-of-line cases.
+		while ((previousOffsetPos && offsetPos.isEqual(previousOffsetPos)) ||
+			  (offsetPos.character === 0 && direction === -1)) {
+			offset += direction;
+			if (offset < 0 || offset > lastOffset ||
+				  (previouslyLookingAt && previouslyLookingAt.match(wordCharRegex))) {
+				targetPos = offsetPos;
+				break;
+			}
+			offsetPos = doc.positionAt(offset);
+		}
+		if (targetPos) { break; }
+		let lookingAtPos = offsetPos.translate(0, Math.min(direction, 0));
 		const lookingAt = characterAtPoint(doc, lookingAtPos);
 		if (previouslyLookingAt && previouslyLookingAt.match(wordCharRegex) && !lookingAt.match(wordCharRegex)) { 
-			targetPos = doc.positionAt(offset);
+			targetPos = offsetPos;
 			break;
 		}
 		previouslyLookingAt = lookingAt;
+		previousOffsetPos = offsetPos;
 	}
-	if (!targetPos) { return; }
+	if (!targetPos || !previouslyLookingAt || !previouslyLookingAt.match(wordCharRegex)) { return; }
 	const anchor = select ? textEditor.selection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
 	textEditor.revealRange(textEditor.selection);
