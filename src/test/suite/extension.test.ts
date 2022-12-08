@@ -260,6 +260,44 @@ suite('Extension Test Suite', () => {
 			'goToEndScope', mode, 'typescript'
 		));
 	}
+	for (const mode of ['NON/RAW', 'NON/JTB']) {
+		test('Bracket syntax navigation: begin scope other line ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) {
+			element = f(^array[index],
+				g@(index));
+		}
+		`,
+			'goToBeginScope', mode, 'typescript'
+		));
+		test('Bracket syntax navigation: end scope other line ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) {
+			element = f(arr@ay[index],
+				g(index)^);
+		}
+		`,
+			'goToEndScope', mode, 'typescript'
+		));
+		test('Bracket syntax navigation: previous scope other line ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) {
+			element = f(array^[index],
+				g@(index));
+		}
+		`,
+			'goPastPreviousScope', mode, 'typescript'
+		));
+		test('Bracket syntax navigation: next scope other line ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) {
+			element = f(array[index]@,
+				g(index)^, index);
+		}
+		`,
+			'goPastNextScope', mode, 'typescript'
+		));
+	}
 	{
 		const mode = 'IND/NON';
 		test('Basic syntax navigation: up scope using IND ' + mode, testCase(
@@ -303,11 +341,33 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToBeginScope', mode, 'python'
 		));
+		test('Basic syntax navigation: begin scope using IND 3 ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					^pass
+					pa@ss
+				elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python'
+		));
 		test('Basic syntax navigation: end scope using IND ' + mode, testCase(
 			`
 			for item in range:
 				if condition:
 					pa@ss^
+				elif condition:
+					pass
+			`,
+			'goToEndScope', mode, 'python'
+		));
+		test('Basic syntax navigation: end scope using IND 2 ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					pa@ss
+					pass^
 				elif condition:
 					pass
 			`,
@@ -439,7 +499,7 @@ suite('Extension Test Suite', () => {
 	));
 	test('Word navigation: previous word same line bof', testCase(
 		`^word1 @word2`,
-		'goPastPreviousWord', 'NON/NON', 'typescript', true
+		'goPastPreviousWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: next word same line eof', testCase(
 		`word1@ word2^`,
@@ -459,7 +519,7 @@ suite('Extension Test Suite', () => {
 	));
 	test('Word navigation: beginning of word bof', testCase(
 		`^wor@d2`,
-		'goPastPreviousWord', 'NON/NON', 'typescript', true
+		'goPastPreviousWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: end of word eof', testCase(
 		`wo@rd1^`,
@@ -467,7 +527,7 @@ suite('Extension Test Suite', () => {
 	));
 	test('Word navigation: no-change bof', testCase(
 		` ^@word2`,
-		'goPastPreviousWord', 'NON/NON', 'typescript', true
+		'goPastPreviousWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: no-change eof', testCase(
 		`word1@^ `,
@@ -492,7 +552,7 @@ suite('Extension Test Suite', () => {
 		...
 		 ^@word2
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript', true
+		'goPastPreviousWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: no-change next other line', testCase(
 		`
@@ -506,7 +566,7 @@ suite('Extension Test Suite', () => {
 		word1
 ^word2@
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript', true
+		'goPastPreviousWord', 'NON/NON', 'typescript'
 	));
 	test('Word navigation: next word no space other line', testCase(
 		`
