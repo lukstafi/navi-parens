@@ -4,7 +4,7 @@
   "displayName": "Navi Parens",
   "description": "Navigate structured code with convenient key shortcuts.",
   "icon": "iconSmall.png",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.73.0"
   },
@@ -12,6 +12,7 @@
     "Keymaps",
     "Other"
   ],
+  "keywords": ["structure", "jump", "navigation", "Emacs", "selection"],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -89,13 +90,13 @@
       },
       {
         "command": "navi-parens.goPastPreviousWord",
-        "title": "Go Past Previous Word: Go to the beginning of the current/previous word",
-        "shortTitle": "Go Past Previous Word"
+        "title": "Go To Previous Word: Go to the beginning of the current/previous word",
+        "shortTitle": "Go To Previous Word"
       },
       {
         "command": "navi-parens.goPastNextWord",
-        "title": "Go Past Next Word: Go to the end of the current/next word",
-        "shortTitle": "Go Past Next Word"
+        "title": "Go To Next Word: Go to the end of the current/next word",
+        "shortTitle": "Go To Next Word"
       },
       {
         "command": "navi-parens.selectPastNextScope",
@@ -139,13 +140,13 @@
       },
       {
         "command": "navi-parens.selectPastPreviousWord",
-        "title": "Select Past Previous Word: select to the beginning of the previous word",
-        "shortTitle": "Select Past Previous Word"
+        "title": "Select To Previous Word: select to the beginning of the previous word",
+        "shortTitle": "Select To Previous Word"
       },
       {
         "command": "navi-parens.selectPastNextWord",
-        "title": "Select Past Next Word: select to the end of the next word",
-        "shortTitle": "Select Past Next Word"
+        "title": "Select To Next Word: select to the end of the next word",
+        "shortTitle": "Select To Next Word"
       },
       {
         "command": "navi-parens.cycleBracketScopeMode",

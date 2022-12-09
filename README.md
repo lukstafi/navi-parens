@@ -129,7 +129,7 @@ This extension contributes the following settings:
 
 ## Quirks, Technical Details and Known Issues
 
-See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts) for diverse behavior examples.
+See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts) for diverse behavior examples. In tests, the character `@` stands for initial cursor position, and `^` for resulting cursor position.
 
 Currently, multiple cursors are not supported.
 
@@ -160,7 +160,7 @@ Coming from Emacs, I appreciate and suggest:
 
 ## Release Notes
 
-See the ![changelog file](CHANGELOG.md) for a detailed list of features and changes!
+See the ![changelog file](./CHANGELOG.md) for a detailed list of features and changes!
 
 The main features that are still missing are multiple cursors support and multicharacter delimiters support.
 
@@ -179,3 +179,7 @@ Initial release of Navi Parens.
 
 * Bug fixes. No, this time for real. Better test coverage with enforced tests.
 * Make the Navi-Parens-bound "move past next/previous word" consistently move past an alphanumeric word, rather than using the built-in `ctrl+rightArrow` / `ctrl+leftArrow` functionality.
+
+### 1.0.1
+
+* Marketplace tags for more discoverability.

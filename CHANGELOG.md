@@ -4,6 +4,17 @@
 
 - ...
 
+## [1.0.1] -- 2022-12-09
+
+### Added
+
+- Tags for Marketplace discoverability.
+- A few more tests.
+
+### Changed
+
+- Replaced `Past` by `To` in all command titles for better discoverability.
+
 ## [1.0.0] -- 2022-12-08
 
 ### Added
