@@ -3,11 +3,6 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as myExtension from '../../extension';
 
-function charactersAround(doc: vscode.TextDocument, pos: vscode.Position): string {
-	return doc.getText(new vscode.Range(
-		doc.positionAt(doc.offsetAt(pos) - 2), doc.positionAt(doc.offsetAt(pos) + 2)));
-}
-
 async function openFileWithCursor(annotated: string, language: string): Promise<{
 	textEditor: vscode.TextEditor,
 	targetPos: vscode.Position
@@ -19,8 +14,6 @@ async function openFileWithCursor(annotated: string, language: string): Promise<
 	const doc = await vscode.workspace.openTextDocument({language, content});
 	const sourcePos = doc.positionAt(source);
 	const targetPos = doc.positionAt(target);
-	// When debugging, to enable charactersAround in watch expressions. 
-	// const debug1 = charactersAround(doc, sourcePos);
 	const textEditor = await vscode.window.showTextDocument(doc);
 	textEditor.selection = new vscode.Selection(sourcePos, sourcePos);
 	return { textEditor, targetPos };
@@ -499,6 +492,47 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 
+		// Empty lines are never scope-introducing, to keep the logic simple.
+		test('Basic syntax navigation: up scope using IND empty line ' + mode, testCase(
+			`
+			^for item in range:
+				if condition:
+					@
+				elif condition:
+					pass
+			`,
+			'goToUpScope', mode, 'python', true
+		));
+		test('Basic syntax navigation: down scope using IND empty line ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					@
+				elif condition:
+					pass
+			^`,
+			'goToDownScope', mode, 'python', true
+		));
+		test('Basic syntax navigation: begin scope using IND empty line ' + mode, testCase(
+			`
+			for item in range:
+				^if condition:
+					@
+				elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python', true
+		));
+		test('Basic syntax navigation: end scope using IND empty line ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					@
+				elif condition:
+					pass^
+			`,
+			'goToEndScope', mode, 'python', true
+		));
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
 		test('Basic syntax navigation: begin scope without block scopes ' + mode, testCase(
