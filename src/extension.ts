@@ -599,7 +599,7 @@ export async function goPastWord(textEditor: vscode.TextEditor, select: boolean,
 	let previouslyLookingAt = null;
 	let previousOffsetPos = null;
 	const lastOffset = doc.offsetAt(doc.validatePosition(new vscode.Position(doc.lineCount, 0)));
-	for (let offset = doc.offsetAt(pos) + direction; 0 <= offset && offset <= lastOffset; offset += direction) {
+	for (let offset = doc.offsetAt(pos); 0 <= offset && offset <= lastOffset; offset += direction) {
 		let offsetPos = doc.positionAt(offset);
 		// Beginning-of-line and end-of-line cases.
 		while ((previousOffsetPos && offsetPos.isEqual(previousOffsetPos)) ||

@@ -664,6 +664,42 @@ suite('Extension Test Suite', () => {
 		`,
 			'goPastNextWord', mode, 'typescript'
 		));
+		test('Word navigation: previous 1 character word same line', testCase(
+			`
+		^w @word2
+		`,
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: next 1 character word same line', testCase(
+			`
+		word1@ w^
+		`,
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: beginning of 1 character word', testCase(
+			`
+		word1 ^w@
+		`,
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: end of 1 character word', testCase(
+			`
+		@w^ word2
+		`,
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: beginning of word from 1 character', testCase(
+			`
+		word1 ^w@ord2
+		`,
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: end of word from 1 character', testCase(
+			`
+		word@1^ word2
+		`,
+			'goPastNextWord', mode, 'typescript'
+		));
 		test('Word navigation: beginning of word bof', testCase(
 			`^wor@d2`,
 			'goPastPreviousWord', mode, 'typescript'
