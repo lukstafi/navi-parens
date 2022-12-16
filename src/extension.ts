@@ -268,6 +268,11 @@ function findOuterBracketRaw(
 		}
 	}
 	if (selection[0] && selection[1]) { return new vscode.Selection(selection[1], selection[0]); }
+	// Allow unmatched brackets in RAW mode.
+	if (selection[0]) {
+		const outerLimit = before ? doc.positionAt(lastOffset) : doc.positionAt(0);
+		return new vscode.Selection(outerLimit, selection[0]);
+	}
 	return null;
 }
 

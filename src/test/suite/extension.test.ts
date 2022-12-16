@@ -257,6 +257,72 @@ suite('Extension Test Suite', () => {
 			'goToEndScope', mode, 'typescript'
 		));
 	}
+	for (const mode of ['NON/RAW', 'IND/RAW']) {
+		test('Basic parentheses navigation: up to unmatched left ' + mode, testCase(
+			`^(@()`,
+			'goToUpScope', mode, 'typescript'
+		));
+		test('Basic parentheses navigation: down to unmatched right ' + mode, testCase(
+			`()@)^`,
+			'goToDownScope', mode, 'typescript'
+		));
+		test('Basic parentheses navigation: up to unmatched left 2 ' + mode, testCase(
+			`^(()@`,
+			'goToUpScope', mode, 'typescript'
+		));
+		test('Basic parentheses navigation: down to unmatched right 2 ' + mode, testCase(
+			`@())^`,
+			'goToDownScope', mode, 'typescript'
+		));
+		test('Basic parentheses navigation: begin to unmatched left ' + mode, testCase(
+			`(^()@`,
+			'goToBeginScope', mode, 'typescript'
+		));
+		test('Basic parentheses navigation: end to unmatched right ' + mode, testCase(
+			`@()^)`,
+			'goToEndScope', mode, 'typescript'
+		));
+	}
+	{
+		const mode = 'NON/RAW';
+		test('Bracket syntax navigation: NON-block begin scope other line unmatched ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) {^
+			element = f(array[index],
+				g(index))@;
+		
+		`,
+			'goToBeginScope', mode, 'typescript'
+		));
+		test('Bracket syntax navigation: NON-block end scope other line unmatched ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) 
+			element = @f(array[index],
+				g(index));
+		^}
+		`,
+			'goToEndScope', mode, 'typescript'
+		));
+		test('Bracket syntax navigation: NON-block up scope other line unmatched ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) ^{
+			element = f(array[index],
+				g(index))@;
+		
+		`,
+			'goToUpScope', mode, 'typescript'
+		));
+		test('Bracket syntax navigation: NON-block down scope other line unmatched ' + mode, testCase(
+			`
+		for (let index = 0; index < array.length; index++) 
+			element = @f(array[index],
+				g(index));
+		}^
+		`,
+			'goToDownScope', mode, 'typescript'
+		));
+
+	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
 		test('Bracket syntax navigation: begin scope other line ' + mode, testCase(
 			`
@@ -505,7 +571,7 @@ suite('Extension Test Suite', () => {
 				elif condition:
 					pass
 			`,
-			'goToUpScope', mode, 'python', true
+			'goToUpScope', mode, 'python'
 		));
 		test('Basic syntax navigation: down scope using IND empty line ' + mode, testCase(
 			`
@@ -515,7 +581,7 @@ suite('Extension Test Suite', () => {
 				elif condition:
 					pass
 			^`,
-			'goToDownScope', mode, 'python', true
+			'goToDownScope', mode, 'python'
 		));
 		test('Basic syntax navigation: begin scope using IND empty line ' + mode, testCase(
 			`
@@ -525,7 +591,7 @@ suite('Extension Test Suite', () => {
 				elif condition:
 					pass
 			`,
-			'goToBeginScope', mode, 'python', true
+			'goToBeginScope', mode, 'python'
 		));
 		test('Basic syntax navigation: end scope using IND empty line ' + mode, testCase(
 			`
@@ -535,7 +601,7 @@ suite('Extension Test Suite', () => {
 				elif condition:
 					pass^
 			`,
-			'goToEndScope', mode, 'python', true
+			'goToEndScope', mode, 'python'
 		));
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
@@ -564,135 +630,137 @@ suite('Extension Test Suite', () => {
 			'goToUpScope', mode, 'typescript'
 		));
 	}
-	test('Word navigation: previous word same line', testCase(
-		`
+	{
+		const mode = 'NON/NON';
+		test('Word navigation: previous word same line', testCase(
+			`
 		^word1 @word2
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: next word same line', testCase(
-		`
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: next word same line', testCase(
+			`
 		word1@ word2^
 		`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: previous word same line bof', testCase(
-		`^word1 @word2`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: next word same line eof', testCase(
-		`word1@ word2^`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: beginning of word', testCase(
-		`
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: previous word same line bof', testCase(
+			`^word1 @word2`,
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: next word same line eof', testCase(
+			`word1@ word2^`,
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: beginning of word', testCase(
+			`
 		word1 ^wor@d2
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: end of word', testCase(
-		`
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: end of word', testCase(
+			`
 		wo@rd1^ word2
 		`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: beginning of word bof', testCase(
-		`^wor@d2`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: end of word eof', testCase(
-		`wo@rd1^`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: no-change bof', testCase(
-		` ^@word2`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: no-change eof', testCase(
-		`word1@^ `,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: previous word other line', testCase(
-		`
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: beginning of word bof', testCase(
+			`^wor@d2`,
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: end of word eof', testCase(
+			`wo@rd1^`,
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: no-change bof', testCase(
+			` ^@word2`,
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: no-change eof', testCase(
+			`word1@^ `,
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: previous word other line', testCase(
+			`
 		^word1
 		 @word2
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: next word other line', testCase(
-		`
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: next word other line', testCase(
+			`
 		word1@
 		 word2^
 		`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: no-change previous other line', testCase(
-		`
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: no-change previous other line', testCase(
+			`
 		...
 		 ^@word2
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: no-change next other line', testCase(
-		`
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: no-change next other line', testCase(
+			`
 		word1@^
 		 ...
 		`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: previous word no space other line', testCase(
-		`
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: previous word no space other line', testCase(
+			`
 		word1
 ^word2@
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: next word no space other line', testCase(
-		`
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: next word no space other line', testCase(
+			`
 		@word1^
 word2
 		`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: previous word same line punctuation', testCase(
-		`
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: previous word same line punctuation', testCase(
+			`
 		.^word1, !@word2
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: next word same line punctuation', testCase(
-		`
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: next word same line punctuation', testCase(
+			`
 		word1@, !word2^;
 		`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: previous word other line punctuation', testCase(
-		`
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: previous word other line punctuation', testCase(
+			`
 		.^word1;
 		 .@word2;
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: next word other line punctuation', testCase(
-		`
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: next word other line punctuation', testCase(
+			`
 		.word1@;
 		 .word2^;
 		`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: previous word other line punctuation 2', testCase(
-		`
+			'goPastNextWord', mode, 'typescript'
+		));
+		test('Word navigation: previous word other line punctuation 2', testCase(
+			`
 		.^word1;
 		 .@,word2;
 		`,
-		'goPastPreviousWord', 'NON/NON', 'typescript'
-	));
-	test('Word navigation: next word other line punctuation 2', testCase(
-		`
+			'goPastPreviousWord', mode, 'typescript'
+		));
+		test('Word navigation: next word other line punctuation 2', testCase(
+			`
 		.word1,@;
 		 .word2^;
 		`,
-		'goPastNextWord', 'NON/NON', 'typescript'
-	));
-
+			'goPastNextWord', mode, 'typescript'
+		));
+	}
 });
