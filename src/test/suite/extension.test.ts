@@ -74,6 +74,10 @@ function testCase(content: string, command: string, mode: string, language: stri
 			vscode.ConfigurationTarget.Global, true);
 		await vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketMode,
 			vscode.ConfigurationTarget.Global, true);
+		// Wait extra for the bracket providers to settle.
+		if (bracketMode === 'JumpToBracket') {
+			await new Promise(f => setTimeout(f, 500));
+		}
 		// We cannot use vscode.commands.executeCommand because that creates a different TextEditor.
 		const action = commands.get(command);
 		assert.notStrictEqual(action, undefined);
