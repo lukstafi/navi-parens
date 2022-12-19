@@ -250,14 +250,36 @@ async function findOuterBracket(
 	return null;
 }
 
+function oneOfAtPoint(doc: vscode.TextDocument, closingDelimiters: boolean, isRaw: boolean, before: boolean,
+	pos: vscode.Position): string | null {
+	if (!isRaw) {
+		const direction = before ? -1 : 1;
+		let lookingAtPos = pos.translate(0, Math.min(direction, 0));
+		const lookingAt = characterAtPoint(doc, lookingAtPos);
+		const delimiters = closingDelimiters ? closingBrackets : openingBrackets;
+		return delimiters.includes(lookingAt) ? lookingAt : null;
+	}
+	const delimiters = closingDelimiters ? (before ? closingBeforeRawRegex : closingAfterRawRegex) :
+		(before ? openingBeforeRawRegex : openingAfterRawRegex);
+	const delimLength = closingDelimiters ? closingRawMaxLength : openingRawMaxLength;
+	const direction = before ? -1 : 1;
+	
+	const translPos = pos.translate(0,
+		direction * (direction < 0 ? Math.min(delimLength, pos.character) : delimLength));
+	const textAtPoint = doc.getText(doc.validateRange(new vscode.Selection(pos, translPos)));
+	const matchResults = delimiters.exec(textAtPoint);
+	return matchResults?.[0] || null;
+}
+
 function findOuterBracketRaw(
 	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): vscode.Selection | null {
 	const doc = textEditor.document;
 	// Target end first, then anchor end.
 	const direction = before ? [-1, 1] : [1, -1];
+	const beforeFor = [before, !before];
 	const lastOffset = doc.offsetAt(doc.validatePosition(new vscode.Position(doc.lineCount, 1)));
-	const incrBrackets = before ? [closingBracketsRaw, openingBracketsRaw] : [openingBracketsRaw, closingBracketsRaw];
-	const decrBrackets = [incrBrackets[1], incrBrackets[0]];
+	const incrIsClosing = before ? [true, false] : [false, true];
+	const decrIsClosing = [incrIsClosing[1], incrIsClosing[0]];
 	let selection: Array<vscode.Position | null> = [null, null];
 	for (const side of [0, 1]) {
 		let nesting = 0;
@@ -269,14 +291,18 @@ function findOuterBracketRaw(
 			if (direction[side] === -1 && offsetPos.character === 0) {
 				continue;
 			}
-			const lookingAtPos = offsetPos.translate(0, Math.min(direction[side], 0));
-			const lookingAt = characterAtPoint(doc, lookingAtPos);
-			if (incrBrackets[side].includes(lookingAt)) { ++nesting; }
-			else if (decrBrackets[side].includes(lookingAt)) { --nesting; }
+			let lookingAt = oneOfAtPoint(doc, incrIsClosing[side], true, beforeFor[side], offsetPos);
+			if (lookingAt) { ++nesting; }
+			else {
+				lookingAt = oneOfAtPoint(doc, decrIsClosing[side], true, beforeFor[side], offsetPos);
+				if (lookingAt) {
+					--nesting;
 			if (nesting === -1) {
-				selection[side] = offsetPos.translate(0, direction[side]);
+						selection[side] = offsetPos.translate(0, lookingAt.length * direction[side]);
 				break;
 			}
+		}
+	}
 		}
 	}
 	if (selection[0] && selection[1]) { return new vscode.Selection(selection[1], selection[0]); }
@@ -335,8 +361,10 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos) : null;
 	const doc = textEditor.document;
 	if (near && bracketScope) {
-		const bs = nextPosition(doc, bracketScope.start);
-		const be = previousPosition(doc, bracketScope.end);
+		const lookingAtS = oneOfAtPoint(doc, false, bracketsMode === "Raw", false, bracketScope.start);
+		const bs = lookingAtS ? bracketScope.start.translate(0, lookingAtS.length) : bracketScope.start;
+		const lookingAtE = oneOfAtPoint(doc, true, bracketsMode === "Raw", true, bracketScope.end);
+		const be = lookingAtE ? bracketScope.end.translate(0, -1 * lookingAtE.length) : bracketScope.end;
 		bracketScope = before ? new vscode.Selection(be, bs) : new vscode.Selection(bs, be);
 	}
 	const blockMode = configuration.get<string>("navi-parens.blockScopeMode");
