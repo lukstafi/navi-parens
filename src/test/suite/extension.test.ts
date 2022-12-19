@@ -300,6 +300,39 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastNextScope', mode, 'python'
 		));
+		test('Problematic syntax navigation: down scope with IND from header line no change ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			@^def foo(bar, baz):
+				bar()
+				baz()
+			
+			pass
+			`,
+			'goToDownScope', mode, 'python'
+		));
+		test('Problematic syntax navigation: down scope with IND from header line 2 no change ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			d@^ef foo(bar, baz):
+				bar()
+				baz()
+			
+			pass
+			`,
+			'goToDownScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: down scope with IND from inner line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			def foo(bar, baz):
+				ba@r()
+				baz()
+			^
+			pass
+			`,
+			'goToDownScope', mode, 'python'
+		));
 		test('Tricky syntax navigation: previous scope with IND from code line ' + mode, testCase(
 			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`

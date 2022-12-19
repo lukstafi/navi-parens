@@ -319,13 +319,19 @@ function findOuterIndentation(
 	const doc = textEditor.document;
 	const direction = before ? [-1, 1] : [1, -1];
 	let selection: Array<vscode.Position | null> = [null, null];
+	// Note: there is an assymetry between the `-1` and `1` directions, because an indentation scope starts
+	// with an undindented line and ends with an indented line!
 	for (const side of [0, 1]) {
 		let entryIndent = -1;
 		let previousNo = -1;
 		let previousIndent = -1;
+		let passingEmptyLine = false;
 		for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction[side]) {
 			const line = doc.lineAt(lineNo);
-			if (line.isEmptyOrWhitespace && lineNo < doc.lineCount - 1 && lineNo > 0) { continue; }
+			if (line.isEmptyOrWhitespace && lineNo < doc.lineCount - 1 && lineNo > 0) {
+				passingEmptyLine = true;
+				continue;
+			}
 			// TODO(4): handle tabs/spaces?
 			const indentation = line.firstNonWhitespaceCharacterIndex;
 			if (entryIndent < 0) { entryIndent = indentation; }
@@ -335,15 +341,18 @@ function findOuterIndentation(
 						selection[side] = new vscode.Position(previousNo, previousIndent);
 					} else {
 						// Return end of the previous line.
-						selection[side] = doc.positionAt(doc.offsetAt(new vscode.Position(previousNo + 1, 0)) - 1);
+						selection[side] = doc.lineAt(previousNo).range.end;
 					}
 				} else {
-					selection[side] = new vscode.Position(lineNo, indentation);
+					const previousLinePos = doc.lineAt(lineNo - direction[side]).range.end;
+					selection[side] = direction[side] === 1 && passingEmptyLine ?
+						previousLinePos : new vscode.Position(lineNo, indentation);
 				}
 				break;
 			}
 			previousNo = lineNo;
 			previousIndent = indentation;
+			passingEmptyLine = false;
 		}
 	}
 	if (selection[0] && selection[1]) { return new vscode.Selection(selection[1], selection[0]); }
