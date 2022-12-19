@@ -191,27 +191,28 @@ async function findOuterBracket(
 	const doc = textEditor.document;
 	// TODO(3): the rules do not handle multicharacter brackets.
 
-	// If we are touching a bracket from the outside and there's a non-bracket-adjacent spot beside, jump from it
+	// If we are touching a bracket from the outside and we wouldn't cross a scope moving beside, jump from there
 	// rather than current position, to minimize jumpToBracket calls.
 	let from = pos;
 	const allBrackets = openingBrackets.concat(closingBrackets);
 	let leftPos = pos.character === 0 ? null : doc.validatePosition(pos.translate(0, -1));
+	let rightPos = doc.validatePosition(pos.translate(0, 1));
 	if (openingBrackets.includes(characterAtPoint(doc, pos))) {
+		// From an opening bracket, we can only move left.
 		if (leftPos && leftPos !== pos && !allBrackets.includes(characterAtPoint(doc, leftPos))) {
+		// Moving left into a bracket position always crosses a scope (exiting on open or entering on close).
 			let leftLeft = leftPos.character === 0 ? null : doc.validatePosition(leftPos.translate(0, -1));
-			if (leftLeft && !allBrackets.includes(characterAtPoint(doc, leftLeft))) {
+			if (leftLeft && !closingBrackets.includes(characterAtPoint(doc, leftLeft))) {
+				// Not worth moving next to a sibling-scope bracket, otherwise good.
 				from = leftPos;
 			}
 		}
-	}
-	if (leftPos && leftPos !== pos && closingBrackets.includes(characterAtPoint(doc, leftPos)) &&
-			!allBrackets.includes(characterAtPoint(doc, pos))) {
-		let rightPos = doc.validatePosition(pos.translate(0, 1));
-		if (rightPos !== pos && !allBrackets.includes(characterAtPoint(doc, rightPos))) {
-			let rightRight = rightPos.translate(0, 1);
-			if (!allBrackets.includes(characterAtPoint(doc, rightRight))) {
+	} else if (leftPos && leftPos !== pos && !allBrackets.includes(characterAtPoint(doc, pos))) {
+		// Otherwise it is better to go right or stay in place. Going right crosses scopes iff there is any
+		// bracket at `pos`.
+		if (rightPos && rightPos !== pos && !openingBrackets.includes(characterAtPoint(doc, rightPos))) {
+			// Not worth moving next to a sibling-scope bracket, otherwise good.
 				from = rightPos;
-			}
 		}
 	}
 	// In all cases, we need both ends of a scope, both verified via Jump To Bracket.
@@ -236,6 +237,7 @@ async function findOuterBracket(
 			return new vscode.Selection(jumpBack, jumpPos.translate(0, 1));
 		}
 	}
+	// If we could not locate the outer scope from the current position, we need to jump over a sibling scope.
 	const rightwardPos = jumpPos.isBefore(jumpBack) ? jumpBack : jumpPos;
 	if (rightwardPos.isAfter(pos) && rightwardPos.isAfter(from)) {
 		// Note that rightwardPos will be at the closing bracket inside the sibling scope, moving out of it.
