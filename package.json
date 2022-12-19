@@ -216,9 +216,12 @@
           "markdownDescription": "The closing delimiters for the `Raw` `bracketScopeMode`",
           "type": "array",
           "default": [
+            " *)",
             ")",
             "]",
-            "}"
+            "}",
+            "</p>",
+            "</div>"
           ],
           "scope": "language-overridable"
         },
@@ -226,9 +229,12 @@
           "markdownDescription": "The closing delimiters for the `Raw` `bracketScopeMode`",
           "type": "array",
           "default": [
+            "(* ",
             "(",
             "[",
-            "{"
+            "{",
+            "<p>",
+            "<div"
           ],
           "scope": "language-overridable"
         },

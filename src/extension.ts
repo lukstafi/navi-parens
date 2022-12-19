@@ -28,11 +28,21 @@ interface DocumentNavigationState {
 }
 let documentStates = new Map<vscode.Uri, DocumentNavigationState>();
 
+// In case of doubt, add more parentheses.
+function escapeRegExps(strings: string[]) {
+	return strings.map(s => '('+s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')+')'); // $& means the whole matched string
+}
+
 let closingBrackets: string[] = [")", "]", "}", ">"];
 let openingBrackets: string[] = ["(", "[", "{", "<"];
-let closingBracketsRaw: string[] = [")", "]", "}"];
-let openingBracketsRaw: string[] = ["(", "[", "{"];
-
+let closingBracketsRaw: string[] = [" *)", ")", "]", "}", "</p>", "</div>"];
+let openingBracketsRaw: string[] = ["(* ", "(", "[", "{", "<p>", "<div"];
+let closingBeforeRawRegex = new RegExp('(' + escapeRegExps(closingBracketsRaw).join('|') + ')$', 'u');
+let openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw).join('|') + ')$', 'u');
+let closingAfterRawRegex = new RegExp('^(' + escapeRegExps(closingBracketsRaw).join('|') + ')', 'u');
+let openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw).join('|') + ')', 'u');
+let closingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
+let openingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
 let naviStatusBarItem: vscode.StatusBarItem;
 
 /** From Navi Parens perspective, positions on the border of a scope are outside of the scope. */
@@ -651,6 +661,24 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 			openingBrackets = openingBracketsConfig;
 		}
 	}
+	if (event.affectsConfiguration('navi-parens.closingBracketsRaw')) {
+		const closingBracketsRawConfig = configuration.get<string[]>("navi-parens.closingBracketsRaw");
+		if (closingBracketsRawConfig) {
+			closingBracketsRaw = closingBracketsRawConfig;
+			closingBeforeRawRegex = new RegExp('(' + escapeRegExps(closingBracketsRaw).join('|') + ')$', 'u');
+			closingAfterRawRegex = new RegExp('^(' + escapeRegExps(closingBracketsRaw).join('|') + ')', 'u');
+			closingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
+		}
+	}
+	if (event.affectsConfiguration('navi-parens.openingBracketsRaw')) {
+		const openingBracketsRawConfig = configuration.get<string[]>("navi-parens.openingBracketsRaw");
+		if (openingBracketsRawConfig) {
+			openingBracketsRaw = openingBracketsRawConfig;
+			openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw).join('|') + ')$', 'u');
+			openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw).join('|') + ')', 'u');
+			openingRawMaxLength = Math.max(...openingBracketsRaw.map(delim => delim.length));
+		}
+	}
 	if (event.affectsConfiguration('navi-parens.blockScopeMode') ||
 		event.affectsConfiguration('navi-parens.bracketScopeMode')
 	) {
@@ -698,6 +726,20 @@ export function activate(context: vscode.ExtensionContext) {
 	const openingBracketsConfig = configuration.get<string[]>("navi-parens.openingBrackets");
 	if (openingBracketsConfig) {
 		openingBrackets = openingBracketsConfig;
+	}
+	const closingBracketsRawConfig = configuration.get<string[]>("navi-parens.closingBracketsRaw");
+	if (closingBracketsRawConfig) {
+		closingBracketsRaw = closingBracketsRawConfig;
+		closingBeforeRawRegex = new RegExp('(' + escapeRegExps(closingBracketsRaw).join('|') + ')$', 'u');
+		closingAfterRawRegex = new RegExp('^(' + escapeRegExps(closingBracketsRaw).join('|') + ')', 'u');
+		closingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
+	}
+	const openingBracketsRawConfig = configuration.get<string[]>("navi-parens.openingBracketsRaw");
+	if (openingBracketsRawConfig) {
+		openingBracketsRaw = openingBracketsRawConfig;
+		openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw).join('|') + ')$', 'u');
+		openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw).join('|') + ')', 'u');
+		openingRawMaxLength = Math.max(...openingBracketsRaw.map(delim => delim.length));
 	}
 	vscode.workspace.onDidChangeConfiguration(configurationChangeUpdate);
 
