@@ -404,6 +404,43 @@ suite('Extension Test Suite', () => {
 			`(<p>()@^</p>)`,
 			'goToEndScope', mode, 'html'
 		));
+
+		test('Multicharacter brackets navigation: up multiline ' + mode, testCase(
+			`^<p>
+			   <p> </p>@
+			</p>`,
+			'goToUpScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: down multiline ' + mode, testCase(
+			`<p>
+				@<p> </p>
+			</p>^`,
+			'goToDownScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: left multiline ' + mode, testCase(
+			`<p>^<p>
+				</p>
+				@</p>`,
+			'goPastPreviousScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: right multiline ' + mode, testCase(
+			`<p>
+			@<p>
+			</p>^</p>`,
+			'goPastNextScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: beginning multiline ' + mode, testCase(
+			`<p>^
+			 <p> </p>@<p> </p>
+			 </p>`,
+			'goToBeginScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: end multiline ' + mode, testCase(
+			`<p>
+			 <p> </p>@<p> </p>
+			 ^</p>`,
+			'goToEndScope', mode, 'html'
+		));
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
 		test('Bracket syntax navigation: begin scope other line ' + mode, testCase(
