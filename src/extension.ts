@@ -498,7 +498,10 @@ async function findSiblingBracket(
 }
 
 /** Like findSiblingBracket, but for indentation blocks. Note that it can return a scope that strictly
- *  includes the point (due to the "wide delimiters" view of indentation scopes). */
+ *  includes the point (due to the "wide delimiters" view of indentation scopes).
+ * 
+ * Empty lines surrounding a scope are treated as "not belonging to any scope", which is inelegant
+ * formally, but leads to better navigation experience. */
 function findSiblingIndentation(
 	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): vscode.Selection | null {
 	const doc = textEditor.document;
@@ -506,23 +509,36 @@ function findSiblingIndentation(
 	let noIndent = -1;
 	let entryNo = -1;
 	let updated = false;
+	let passingEmptyLine = false;
+	// Note: there is an assymetry between the `-1` and `1` directions, because an indentation scope starts
+	// with an undindented line and ends with an indented line!
 	for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction) {
 		const line = doc.lineAt(lineNo);
-		if (line.isEmptyOrWhitespace && lineNo < doc.lineCount - 1 && lineNo > 0) { continue; }
+		if (line.isEmptyOrWhitespace && lineNo < doc.lineCount - 1 && lineNo > 0) {
+			// Special treatment so that navigation does not get stuck by entering a scope next to a
+			// skipped-over scope.
+			passingEmptyLine = true;
+			continue;
+		}
 		// TODO(4): handle tabs?
 		const indentation = line.firstNonWhitespaceCharacterIndex;
 		if (noIndent < 0) {
 			noIndent = indentation;
 		}
 		else if (updated && indentation === noIndent) {
-			// Return end of the previous line.
-			const entryPos = new vscode.Position(entryNo, noIndent);
-			const leavePos = new vscode.Position(lineNo, indentation);
+			const entryPos = before ? doc.lineAt(entryNo).range.end : new vscode.Position(entryNo, noIndent);
+			const previousLinePos = doc.lineAt(lineNo - direction).range.end;
+			const leavePos = passingEmptyLine ? previousLinePos : new vscode.Position(lineNo, indentation);
 			return new vscode.Selection(entryPos, leavePos);
 		} else if (!updated && indentation > noIndent) {
 			updated = true;
-			entryNo = lineNo - direction;
-		} else if (indentation < noIndent) { return null;  }
+			if (before) {
+				entryNo = lineNo;
+			} else {
+				entryNo = lineNo - direction;
+			}
+		} else if (indentation < noIndent) { return null; }
+		passingEmptyLine = false;
 	}
 	return null;
 }

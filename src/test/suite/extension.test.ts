@@ -256,6 +256,134 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToEndScope', mode, 'typescript'
 		));
+
+		test('Tricky syntax navigation: next scope with IND from code line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			@for (let index = 0; index < array.length; index++)^ {
+				const element = array[index];
+			}
+			`,
+			'goPastNextScope', mode, 'typescript'
+		));
+		test('Tricky syntax navigation: next scope with IND from empty line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			@
+			for (let index = 0; index < array.length; index++) {
+				const element = array[index];
+			^}
+			`,
+			'goPastNextScope', mode, 'typescript'
+		));
+
+		test('Tricky syntax navigation: next scope with IND from empty line to empty line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			@
+			def foo(bar, baz):
+			  bar()
+				baz()
+			^
+			pass
+			`,
+			'goPastNextScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: next scope with IND from code line 2 ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			@def foo(bar, baz)^:
+			  bar()
+				baz()
+			
+			pass
+			`,
+			'goPastNextScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: previous scope with IND from code line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			
+			^def foo(bar, baz):
+				bar()
+				baz()
+			
+			@pass
+			`,
+			'goPastPreviousScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: previous scope with IND from attached code line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			
+			^def foo(bar, baz):
+				bar()
+				baz()
+			@pass
+			`,
+			'goPastPreviousScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: previous scope with IND from empty line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			^def foo(bar, baz):
+			  bar()
+				baz()
+			pass
+			@
+			`,
+			'goPastPreviousScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: previous scope with IND from hanging empty line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			
+			def foo(bar, baz):
+			  bar()
+				baz^()
+			@
+			`,
+			'goPastPreviousScope', mode, 'python'
+		));
+		test('Problematic syntax navigation: previous scope with IND from separating empty line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			
+			def foo(bar, baz):
+				bar()
+				baz^()
+			@
+			pass
+			`,
+			'goPastPreviousScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: previous scope with IND to separating empty line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			pass
+			
+			^def foo(bar, baz):
+				bar()
+				baz()
+			pass
+			@
+			`,
+			'goPastPreviousScope', mode, 'python'
+		));
+		test('Problematic syntax navigation: previous scope with IND from and to separating empty line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			pass
+			
+			def foo(bar, baz):
+				bar()
+				baz^()
+			@
+			pass
+			`,
+			'goPastPreviousScope', mode, 'python'
+		));
+
 	}
 	for (const mode of ['NON/RAW', 'IND/RAW']) {
 		test('Basic parentheses navigation: up to unmatched left ' + mode, testCase(
@@ -682,7 +810,7 @@ suite('Extension Test Suite', () => {
 		));
 
 		// Empty lines are never scope-introducing, to keep the logic simple.
-		test('Basic syntax navigation: up scope using IND empty line ' + mode, testCase(
+		test('Tricky syntax navigation: up scope using IND empty line ' + mode, testCase(
 			`
 			^for item in range:
 				if condition:
@@ -692,7 +820,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToUpScope', mode, 'python'
 		));
-		test('Basic syntax navigation: down scope using IND empty line ' + mode, testCase(
+		test('Tricky syntax navigation: down scope using IND empty line ' + mode, testCase(
 			`
 			for item in range:
 				if condition:
@@ -702,7 +830,7 @@ suite('Extension Test Suite', () => {
 			^`,
 			'goToDownScope', mode, 'python'
 		));
-		test('Basic syntax navigation: begin scope using IND empty line ' + mode, testCase(
+		test('Tricky syntax navigation: begin scope using IND empty line ' + mode, testCase(
 			`
 			for item in range:
 				^if condition:
@@ -712,7 +840,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToBeginScope', mode, 'python'
 		));
-		test('Basic syntax navigation: end scope using IND empty line ' + mode, testCase(
+		test('Tricky syntax navigation: end scope using IND empty line ' + mode, testCase(
 			`
 			for item in range:
 				if condition:
@@ -721,6 +849,71 @@ suite('Extension Test Suite', () => {
 					pass^
 			`,
 			'goToEndScope', mode, 'python'
+		));
+
+		test('Tricky syntax navigation: end scope using IND end empty line ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					@
+				elif condition:
+					pass^
+
+			pass
+			`,
+			'goToEndScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: begin scope using IND begin empty line ' + mode, testCase(
+			`
+			for item in range:
+
+				^if condition:
+					@
+				elif condition:
+					pass
+			pass
+			`,
+			'goToBeginScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: next scope using IND end empty line ' + mode, testCase(
+			`
+			@for item in range:
+				if condition:
+					pass
+				elif condition:
+					pass
+			^
+			pass
+			`,
+			'goPastNextScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: next scope using IND begin and end empty line ' + mode, testCase(
+			`
+			@
+			for item in range:
+				if condition:
+					pass
+				elif condition:
+					pass
+
+			^
+			pass
+			`,
+			'goPastNextScope', mode, 'python'
+		));
+		test('Tricky syntax navigation: previous scope using IND begin empty line ' + mode, testCase(
+			`
+			pass
+      
+			^for item in range:
+				if condition:
+					pass
+				elif condition:
+					pass
+			
+			@pass
+			`,
+			'goPastPreviousScope', mode, 'python'
 		));
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
