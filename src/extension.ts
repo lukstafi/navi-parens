@@ -201,7 +201,7 @@ async function findOuterBracket(
 		// From an opening bracket, we can only move left.
 		if (leftPos && leftPos !== pos && !allBrackets.includes(characterAtPoint(doc, leftPos))) {
 		// Moving left into a bracket position always crosses a scope (exiting on open or entering on close).
-			let leftLeft = leftPos.character === 0 ? null : doc.validatePosition(leftPos.translate(0, -1));
+		let leftLeft = leftPos.character === 0 ? null : doc.validatePosition(leftPos.translate(0, -1));
 			if (leftLeft && !closingBrackets.includes(characterAtPoint(doc, leftLeft))) {
 				// Not worth moving next to a sibling-scope bracket, otherwise good.
 				from = leftPos;
@@ -212,7 +212,7 @@ async function findOuterBracket(
 		// bracket at `pos`.
 		if (rightPos && rightPos !== pos && !openingBrackets.includes(characterAtPoint(doc, rightPos))) {
 			// Not worth moving next to a sibling-scope bracket, otherwise good.
-				from = rightPos;
+			from = rightPos;
 		}
 	}
 	// In all cases, we need both ends of a scope, both verified via Jump To Bracket.
@@ -297,12 +297,12 @@ function findOuterBracketRaw(
 				lookingAt = oneOfAtPoint(doc, decrIsClosing[side], true, beforeFor[side], offsetPos);
 				if (lookingAt) {
 					--nesting;
-			if (nesting === -1) {
+					if (nesting === -1) {
 						selection[side] = offsetPos.translate(0, lookingAt.length * direction[side]);
-				break;
+						break;
+					}
+				}
 			}
-		}
-	}
 		}
 	}
 	if (selection[0] && selection[1]) { return new vscode.Selection(selection[1], selection[0]); }
@@ -421,14 +421,17 @@ async function findSiblingBracket(
 	const doc = textEditor.document;
 	const direction = before ? -1 : 1;
 	const lastOffset = doc.offsetAt(doc.validatePosition(new vscode.Position(doc.lineCount, 1)));
-	const incrBrackets = before ? (raw ? closingBracketsRaw : closingBrackets) :
-		(raw ? openingBracketsRaw : openingBrackets);
-	const decrBrackets = !before ? (raw ? closingBracketsRaw : closingBrackets) :
-		(raw ? openingBracketsRaw : openingBrackets);
+	// const incrBrackets = before ? (raw ? closingBracketsRaw : closingBrackets) :
+	// 	(raw ? openingBracketsRaw : openingBrackets);
+	const incrIsClosing = before ? true : false;
+	// const decrBrackets = !before ? (raw ? closingBracketsRaw : closingBrackets) :
+	// 	(raw ? openingBracketsRaw : openingBrackets);
 	// `nesting` and `updated` only used when raw is true.
 	let nesting = 0;
 	let updated = false;
+	// TODO(9): this is convoluted, maybe refactor/simplify.
 	let jumpPos = null;
+	let lookingAtJump = null;
 	for (let offset = doc.offsetAt(pos); 0 <= offset && offset <= lastOffset; offset += direction) {
 		const offsetPos = doc.positionAt(offset);
 		// \r\n endline.
@@ -436,56 +439,58 @@ async function findSiblingBracket(
 		if (before && offsetPos.character === 0) {
 			continue;
 		}
-		const lookingAtPos = before ? offsetPos.translate(0, -1) : offsetPos;
-		const lookingAt = characterAtPoint(doc, lookingAtPos);
-		if (incrBrackets.includes(lookingAt)) {
+		const lookingAtIncr = oneOfAtPoint(doc, incrIsClosing, raw, before, offsetPos);
+		const lookingAtDecr = oneOfAtPoint(doc, !incrIsClosing, raw, before, offsetPos);
+		if (lookingAtIncr) {
+			const lookingAtIncrPos = offsetPos.translate(0, Math.min(direction * lookingAtIncr.length, 0));
 			if (raw) {
-				if (!updated) { jumpPos = lookingAtPos; }
+				if (!updated) { jumpPos = lookingAtIncrPos; lookingAtJump = lookingAtIncr; }
 				++nesting; updated = true;
 			} else {
 				// Check whether it is a real delimiter vs. e.g. in a comment.
-				let targetPos = await jumpToBracket(textEditor, lookingAtPos);
-				if (isNearer(before, targetPos, lookingAtPos)) {
+				let targetPos = await jumpToBracket(textEditor, lookingAtIncrPos);
+				if (isNearer(before, targetPos, lookingAtIncrPos)) {
 					continue;
 				}
-				if (targetPos.isEqual(lookingAtPos)) {
+				if (targetPos.isEqual(lookingAtIncrPos)) {
 					// No bracket scopes left to the right.
 					if (before) { continue; } else { return null; }
 				}
 				// Verify it was an active delimiter by backjumping.
 				jumpPos = await jumpToBracket(textEditor, targetPos);
-				if (jumpPos.isEqual(lookingAtPos)) {
+				if (jumpPos.isEqual(lookingAtIncrPos)) {
 					targetPos = before ? targetPos : targetPos.translate(0, 1);
-					const entryPos = before ? jumpPos.translate(0, 1) : jumpPos;
+					const entryPos = before ? jumpPos.translate(0, lookingAtIncr.length) : jumpPos;
 					return new vscode.Selection(entryPos, targetPos);
 				}
 			}
 		}
-		else if (decrBrackets.includes(lookingAt)) {
+		if (lookingAtDecr) {
+			const lookingAtDecrPos = offsetPos.translate(0, Math.min(direction * lookingAtDecr.length, 0));
 			if (raw) {
 				--nesting; updated = true;
+				if (nesting === 0) {
+					if (!jumpPos || !lookingAtJump) {
+						console.assert(false, 'findSiblingBracket anchor not initialized.');
+						return null;
+					}
+					const entryPos = before ? jumpPos.translate(0, lookingAtJump.length) : jumpPos;
+					return new vscode.Selection(entryPos, offsetPos.translate(0, direction*lookingAtDecr.length));
+				}
 			} else {
 				// Verify it is an active outer scope delimiter. If yes, bail out.
-				const endJump = await jumpToBracket(textEditor, lookingAtPos);
-				if (endJump.isEqual(lookingAtPos)) {
+				const endJump = await jumpToBracket(textEditor, lookingAtDecrPos);
+				if (endJump.isEqual(lookingAtDecrPos)) {
 					// No bracket scopes left to the right. No need to back-jump, it's not a valid delimiter.
 					if (before) { continue; } else { return null; }
 				}
 				if (before) {
 					const backJump = await jumpToBracket(textEditor, endJump);
-					if (backJump.isEqual(lookingAtPos)) { return null; }
+					if (backJump.isEqual(lookingAtDecrPos)) { return null; }
 				} else {
 					if (endJump.isBefore(offsetPos)) { return null; }
 				}
 			}
-		}
-		if (updated && nesting === 0) {
-			if (!jumpPos) {
-				console.assert(false, 'findSiblingBracket anchor not initialized.');
-				return null;
-			}
-			const entryPos = before ? jumpPos.translate(0, 1) : jumpPos;
-			return new vscode.Selection(entryPos, offsetPos.translate(0, direction));
 		}
 		if (updated && nesting < 0) { return null; }
 	}

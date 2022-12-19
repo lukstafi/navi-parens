@@ -69,13 +69,13 @@ function testCase(content: string, command: string, mode: string, language: stri
 		const modePair = modes.get(mode);
 		assert.notStrictEqual(modePair, undefined);
 		if (!modePair) { return; }
-		const [blockMode, bracketMode] = modePair;
+		const [blockMode, bracketsMode] = modePair;
 		await vscode.workspace.getConfiguration().update("navi-parens.blockScopeMode", blockMode,
 			vscode.ConfigurationTarget.Global, true);
-		await vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketMode,
+		await vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketsMode,
 			vscode.ConfigurationTarget.Global, true);
 		// Wait extra for the bracket providers to settle.
-		if (bracketMode === 'JumpToBracket') {
+		if (bracketsMode === 'JumpToBracket') {
 			await new Promise(f => setTimeout(f, 500));
 		}
 		// We cannot use vscode.commands.executeCommand because that creates a different TextEditor.
@@ -126,11 +126,11 @@ suite('Extension Test Suite', () => {
 			'goPastNextScope', mode, 'typescript'
 		));
 		test('Basic parentheses navigation: beginning from between parens ' + mode, testCase(
-			`((^()@()))`,
+			`((^ ()@()))`,
 			'goToBeginScope', mode, 'typescript'
 		));
 		test('Basic parentheses navigation: end from between parens ' + mode, testCase(
-			`((()@()^))`,
+			`((()@() ^))`,
 			'goToEndScope', mode, 'typescript'
 		));
 		test('Basic parentheses navigation: beginning no-change ' + mode, testCase(
@@ -322,6 +322,88 @@ suite('Extension Test Suite', () => {
 			'goToDownScope', mode, 'typescript'
 		));
 
+		// Multicharacter brackets.
+		test('Multicharacter brackets navigation: up from between parens ' + mode, testCase(
+			`(^(* @() *))`,
+			'goToUpScope', mode, 'pascal'
+		));
+		test('Multicharacter brackets navigation: down from between parens ' + mode, testCase(
+			`((* @() *)^)`,
+			'goToDownScope', mode, 'pascal'
+		));
+		test('Multicharacter brackets navigation: left no-change ' + mode, testCase(
+			`((* ^@() *))`,
+			'goPastPreviousScope', mode, 'pascal'
+		));
+		test('Multicharacter brackets navigation: right no-change ' + mode, testCase(
+			`((* ()@^ *))`,
+			'goPastNextScope', mode, 'pascal'
+		));
+		test('Multicharacter brackets navigation: left ' + mode, testCase(
+			`(^(* () *)@)`,
+			'goPastPreviousScope', mode, 'pascal'
+		));
+		test('Multicharacter brackets navigation: right ' + mode, testCase(
+			`(@(* () *)^)`,
+			'goPastNextScope', mode, 'pascal'
+		));
+		test('Multicharacter brackets navigation: beginning from between parens ' + mode, testCase(
+			`((* ^ ()@() *))`,
+			'goToBeginScope', mode, 'pascal'
+		));
+		test('Multicharacter brackets navigation: end from between parens ' + mode, testCase(
+			`((* ()@() ^ *))`,
+			'goToEndScope', mode, 'pascal'
+		));
+		test('Multicharacter brackets navigation: beginning no-change ' + mode, testCase(
+			`((* ^@() *))`,
+			'goToBeginScope', mode, 'pascal'
+		));
+		test('Multicharacter brackets navigation: end no-change ' + mode, testCase(
+			`((* ()@^ *))`,
+			'goToEndScope', mode, 'pascal'
+		));
+
+		test('Multicharacter brackets navigation: up from between parens 2 ' + mode, testCase(
+			`(^<p>@()</p>)`,
+			'goToUpScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: down from between parens 2 ' + mode, testCase(
+			`(<p>@()</p>^)`,
+			'goToDownScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: left no-change 2 ' + mode, testCase(
+			`(<p>^@()</p>)`,
+			'goPastPreviousScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: right no-change 2 ' + mode, testCase(
+			`(<p>()@^</p>)`,
+			'goPastNextScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: left 2 ' + mode, testCase(
+			`(^<p>()</p>@)`,
+			'goPastPreviousScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: right 2 ' + mode, testCase(
+			`(@<p>()</p>^)`,
+			'goPastNextScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: beginning from between parens 2 ' + mode, testCase(
+			`(<p>^ ()@()</p>)`,
+			'goToBeginScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: end from between parens 2 ' + mode, testCase(
+			`(<p>()@() ^</p>)`,
+			'goToEndScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: beginning no-change 2 ' + mode, testCase(
+			`(<p>^@()</p>)`,
+			'goToBeginScope', mode, 'html'
+		));
+		test('Multicharacter brackets navigation: end no-change 2 ' + mode, testCase(
+			`(<p>()@^</p>)`,
+			'goToEndScope', mode, 'html'
+		));
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
 		test('Bracket syntax navigation: begin scope other line ' + mode, testCase(
