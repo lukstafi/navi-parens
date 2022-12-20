@@ -170,7 +170,7 @@ Coming from Emacs, I appreciate and suggest:
 
 ## Release Notes
 
-See the ![changelog file](https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog) for a detailed list of features and changes!
+See the [changelog] for a detailed list of features and changes!
 
 The main feature that is still missing is multiple cursors support.
 
@@ -198,3 +198,5 @@ Initial release of Navi Parens.
 
 * Multicharacter delimiters for the RAW brackets mode!
 * Improvements to the Indentation block mode navigation.
+
+[changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog
