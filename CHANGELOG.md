@@ -1,8 +1,24 @@
 # Change Log
 
-## [Unreleased]
+## [1.1.0] -- 2022-12-20
 
-- ...
+### Added
+
+- Multicharacter delimiters for the RAW mode.
+- More tests.
+
+### Changed
+
+- Unmatched brackets/parentheses now work well with the RAW mode: the scope extends to the document boundary.
+- Indentation mode Next Scope / Down Scope now stops at an empty line if available: smoother navigation.
+
+### Fixed
+
+- Next / Previous Word navigation when there is 1 character to go past in the current word.
+- Test flakiness for the Jump To Bracket mode.
+- The delimiters configuration for the RAW mode is now processed / propagated.
+- The JTB mode Go To Up / Down Scope code had a bug.
+- Clarification and fixes to the Indentation mode semantics.
 
 ## [1.0.1] -- 2022-12-09
 

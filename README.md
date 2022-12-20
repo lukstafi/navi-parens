@@ -7,6 +7,18 @@ It also provides additional key bindings for moving the cursor without "fingers 
 
 VSCode, Emacs, Structured Code Navigation, Home Row Cursor Movement
 
+## Overview
+
+Navi Parens provides commands for moving the cursor around smoothly from the innermost parentheses to the outermost code blocks and in between. It also offers keybindings centered around the `J, K, L, I` keys and the `Alt` modifier. E.g. moves of the cursor: `Alt+J` one character left, `Ctrl+Alt+J` one scope left, `Alt+K` one line up, `Ctrl+Alt+K` to outside the beginning of the scope around the cursor.
+
+![Overview](animations/overview.gif)
+* Activates the extension.
+* Navigates in `SEM` mode across functions.
+* Navigates in `SEM/JTB` mode within function.
+* Switches to `IND`, navigates within function.
+* Navigates across functions.
+* Switches to `RAW` to demonstrate navigating within docu-comments.
+
 ## Features
 
 Commands:
@@ -57,12 +69,12 @@ Navi Parens combines two sources of structure information:
 * Code blocks.
 
 Each of the sources comes in two variants.
-* The bracket scopes come from either a judicious use of the built-in `Go to Bracket` command, or just looking for the delimiter characters.
+* The bracket scopes come from either a judicious use of the built-in `Go to Bracket` command, or just looking for the delimiters.
 * The block scopes come from either semantic symbol providers, as in the outline view, where the corresponding scope is the full range of a definition; or from indentation.
 
-An indentation scope comprises a less-indented line followed by at least one more-indented line. The first, less-indented line is a big opening delimiter for the indentation scope: none of it is inside the scope, and only the first non-whitespace position and earlier are outside the scope. The closing delimiter is the whitespace from the end of the last indented line to before the first non-whitespace position of the less-indented following line.
+An indentation scope comprises a less-indented line followed by at least one more-indented line. The first, less-indented line is a big opening delimiter for the indentation scope: none of it is inside the scope, and only the first non-whitespace position and earlier are outside the scope. The closing delimiter is the whitespace from the end of the last indented line to before the first non-whitespace position of the less-indented following line. Currently, if there is an empty line at the end of an indentation scope, the `Go Past Next Scope` and `Go To Down Scope` commands put the cursor there.
 
-The `Raw` mode for bracket scopes is useful for navigating within comments or string literals, and does not cause "jitter" like the `JumpToBracket` mode does. However, it is less reliable since it will count brackets even if they were not intended as delimiters.
+The `Raw` mode for bracket scopes is useful as it enables navigating within comments or string literals, and does not cause "jitter" like the `JumpToBracket` mode does. However, it is less reliable since it will count brackets even if they were not intended as delimiters.
 
 ## Some use cases
 
@@ -116,10 +128,10 @@ This extension contributes the following settings:
   * Defaults to `["(", "[", "{", "<"]`.
   * Can be language specific.
 * `navi-parens.closingBracketsForRaw`: the closing delimiters for `bracketScopeProvider.Raw`.
-  * Defaults to `[")", "]", "}"]`.
+  * Defaults to `[" *)", ")", "]", "}", "</p>", "</div>"]`.
   * Can be language specific.
 * `navi-parens.openingBracketsForRaw`: the opening delimiters for `bracketScopeProvider.Raw`.
-  * Defaults to `["(", "[", "{"]`.
+  * Defaults to `["(* ", "(", "[", "{", "<p>", "<div"]`.
   * Can be language specific.
 * `navi-parens.pastWordRegex`: the regular expression defining words by which the `alt+h`/`alt+;` commands navigate.
   * Defaults to `"\\p{General_Category=Letter}|[0-9]|_"`.
@@ -160,7 +172,7 @@ Coming from Emacs, I appreciate and suggest:
 
 ## Release Notes
 
-See the ![changelog file](./CHANGELOG.md) for a detailed list of features and changes!
+See the ![changelog file](https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog) for a detailed list of features and changes!
 
 The main features that are still missing are multiple cursors support and multicharacter delimiters support.
 
@@ -183,3 +195,8 @@ Initial release of Navi Parens.
 ### 1.0.1
 
 * Marketplace tags for more discoverability.
+
+### 1.1.0
+
+* Multicharacter delimiters for the RAW brackets mode!
+* Improvements to the Indentation block mode navigation.
