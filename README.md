@@ -147,8 +147,6 @@ Currently, multiple cursors are not supported.
 
 I ignore defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.
 
-Currently, navigating scopes with multicharacter closing brackets might not work well (issue [#3](https://github.com/lukstafi/navi-parens/issues/3)).
-
 If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
 
 When navigating down out of a scope with both indentation and bracket scopes enabled, where the scope brackets are both the first non-white characters on their lines (as often happens with braces in JSON files), the behavior can be a bit unintuitive: the cursor can end up before the closing bracket/brace. That is because we jump out of the indentation scope, since it is contained (not just overlapping) in the brackets scope. We remain within the brackets scope. It is the intended behavior.
@@ -174,7 +172,7 @@ Coming from Emacs, I appreciate and suggest:
 
 See the ![changelog file](https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog) for a detailed list of features and changes!
 
-The main features that are still missing are multiple cursors support and multicharacter delimiters support.
+The main feature that is still missing is multiple cursors support.
 
 ### 0.9
 
