@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.1.1] -- 2022-12-20
+
+### Fixed
+
+- A README tweak missing from 1.1.0.
+
 ## [1.1.0] -- 2022-12-20
 
 ### Added
