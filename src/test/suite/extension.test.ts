@@ -300,7 +300,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastNextScope', mode, 'python'
 		));
-		test('Problematic syntax navigation: down scope with IND from header line no change ' + mode, testCase(
+		test('Tricky syntax navigation: down scope with IND from header line no change ' + mode, testCase(
 			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			@^def foo(bar, baz):
@@ -311,7 +311,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToDownScope', mode, 'python'
 		));
-		test('Problematic syntax navigation: down scope with IND from header line 2 no change ' + mode, testCase(
+		test('Tricky syntax navigation: down scope with IND from header line 2 no change ' + mode, testCase(
 			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			d@^ef foo(bar, baz):
@@ -378,7 +378,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastPreviousScope', mode, 'python'
 		));
-		test('Problematic syntax navigation: previous scope with IND from separating empty line ' + mode, testCase(
+		test('Tricky syntax navigation: previous scope with IND from separating empty line ' + mode, testCase(
 			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			
@@ -403,7 +403,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastPreviousScope', mode, 'python'
 		));
-		test('Problematic syntax navigation: previous scope with IND from and to separating empty line ' + mode, testCase(
+		test('Tricky syntax navigation: previous scope with IND from and to separating empty line ' + mode, testCase(
 			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			pass

@@ -430,11 +430,7 @@ async function findSiblingBracket(
 	const doc = textEditor.document;
 	const direction = before ? -1 : 1;
 	const lastOffset = doc.offsetAt(doc.validatePosition(new vscode.Position(doc.lineCount, 1)));
-	// const incrBrackets = before ? (raw ? closingBracketsRaw : closingBrackets) :
-	// 	(raw ? openingBracketsRaw : openingBrackets);
 	const incrIsClosing = before ? true : false;
-	// const decrBrackets = !before ? (raw ? closingBracketsRaw : closingBrackets) :
-	// 	(raw ? openingBracketsRaw : openingBrackets);
 	// `nesting` and `updated` only used when raw is true.
 	let nesting = 0;
 	let updated = false;
