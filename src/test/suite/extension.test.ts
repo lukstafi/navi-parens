@@ -616,30 +616,57 @@ suite('Extension Test Suite', () => {
 		));
 		// FIXME(11): bug.
 		test('Multicharacter brackets navigation: left multiline 3 ' + mode, testCase(
-			`^{
+			`^[
 				(* comment *)
-			}@`,
+			]@`,
 			'goPastPreviousScope', mode, 'pascal', true
 		));
 		test('Multicharacter brackets navigation: right multiline 3 ' + mode, testCase(
-			`@{
+			`@[
 				(* comment *)
-			}^`,
+			]^`,
 			'goPastNextScope', mode, 'pascal', true
 		));
 		test('Multicharacter brackets navigation: up multiline 2 ' + mode, testCase(
-			`^{
+			`^[
 			   (* comment *)@
-			}`,
+			]`,
 			'goToUpScope', mode, 'pascal', true
 		));
 		test('Multicharacter brackets navigation: down multiline 2 ' + mode, testCase(
-			`{
+			`[
 			   @(* comment *)
-			}^`,
+			]^`,
 			'goToDownScope', mode, 'pascal', true
 		));
 
+	}
+	{
+		const mode = 'IND/RAW';
+		test('Multicharacter brackets navigation: up multiline 3 ' + mode, testCase(
+			`(* comment *)
+
+			program Test;
+			^begin
+				Pass;
+				@(* comment *)
+				Pass;
+			end.
+			}`,
+			'goToUpScope', mode, 'pascal', true
+		));
+		test('Non-Multicharacter brackets navigation: baseline for up multiline 3 ' + mode, testCase(
+			`{ comment }
+
+			program Test;
+			^begin
+				Pass;
+				@{ comment }
+				Pass;
+			end.
+			}`,
+			'goToUpScope', mode, 'pascal', true
+		));
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
 		test('Bracket syntax navigation: begin scope other line ' + mode, testCase(
