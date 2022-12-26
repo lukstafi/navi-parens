@@ -266,15 +266,39 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastNextScope', mode, 'typescript'
 		));
+		// FIXME(12): make this work by default, make it a config if this "offends the logic of scopes".
+		test('Tricky syntax navigation: next scope with IND from code line 2 ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			@{
+				let local = true;
+			}
+			^{
+				let local = 'true';
+			}
+			`,
+			'goPastNextScope', mode, 'typescript', true
+		));
+		test('Tricky syntax navigation: next scope with IND from code line 3 ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			@{
+				let local = true; }
+			^{
+				let local = 'true';
+			}
+			`,
+			'goPastNextScope', mode, 'typescript', true
+		));
 		test('Tricky syntax navigation: next scope with IND from empty line ' + mode, testCase(
 			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			@
 			for (let index = 0; index < array.length; index++) {
 				const element = array[index];
-			^}
+			}^
 			`,
-			'goPastNextScope', mode, 'typescript'
+			'goPastNextScope', mode, 'typescript', true
 		));
 
 		test('Tricky syntax navigation: next scope with IND from empty line to empty line ' + mode, testCase(
