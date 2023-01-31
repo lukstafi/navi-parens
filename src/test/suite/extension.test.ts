@@ -440,7 +440,7 @@ suite('Extension Test Suite', () => {
 				const element = array[index];
 			}^
 			`,
-			'goPastNextScope', mode, 'typescript', true
+			'goPastNextScope', mode, 'typescript'
 		));
 
 	}

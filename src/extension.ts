@@ -616,7 +616,7 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 	if (blockScope && scopeLimit && !scopeLimit.contains(blockScope)) {
 		blockScope = null;
 	}
-	if (bracketScope && scopeLimit && !scopeLimit.contains(bracketScope)) {
+	if (bracketScope && scopeLimit && !scopeLimit.intersection(bracketScope)) {
 		bracketScope = null;
 	}
 	
