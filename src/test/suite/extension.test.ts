@@ -432,6 +432,23 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToDownScope', mode, 'typescript'
 		));
+		test('Tricky syntax navigation: previous scope with IND from indented line ' + mode, testCase(
+			`
+			for ^(let index = 0;
+				   index < array.length;
+					 index++)@ {
+				const element = array[index];
+			}
+			`,
+			'goPastPreviousScope', mode, 'typescript'
+		));
+		test('Tricky syntax navigation: previous scope with IND from indented line 2 ' + mode, testCase(
+			`
+			print^("Hello, ",
+                 name)@
+			`,
+			'goPastPreviousScope', mode, 'typescript'
+		));
 		test('Tricky syntax navigation: next scope with IND from indented line ' + mode, testCase(
 			`
 			for (let index = 0;
