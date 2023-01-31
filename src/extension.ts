@@ -317,6 +317,15 @@ function findOuterBracketRaw(
 	return null;
 }
 
+async function findBracketScopeOverPos(
+	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): Promise<vscode.Selection | null> {
+	const configuration = vscode.workspace.getConfiguration();
+	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	let bracketScope = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
+		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos) : null;
+	return bracketScope;
+}
+
 function findOuterIndentation(
 	textEditor: vscode.TextEditor, before: boolean, near: boolean, pos: vscode.Position): vscode.Selection | null {
 	const doc = textEditor.document;
@@ -415,6 +424,11 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 			textEditor.revealRange(state.lastVisibleRange);
 		}
 		return;	
+	}
+	const maybeBracketOverride = await findBracketScopeOverPos(textEditor, before, result);
+	if (maybeBracketOverride && (!blockScope || !maybeBracketOverride.contains(blockScope)) &&
+		(!bracketScope || !maybeBracketOverride.contains(bracketScope))) {
+		result = maybeBracketOverride.active;
 	}
 	const anchor = select ? savedSelection.anchor : result;
 	textEditor.selection = new vscode.Selection(anchor, result);
@@ -628,6 +642,11 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 			textEditor.revealRange(state.lastVisibleRange);
 		}
 		return;
+	}
+	const maybeBracketOverride = await findBracketScopeOverPos(textEditor, before, targetPos);
+	if (maybeBracketOverride && (!blockScope || !maybeBracketOverride.contains(blockScope)) &&
+		(!bracketScope || !maybeBracketOverride.contains(bracketScope))) {
+		targetPos = maybeBracketOverride.active;
 	}
 	const anchor = select ? savedSelection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);

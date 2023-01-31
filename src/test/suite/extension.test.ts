@@ -238,7 +238,6 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'typescript'
 		));
 		test('Basic syntax navigation: begin scope with IND ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which here comes from indentation.
 			// (For indentation the less-indented line is a big delimiter, its start is outside but it is not inside.)
 			`
 			for (let index = 0; index < array.length; index++) {
@@ -248,7 +247,6 @@ suite('Extension Test Suite', () => {
 			'goToBeginScope', mode, 'typescript'
 		));
 		test('Basic syntax navigation: end scope with IND ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			for (let index = 0; index < array.length; index++) {
 				const element = @array[index];^
@@ -258,7 +256,6 @@ suite('Extension Test Suite', () => {
 		));
 
 		test('Tricky syntax navigation: next scope with IND from code line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			@for (let index = 0; index < array.length; index++)^ {
 				const element = array[index];
@@ -266,43 +263,38 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastNextScope', mode, 'typescript'
 		));
-		// FIXME(12): make this work by default, make it a config if this "offends the logic of scopes".
 		test('Tricky syntax navigation: next scope with IND from code line 2 ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			@{
 				let local = true;
-			}
-			^{
+			}^
+			{
 				let local = 'true';
 			}
 			`,
-			'goPastNextScope', mode, 'typescript', true
+			'goPastNextScope', mode, 'typescript'
 		));
 		test('Tricky syntax navigation: next scope with IND from code line 3 ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			@{
-				let local = true; }
-			^{
+				let local = true; }^
+			{
 				let local = 'true';
 			}
 			`,
-			'goPastNextScope', mode, 'typescript', true
+			'goPastNextScope', mode, 'typescript'
 		));
 		test('Tricky syntax navigation: next scope with IND from empty line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			@
 			for (let index = 0; index < array.length; index++) {
 				const element = array[index];
 			}^
 			`,
-			'goPastNextScope', mode, 'typescript', true
+			'goPastNextScope', mode, 'typescript'
 		));
 
 		test('Tricky syntax navigation: next scope with IND from empty line to empty line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			@
 			def foo(bar, baz):
@@ -314,7 +306,6 @@ suite('Extension Test Suite', () => {
 			'goPastNextScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: next scope with IND from code line 2 ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			@def foo(bar, baz)^:
 			  bar()
@@ -325,7 +316,6 @@ suite('Extension Test Suite', () => {
 			'goPastNextScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: down scope with IND from header line no change ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			@^def foo(bar, baz):
 				bar()
@@ -336,7 +326,6 @@ suite('Extension Test Suite', () => {
 			'goToDownScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: down scope with IND from header line 2 no change ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			d@^ef foo(bar, baz):
 				bar()
@@ -347,7 +336,6 @@ suite('Extension Test Suite', () => {
 			'goToDownScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: down scope with IND from inner line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			def foo(bar, baz):
 				ba@r()
@@ -358,7 +346,6 @@ suite('Extension Test Suite', () => {
 			'goToDownScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: previous scope with IND from code line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			
 			^def foo(bar, baz):
@@ -370,7 +357,6 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: previous scope with IND from attached code line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			
 			^def foo(bar, baz):
@@ -381,7 +367,6 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: previous scope with IND from empty line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			^def foo(bar, baz):
 			  bar()
@@ -392,7 +377,6 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: previous scope with IND from hanging empty line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			
 			def foo(bar, baz):
@@ -403,7 +387,6 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: previous scope with IND from separating empty line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			
 			def foo(bar, baz):
@@ -415,7 +398,6 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: previous scope with IND to separating empty line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			pass
 			
@@ -428,7 +410,6 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: previous scope with IND from and to separating empty line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
 			`
 			pass
 			
@@ -441,8 +422,7 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 
-		test('Tricky syntax navigation: next scope with IND from indented line ' + mode, testCase(
-			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+		test('Tricky syntax navigation: down scope with IND from indented line ' + mode, testCase(
 			`
 			for (let index = 0;
 				   index < array.length;
@@ -450,7 +430,17 @@ suite('Extension Test Suite', () => {
 				const element = array[index];
 			}^
 			`,
-			'goPastNextScope', mode, 'typescript' , true
+			'goToDownScope', mode, 'typescript'
+		));
+		test('Tricky syntax navigation: next scope with IND from indented line ' + mode, testCase(
+			`
+			for (let index = 0;
+				   index < array.length;
+					 index++)@ {
+				const element = array[index];
+			}^
+			`,
+			'goPastNextScope', mode, 'typescript', true
 		));
 
 	}
