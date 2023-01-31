@@ -1,5 +1,16 @@
 # Change Log
 
+## [1.2.0] -- 2023-01-31
+
+### Fixed
+
+- Fixed multicharacter delimiters navigation bugs (double-counting delimiters that are prefixes of longer delimiters).
+
+### Changed
+
+- Uses the brackets scope intersecting with the target endpoint of a block scope for navigation decisions.
+- Checks for intersection of a brackets scope with a block scope instead of inclusion, when deciding if a sibling scope fits within the limiting (encompassing) scope.
+
 ## [1.1.1] -- 2022-12-20
 
 ### Fixed

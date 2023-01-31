@@ -196,4 +196,9 @@ Initial release of Navi Parens.
 * Multicharacter delimiters for the RAW brackets mode!
 * Improvements to the Indentation block mode navigation.
 
+### 1.2.0
+
+* Bug fix in multicharacter delimiters handling.
+* Improved interaction of indentation scopes and brackets scopes: when a brackets scope is intersected by the endpoint of an indentation scope, use the brackets scope for the target position.
+
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog
