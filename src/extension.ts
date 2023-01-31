@@ -283,7 +283,10 @@ function findOuterBracketRaw(
 	let selection: Array<vscode.Position | null> = [null, null];
 	for (const side of [0, 1]) {
 		let nesting = 0;
-		for (let offset = doc.offsetAt(pos); 0 <= offset && offset <= lastOffset; offset += direction[side]) {
+		let delta = direction[side];
+		for (let offset = doc.offsetAt(pos); 0 <= offset && offset <= lastOffset; offset += delta) {
+			// Reset to the default delta.
+			delta = direction[side];
 			const offsetPos = doc.positionAt(offset);
 			// \r\n endline.
 			if (doc.offsetAt(offsetPos) !== offset) { continue; }
@@ -292,11 +295,11 @@ function findOuterBracketRaw(
 				continue;
 			}
 			let lookingAt = oneOfAtPoint(doc, incrIsClosing[side], true, beforeFor[side], offsetPos);
-			if (lookingAt) { ++nesting; }
+			if (lookingAt) { ++nesting; delta = lookingAt.length * direction[side]; }
 			else {
 				lookingAt = oneOfAtPoint(doc, decrIsClosing[side], true, beforeFor[side], offsetPos);
 				if (lookingAt) {
-					--nesting;
+					--nesting; delta = lookingAt.length * direction[side];
 					if (nesting === -1) {
 						selection[side] = offsetPos.translate(0, lookingAt.length * direction[side]);
 						break;
@@ -450,7 +453,7 @@ async function findSiblingBracket(
 			const lookingAtIncrPos = offsetPos.translate(0, Math.min(direction * lookingAtIncr.length, 0));
 			if (raw) {
 				if (!updated) { jumpPos = lookingAtIncrPos; lookingAtJump = lookingAtIncr; }
-				++nesting; updated = true;
+				++nesting; updated = true; offset += direction * (lookingAtIncr.length - 1);
 			} else {
 				// Check whether it is a real delimiter vs. e.g. in a comment.
 				let targetPos = await jumpToBracket(textEditor, lookingAtIncrPos);
@@ -482,6 +485,7 @@ async function findSiblingBracket(
 					const entryPos = before ? jumpPos.translate(0, lookingAtJump.length) : jumpPos;
 					return new vscode.Selection(entryPos, offsetPos.translate(0, direction*lookingAtDecr.length));
 				}
+				offset += direction * (lookingAtDecr.length - 1);
 			} else {
 				// Verify it is an active outer scope delimiter. If yes, bail out.
 				const endJump = await jumpToBracket(textEditor, lookingAtDecrPos);

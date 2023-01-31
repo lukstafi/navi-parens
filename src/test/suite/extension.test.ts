@@ -76,7 +76,7 @@ function testCase(content: string, command: string, mode: string, language: stri
 			vscode.ConfigurationTarget.Global, true);
 		// Wait extra for the bracket providers to settle.
 		if (bracketsMode === 'JumpToBracket') {
-			await new Promise(f => setTimeout(f, 500));
+			await new Promise(f => setTimeout(f, 800));
 		}
 		// We cannot use vscode.commands.executeCommand because that creates a different TextEditor.
 		const action = commands.get(command);
@@ -643,25 +643,25 @@ suite('Extension Test Suite', () => {
 			`^[
 				(* comment *)
 			]@`,
-			'goPastPreviousScope', mode, 'pascal', true
+			'goPastPreviousScope', mode, 'pascal'
 		));
 		test('Multicharacter brackets navigation: right multiline 3 ' + mode, testCase(
 			`@[
 				(* comment *)
 			]^`,
-			'goPastNextScope', mode, 'pascal', true
+			'goPastNextScope', mode, 'pascal'
 		));
 		test('Multicharacter brackets navigation: up multiline 2 ' + mode, testCase(
 			`^[
 			   (* comment *)@
 			]`,
-			'goToUpScope', mode, 'pascal', true
+			'goToUpScope', mode, 'pascal'
 		));
 		test('Multicharacter brackets navigation: down multiline 2 ' + mode, testCase(
 			`[
 			   @(* comment *)
 			]^`,
-			'goToDownScope', mode, 'pascal', true
+			'goToDownScope', mode, 'pascal'
 		));
 
 	}
@@ -677,7 +677,7 @@ suite('Extension Test Suite', () => {
 				Pass;
 			end.
 			}`,
-			'goToUpScope', mode, 'pascal', true
+			'goToUpScope', mode, 'pascal'
 		));
 		test('Non-Multicharacter brackets navigation: baseline for up multiline 3 ' + mode, testCase(
 			`{ comment }
@@ -689,7 +689,7 @@ suite('Extension Test Suite', () => {
 				Pass;
 			end.
 			}`,
-			'goToUpScope', mode, 'pascal', true
+			'goToUpScope', mode, 'pascal'
 		));
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
