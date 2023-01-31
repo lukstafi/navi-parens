@@ -441,6 +441,18 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 
+		test('Tricky syntax navigation: next scope with IND from indented line ' + mode, testCase(
+			// For begin/end scope, we always pick the nearer end-point, which comes from indentation.
+			`
+			for (let index = 0;
+				   index < array.length;
+					 index++)@ {
+				const element = array[index];
+			}^
+			`,
+			'goPastNextScope', mode, 'typescript' , true
+		));
+
 	}
 	for (const mode of ['NON/RAW', 'IND/RAW']) {
 		test('Basic parentheses navigation: up to unmatched left ' + mode, testCase(
