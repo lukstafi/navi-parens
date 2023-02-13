@@ -21,30 +21,6 @@
   "bugs": {
     "url": "https://github.com/lukstafi/navi-parens/issues"
   },
-  "activationEvents": [
-    "onCommand:navi-parens.goPastNextScope",
-    "onCommand:navi-parens.goPastPreviousScope",
-    "onCommand:navi-parens.goToUpScope",
-    "onCommand:navi-parens.goToDownScope",
-    "onCommand:navi-parens.goToBeginScope",
-    "onCommand:navi-parens.goToEndScope",
-    "onCommand:navi-parens.selectPastNextScope",
-    "onCommand:navi-parens.selectPastPreviousScope",
-    "onCommand:navi-parens.selectToUpScope",
-    "onCommand:navi-parens.selectToDownScope",
-    "onCommand:navi-parens.selectToBeginScope",
-    "onCommand:navi-parens.selectToEndScope",
-    "onCommand:navi-parens.goToPreviousEmptyLine",
-    "onCommand:navi-parens.goToNextEmptyLine",
-    "onCommand:navi-parens.goPastPreviousWord",
-    "onCommand:navi-parens.goPastNextWord",
-    "onCommand:navi-parens.selectToPreviousEmptyLine",
-    "onCommand:navi-parens.selectToNextEmptyLine",
-    "onCommand:navi-parens.selectPastPreviousWord",
-    "onCommand:navi-parens.selectPastNextWord",
-    "onCommand:navi-parens.cycleBracketScopeMode",
-    "onCommand:navi-parens.cycleBlockScopeMode"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
