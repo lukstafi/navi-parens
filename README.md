@@ -201,4 +201,9 @@ Initial release of Navi Parens.
 * Bug fix in multicharacter delimiters handling.
 * Improved interaction of indentation scopes and brackets scopes: when a brackets scope is intersected by the endpoint of an indentation scope, use the brackets scope for the target position.
 
+### 1.2.1
+
+* Clears out pending issues.
+* Includes OCaml array delimiters in defaults.
+
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog

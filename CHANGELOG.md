@@ -1,5 +1,19 @@
 # Change Log
 
+## [1.2.1] -- 2023-02-13
+
+### Added
+
+- OCaml array delimiters in Raw Brackets defaults.
+
+### Changed
+
+- `goToPreviousEmptyLine` / `goToNextEmptyLine` moves to the beginning / end of document if there are no empty lines to stop at, instead of doing nothing.
+
+### Fixed
+
+- Mixing tabs and spaces is verified to work.
+
 ## [1.2.0] -- 2023-01-31
 
 ### Fixed

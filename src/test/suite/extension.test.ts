@@ -32,7 +32,7 @@ function getAnnotatedContent(textEditor: vscode.TextEditor, sourcePos: vscode.Po
 	return content;
 }
 
-const isDebugSession = true;
+const isDebugSession = false;
 
 function testCase(content: string, command: string, mode: string, language: string, debugThis?: boolean | undefined) {
 	if ((isDebugSession && !debugThis) || (!isDebugSession && debugThis)) { return; }
@@ -1304,14 +1304,14 @@ word2
 			`^paragraph
 			paragraph@
 		`,
-			'goToPreviousEmptyLine', mode, 'text', true
+			'goToPreviousEmptyLine', mode, 'text'
 		));
 		test('Tricky paragraph navigation: end of document', testCase(
 			`
 			@paragraph
 			paragraph
 			paragraph^`,
-			'goToNextEmptyLine', mode, 'text', true
+			'goToNextEmptyLine', mode, 'text'
 		));
 	}
 });
