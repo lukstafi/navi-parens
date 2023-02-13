@@ -32,7 +32,7 @@ function getAnnotatedContent(textEditor: vscode.TextEditor, sourcePos: vscode.Po
 	return content;
 }
 
-const isDebugSession = false;
+const isDebugSession = true;
 
 function testCase(content: string, command: string, mode: string, language: string, debugThis?: boolean | undefined) {
 	if ((isDebugSession && !debugThis) || (!isDebugSession && debugThis)) { return; }
@@ -56,6 +56,10 @@ function testCase(content: string, command: string, mode: string, language: stri
 			'goPastPreviousWord': () => myExtension.goPastWord(textEditor, false, true),
 			'selectPastNextWord': () => myExtension.goPastWord(textEditor, true, false),
 			'selectPastPreviousWord': () => myExtension.goPastWord(textEditor, true, true),
+			'goToPreviousEmptyLine': () => myExtension.goToEmptyLine(textEditor, false, true),
+			'goToNextEmptyLine': () => myExtension.goToEmptyLine(textEditor, false, false),
+			'selectToPreviousEmptyLine': () => myExtension.goToEmptyLine(textEditor, true, true),
+			'selectToNextEmptyLine': () => myExtension.goToEmptyLine(textEditor, true, false),
 		}));
 		// TODO(2): enable symbol providers -- perhaps add mocks.
 		const modes = new Map([
@@ -1250,6 +1254,64 @@ word2
 		 .word2^;
 		`,
 			'goPastNextWord', mode, 'typescript'
+		));
+	}
+	{
+		const mode = 'NON/NON';
+		test('Paragraph navigation: previous empty line', testCase(
+			`
+			paragraph1
+^      
+			paragraph2@
+      
+			paragraph3
+		`,
+			'goToPreviousEmptyLine', mode, 'text'
+		));
+		test('Paragraph navigation: next empty line', testCase(
+			`
+			paragraph1
+      
+			@paragraph2
+^      
+			paragraph3
+		`,
+			'goToNextEmptyLine', mode, 'text'
+		));
+		test('Paragraph navigation: previous empty line 2', testCase(
+			`
+			paragraph1
+^      
+			paragraph2
+			paragraph2@
+      
+			paragraph3
+		`,
+			'goToPreviousEmptyLine', mode, 'text'
+		));
+		test('Paragraph navigation: next empty line 2', testCase(
+			`
+			paragraph1
+      
+			@paragraph2
+			paragraph2
+^      
+			paragraph3
+		`,
+			'goToNextEmptyLine', mode, 'text'
+		));
+		test('Tricky paragraph navigation: beginning of document', testCase(
+			`^paragraph
+			paragraph@
+		`,
+			'goToPreviousEmptyLine', mode, 'text', true
+		));
+		test('Tricky paragraph navigation: end of document', testCase(
+			`
+			@paragraph
+			paragraph
+			paragraph^`,
+			'goToNextEmptyLine', mode, 'text', true
 		));
 	}
 });

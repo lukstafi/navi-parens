@@ -670,7 +670,10 @@ export async function goToEmptyLine(textEditor: vscode.TextEditor, select: boole
 			break;
 		 }
 	}
-	if (!targetPos) { return; }
+	if (!targetPos) {
+		targetPos = before ? doc.validatePosition(doc.positionAt(0))
+			: doc.validatePosition(doc.lineAt(doc.lineCount-1).range.end);
+	}
 	const anchor = select ? textEditor.selection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
 	textEditor.revealRange(textEditor.selection);
