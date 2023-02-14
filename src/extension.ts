@@ -326,6 +326,16 @@ async function findBracketScopeOverPos(
 	return bracketScope;
 }
 
+function countVisibleIndentation(textEditor: vscode.TextEditor, line: vscode.TextLine): number {
+	const tabSize = Number(textEditor.options.tabSize);
+	const updatedText = line.text.replace(/\t/g, " ".repeat(tabSize));
+	const firstNonWhite = Number(updatedText.search(/[^ ]/g));
+	if (firstNonWhite < 0) {
+		return updatedText.length / tabSize;
+	}
+	return firstNonWhite / tabSize;
+}
+
 function findOuterIndentation(
 	textEditor: vscode.TextEditor, before: boolean, near: boolean, pos: vscode.Position): vscode.Selection | null {
 	const doc = textEditor.document;
@@ -337,6 +347,7 @@ function findOuterIndentation(
 		let entryIndent = -1;
 		let previousNo = -1;
 		let previousIndent = -1;
+		let previousFirstNonWhitespace = -1;
 		let passingEmptyLine = false;
 		for (let lineNo = pos.line; 0 <= lineNo && lineNo < doc.lineCount; lineNo += direction[side]) {
 			const line = doc.lineAt(lineNo);
@@ -344,13 +355,13 @@ function findOuterIndentation(
 				passingEmptyLine = true;
 				continue;
 			}
-			// TODO(4): handle tabs/spaces?
-			const indentation = line.firstNonWhitespaceCharacterIndex;
+      // Note: indentation is different than `firstNonWhitespaceCharacterIndex`.
+			const indentation = countVisibleIndentation(textEditor, line);
 			if (entryIndent < 0) { entryIndent = indentation; }
 			else if (indentation < entryIndent) {
 				if (near) {
 					if ((before && side === 0) || (!before && side === 1)) {
-						selection[side] = new vscode.Position(previousNo, previousIndent);
+						selection[side] = new vscode.Position(previousNo, previousFirstNonWhitespace);
 					} else {
 						// Return end of the previous line.
 						selection[side] = doc.lineAt(previousNo).range.end;
@@ -358,12 +369,13 @@ function findOuterIndentation(
 				} else {
 					const previousLinePos = doc.lineAt(lineNo - direction[side]).range.end;
 					selection[side] = direction[side] === 1 && passingEmptyLine ?
-						previousLinePos : new vscode.Position(lineNo, indentation);
+						previousLinePos : new vscode.Position(lineNo, line.firstNonWhitespaceCharacterIndex);
 				}
 				break;
 			}
 			previousNo = lineNo;
 			previousIndent = indentation;
+			previousFirstNonWhitespace = line.firstNonWhitespaceCharacterIndex;
 			passingEmptyLine = false;
 		}
 	}
@@ -403,7 +415,7 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 				new vscode.Selection(symbol.selectionRange.end, rangeEnd);
 		}
 	} else if (blockMode === "Indentation") {
-		blockScope = findOuterIndentation(textEditor, before, near, pos);
+		blockScope = await findOuterIndentation(textEditor, before, near, pos);
 	} else { console.assert(blockMode === "None", `Unknown Block Scope Mode ${blockMode}.`); }
 	// If one scope includes the other, pick the nearer target, otherwise pick the farther target.
 	let result = null;
@@ -543,15 +555,16 @@ function findSiblingIndentation(
 			passingEmptyLine = true;
 			continue;
 		}
-		// TODO(4): handle tabs?
-		const indentation = line.firstNonWhitespaceCharacterIndex;
+    // Note: indentation is different than `firstNonWhitespaceCharacterIndex`.
+		const indentation = countVisibleIndentation(textEditor, line);
 		if (noIndent < 0) {
 			noIndent = indentation;
 		}
 		else if (updated && indentation === noIndent) {
 			const entryPos = before ? doc.lineAt(entryNo).range.end : new vscode.Position(entryNo, noIndent);
 			const previousLinePos = doc.lineAt(lineNo - direction).range.end;
-			const leavePos = passingEmptyLine ? previousLinePos : new vscode.Position(lineNo, indentation);
+			const leavePos = passingEmptyLine ? previousLinePos :
+				new vscode.Position(lineNo, line.firstNonWhitespaceCharacterIndex);
 			return new vscode.Selection(entryPos, leavePos);
 		} else if (!updated && indentation > noIndent) {
 			updated = true;
@@ -599,8 +612,8 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 				new vscode.Selection(candidate.start, candidate.end);
 		}
 	} else if (blockMode === "Indentation") {
-		blockScope = findSiblingIndentation(textEditor, before, pos);
-		scopeLimit = findOuterIndentation(textEditor, before, false, pos);
+		blockScope = await findSiblingIndentation(textEditor, before, pos);
+		scopeLimit = await findOuterIndentation(textEditor, before, false, pos);
 	} else { console.assert(blockMode === "None", `Unknown Block Scope Mode ${blockMode}.`); }
 
 	const bracketsMode = vscode.workspace.getConfiguration().get<string>("navi-parens.bracketScopeMode");

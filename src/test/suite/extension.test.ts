@@ -1061,6 +1061,115 @@ suite('Extension Test Suite', () => {
 			'goPastPreviousScope', mode, 'python'
 		));
 	}
+	{
+		const mode = 'IND/NON';
+		test('Tab-space syntax navigation: up scope using IND ' + mode, testCase(
+			// The less-indented non-whitespace-starting-part line is like a big start delimiter for the scope.
+			`
+	    for item in range:
+		  	^if condition:
+					pa@ss
+				elif condition:
+					pass
+			`,
+			'goToUpScope', mode, 'python'
+		));
+		test('Tab-space syntax navigation: down scope using IND ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					pa@ss
+		  	^elif condition:
+					pass
+			`,
+			'goToDownScope', mode, 'python'
+		));
+		test('Tab-space syntax navigation: begin scope using IND ' + mode, testCase(
+			`
+			for item in range:
+		  	if condition:
+					^pa@ss
+				elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python'
+		));
+		test('Tab-space syntax navigation: begin scope using IND 2 ' + mode, testCase(
+			`
+			for item in range:
+	  		^if condition:
+					pass
+		  	@elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python'
+		));
+		test('Tab-space syntax navigation: begin scope using IND 3 ' + mode, testCase(
+			`
+			for item in range:
+		  	if condition:
+					^pass
+		  		pa@ss
+				elif condition:
+					pass
+			`,
+			'goToBeginScope', mode, 'python'
+		));
+		test('Tab-space syntax navigation: end scope using IND ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					pa@ss^
+		  	elif condition:
+					pass
+			`,
+			'goToEndScope', mode, 'python'
+		));
+		test('Tab-space syntax navigation: end scope using IND 2 ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					pa@ss
+	  			pass^
+	  		elif condition:
+					pass
+			`,
+			'goToEndScope', mode, 'python', true
+		));
+		test('Tab-space syntax navigation: next scope using IND ' + mode, testCase(
+			`
+			for item in range:
+  			pa@ss
+				if condition:
+					pass
+	  		^elif condition:
+					pass
+			`,
+			'goPastNextScope', mode, 'python'
+		));
+
+		test('Tab-space syntax navigation: next scope using IND no-change ' + mode, testCase(
+			`
+			for item in range:
+				if condition:
+					pass
+		  	@^elif condition:
+					pass
+			`,
+			'goPastNextScope', mode, 'python'
+		));
+
+		test('Tab-space syntax navigation: previous scope using IND ' + mode, testCase(
+			`
+			for item in range:
+				^if condition:
+					pass
+		  	elif@ condition:
+					pass
+			`,
+			'goPastPreviousScope', mode, 'python', true
+		));
+	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
 		test('Basic syntax navigation: begin scope without block scopes ' + mode, testCase(
 			`
