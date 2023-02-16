@@ -145,15 +145,13 @@ See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts)
 
 Currently, multiple cursors are not supported.
 
-I ignore defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.
+Navi Parens ignores defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.
 
 If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
 
 When navigating down out of a scope with both indentation and bracket scopes enabled, where the scope brackets are both the first non-white characters on their lines (as often happens with braces in JSON files), the behavior can be a bit unintuitive: the cursor can end up before the closing bracket/brace. That is because we jump out of the indentation scope, since it is contained (not just overlapping) in the brackets scope. We remain within the brackets scope. It is the intended behavior. On the other hand, when the overlap is without inclusion, we prefer the bracket scope for navigating out of a scope.
 
 Some Navi Parens commands will misbehave if they are executed before a document editor is fully initialized. Specifically, the `Semantic` and `JumpToBrackets` modes require the corresponding initializations, while the `Indentation` and `Raw` modes are good-to-go right away since they only look at the text of a document.
-
-The indentation scope logic is not tailored for code mixing tab characters and spaces (issue [#4](https://github.com/lukstafi/navi-parens/issues/4)).
 
 Whitespace-only lines are ignored in computing indentation scopes, which might leave to undesired behavior when you navigate out of a newly-opened line.
 
