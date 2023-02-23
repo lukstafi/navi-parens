@@ -5,7 +5,7 @@ It also provides additional key bindings for moving the cursor without "fingers 
 
 ## Keywords
 
-VSCode, Emacs, Structured Code Navigation, Home Row Cursor Movement
+VSCode, Structured Code Navigation, Emacs S-Expressions, Atom Block Travel, Jump, Selection, Keymaps, Key Shortcuts, Home Row Cursor Movement
 
 ## Overview
 
@@ -167,7 +167,7 @@ Coming from Emacs, I appreciate and suggest:
 
 See the [changelog] for a detailed list of features and changes!
 
-The main feature that is still missing is multiple cursors support.
+The main/only feature that is still missing is multiple cursors support.
 
 ### 0.9
 

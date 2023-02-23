@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.2.2] -- 2023-02-23
+
+### Changed
+
+- Discoverability tweaks: keyword: `block`, remove `Keymaps` from `categories`.
+
 ## [1.2.1] -- 2023-02-13
 
 ### Added

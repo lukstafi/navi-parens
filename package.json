@@ -4,15 +4,14 @@
   "displayName": "Navi Parens",
   "description": "Navigate structured code with convenient key shortcuts.",
   "icon": "iconSmall.png",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "engines": {
     "vscode": "^1.73.0"
   },
   "categories": [
-    "Keymaps",
     "Other"
   ],
-  "keywords": ["structure", "jump", "navigation", "Emacs", "selection"],
+  "keywords": ["structure", "navigation", "block", "jump", "selection"],
   "license": "MIT",
   "repository": {
     "type": "git",
