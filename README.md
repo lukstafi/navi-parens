@@ -139,17 +139,15 @@ This extension contributes the following settings:
 
 
 
-## Quirks, Technical Details and Known Issues
+## Technical Details
 
-See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts) for diverse behavior examples. In tests, the character `@` stands for initial cursor position, and `^` for resulting cursor position.
+See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts) for diverse behavior examples. In tests, the character `@` stands for initial cursor position, and `^` for resulting cursor position. The test names starting with `'Tricky syntax navigation:'` indicate cases where there is no unique best or most logical navigation behavior. For such cases, the behavior of Navi Parens should be one that fits well in general, but might get changed if further usability corner cases arise.
 
-Currently, multiple cursors are not supported.
+Currently, multiple cursors are not supported. It's unlikely that I'll add multiple cursors handling, unless other users ask for it.
 
 Navi Parens ignores defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.
 
 If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
-
-When navigating down out of a scope with both indentation and bracket scopes enabled, where the scope brackets are both the first non-white characters on their lines (as often happens with braces in JSON files), the behavior can be a bit unintuitive: the cursor can end up before the closing bracket/brace. That is because we jump out of the indentation scope, since it is contained (not just overlapping) in the brackets scope. We remain within the brackets scope. It is the intended behavior. On the other hand, when the overlap is without inclusion, we prefer the bracket scope for navigating out of a scope.
 
 Some Navi Parens commands will misbehave if they are executed before a document editor is fully initialized. Specifically, the `Semantic` and `JumpToBrackets` modes require the corresponding initializations, while the `Indentation` and `Raw` modes are good-to-go right away since they only look at the text of a document.
 
@@ -203,5 +201,10 @@ Initial release of Navi Parens.
 
 * Clears out pending issues.
 * Includes OCaml array delimiters in defaults.
+
+### 1.2.2
+
+* Fixes to handling indentation scopes that touch beginning/end-of-document.
+* Special-case behavior where the cursor is at the start of the indentation header line.
 
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog

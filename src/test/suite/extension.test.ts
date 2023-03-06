@@ -261,9 +261,9 @@ suite('Extension Test Suite', () => {
 
 		test('Tricky syntax navigation: next scope with IND from code line ' + mode, testCase(
 			`
-			@for (let index = 0; index < array.length; index++)^ {
+			@for (let index = 0; index < array.length; index++) {
 				const element = array[index];
-			}
+			}^
 			`,
 			'goPastNextScope', mode, 'typescript'
 		));
@@ -281,8 +281,8 @@ suite('Extension Test Suite', () => {
 		test('Tricky syntax navigation: next scope with IND from code line 3 ' + mode, testCase(
 			`
 			@{
-				let local = true; }^
-			{
+				let local = true; }
+			^{
 				let local = 'true';
 			}
 			`,
@@ -309,12 +309,12 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastNextScope', mode, 'python'
 		));
-		test('Tricky syntax navigation: next scope with IND from code line 2 ' + mode, testCase(
+		test('Tricky syntax navigation: next scope with IND from python code line ' + mode, testCase(
 			`
-			@def foo(bar, baz)^:
+			@def foo(bar, baz):
 			  bar()
 				baz()
-			
+			^
 			pass
 			`,
 			'goPastNextScope', mode, 'python'
@@ -715,7 +715,7 @@ suite('Extension Test Suite', () => {
 			'goToUpScope', mode, 'pascal'
 		));
 		
-		test('Regression: respect indentation for finding next scope ' + mode, testCase(
+		test('Tricky syntax navigation: either _next_ or down should find next scope ' + mode, testCase(
 			`
 			@for x in xs:
 				if x:
@@ -723,10 +723,41 @@ suite('Extension Test Suite', () => {
 				pass
 			^pass
 			`,
-			'goPastNextScope', mode, 'pascal', true
+			'goPastNextScope', mode, 'pascal'
 		));
 		
-		test('Regression: respect indentation for going up scope ' + mode, testCase(
+		test('Tricky syntax navigation: find next scope from inside indentation header ' + mode, testCase(
+			`
+			f@or x in xs:
+				if x:
+					foo(x)^
+				pass
+			pass
+			`,
+			'goPastNextScope', mode, 'pascal'
+		));
+		
+		test('Tricky syntax navigation: either next or _down_ should find next scope ' + mode, testCase(
+			`
+			^@for x in xs:
+				if x:
+					foo(x)
+				pass
+			pass
+			`,
+			'goToDownScope', mode, 'pascal'
+		));
+		
+		test('Tricky syntax navigation: either _next_ or down should find next scope 2 ' + mode, testCase(
+`@for x in xs:
+	if x:
+		foo(x)
+	pass
+^pass`,
+			'goPastNextScope', mode, 'pascal'
+		));
+	
+		test('Corner case: respect indentation for going up scope ' + mode, testCase(
 			`
 ^if true:
 	pass
@@ -734,20 +765,20 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToUpScope', mode, 'python'
 		));
-		test('Regression: respect indentation for going up scope 2 ' + mode, testCase(
+		test('Corner case: respect indentation for going up scope 2 ' + mode, testCase(
 			`
 ^if true:
 	pass
 	pass@`,
 			'goToUpScope', mode, 'python'
 		));
-		test('Regression: respect indentation for going up scope 3 ' + mode, testCase(
+		test('Corner case: respect indentation for going up scope 3 ' + mode, testCase(
 			`^if true:
 	pass
 	pass@`,
 			'goToUpScope', mode, 'python'
 		));
-		test('Regression: respect indentation for finding end of scope ' + mode, testCase(
+		test('Corner case: respect indentation for finding end of scope ' + mode, testCase(
 			`
 if true:
   pass
@@ -755,13 +786,13 @@ if true:
 			`,
 			'goToEndScope', mode, 'python'
 		));
-		test('Regression: respect indentation for finding end of scope 2 ' + mode, testCase(
+		test('Corner case: respect indentation for finding end of scope 2 ' + mode, testCase(
 			`if true:
   pass
 @	pass^`,
 			'goToEndScope', mode, 'python'
 		));
-		test('Regression: go to end scope from empty line ' + mode, testCase(
+		test('Corner case: go to end scope from empty line ' + mode, testCase(
 			`
 if true:
 @
@@ -1216,7 +1247,7 @@ end
 	  		elif condition:
 					pass
 			`,
-			'goToEndScope', mode, 'python', false
+			'goToEndScope', mode, 'python', true
 		));
 		test('Tab-space syntax navigation: next scope using IND ' + mode, testCase(
 			`
@@ -1249,7 +1280,7 @@ end
 		  	elif@ condition:
 					pass
 			`,
-			'goPastPreviousScope', mode, 'python', false
+			'goPastPreviousScope', mode, 'python', true
 		));
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
