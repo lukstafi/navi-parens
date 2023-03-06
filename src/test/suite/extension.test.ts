@@ -754,17 +754,17 @@ end
 			`,
 			'goToEndScope', mode, 'python', true
 		));
-		test('Tricky syntax navigation: either go to up scope or go past next scope should ' +
+		test('Tricky syntax navigation: either go to down scope or go past next scope should ' +
 			'find end of scope 1 ' + mode,
 			testCase(
 			`
-			procedure Foo(Param: boolean);@ begin  
+			procedure Foo(Param: boolean);^@ begin  
 				pass;
 					
 				pass;
-			end^
+			end
 			`,
-			'goToUpScope', mode, 'pascal', true
+			'goToDownScope', mode, 'pascal'
 		));
 		test('Tricky syntax navigation: either go to up scope or go past next scope should ' +
 			'find end of scope 2 ' + mode,
@@ -774,7 +774,7 @@ end
 				pass;
 					
 				pass;
-			end^
+			^end
 			`,
 			'goPastNextScope', mode, 'pascal', true
 		));
