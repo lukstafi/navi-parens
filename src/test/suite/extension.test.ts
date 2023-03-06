@@ -699,7 +699,7 @@ suite('Extension Test Suite', () => {
 				@(* comment *)
 				Pass;
 			end.
-			}`,
+			`,
 			'goToUpScope', mode, 'pascal'
 		));
 		test('Non-Multicharacter brackets navigation: baseline for up multiline 3 ' + mode, testCase(
@@ -711,9 +711,74 @@ suite('Extension Test Suite', () => {
 				@{ comment }
 				Pass;
 			end.
-			}`,
+			`,
 			'goToUpScope', mode, 'pascal'
 		));
+		
+		test('Regression: respect indentation for finding next scope ' + mode, testCase(
+			`
+			@for x in xs:
+				if x:
+					foo(x)
+				pass
+			^pass
+			`,
+			'goPastNextScope', mode, 'pascal', true
+		));
+		
+		// Hmm, it's better if we can repro the two next cases without the `end` in case we make it
+		// a delimiter.
+		test('Regression: respect indentation for going up scope ' + mode, testCase(
+			`
+^if true:
+	pass
+	pass@
+			`,
+			'goToUpScope', mode, 'python', true
+		));
+		test('Regression: respect indentation for finding end of scope ' + mode, testCase(
+			`
+if true:
+  pass
+@	pass^
+			`,
+			'goToEndScope', mode, 'python', true
+		));
+		test('Regression: go to end scope from empty line ' + mode, testCase(
+			`
+if true:
+@
+	pass
+	pass^
+end
+			`,
+			'goToEndScope', mode, 'python', true
+		));
+		test('Tricky syntax navigation: either go to up scope or go past next scope should ' +
+			'find end of scope 1 ' + mode,
+			testCase(
+			`
+			procedure Foo(Param: boolean);@ begin  
+				pass;
+					
+				pass;
+			end^
+			`,
+			'goToUpScope', mode, 'pascal', true
+		));
+		test('Tricky syntax navigation: either go to up scope or go past next scope should ' +
+			'find end of scope 2 ' + mode,
+			testCase(
+			`
+			procedure Foo(Param: boolean);@ begin  
+				pass;
+					
+				pass;
+			end^
+			`,
+			'goPastNextScope', mode, 'pascal', true
+		));
+
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
 		test('Bracket syntax navigation: begin scope other line ' + mode, testCase(
