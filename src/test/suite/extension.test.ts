@@ -726,8 +726,6 @@ suite('Extension Test Suite', () => {
 			'goPastNextScope', mode, 'pascal', true
 		));
 		
-		// Hmm, it's better if we can repro the two next cases without the `end` in case we make it
-		// a delimiter.
 		test('Regression: respect indentation for going up scope ' + mode, testCase(
 			`
 ^if true:
@@ -736,12 +734,31 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToUpScope', mode, 'python'
 		));
+		test('Regression: respect indentation for going up scope 2 ' + mode, testCase(
+			`
+^if true:
+	pass
+	pass@`,
+			'goToUpScope', mode, 'python'
+		));
+		test('Regression: respect indentation for going up scope 3 ' + mode, testCase(
+			`^if true:
+	pass
+	pass@`,
+			'goToUpScope', mode, 'python'
+		));
 		test('Regression: respect indentation for finding end of scope ' + mode, testCase(
 			`
 if true:
   pass
 @	pass^
 			`,
+			'goToEndScope', mode, 'python'
+		));
+		test('Regression: respect indentation for finding end of scope 2 ' + mode, testCase(
+			`if true:
+  pass
+@	pass^`,
 			'goToEndScope', mode, 'python'
 		));
 		test('Regression: go to end scope from empty line ' + mode, testCase(
@@ -1199,7 +1216,7 @@ end
 	  		elif condition:
 					pass
 			`,
-			'goToEndScope', mode, 'python', true
+			'goToEndScope', mode, 'python', false
 		));
 		test('Tab-space syntax navigation: next scope using IND ' + mode, testCase(
 			`
@@ -1232,7 +1249,7 @@ end
 		  	elif@ condition:
 					pass
 			`,
-			'goPastPreviousScope', mode, 'python', true
+			'goPastPreviousScope', mode, 'python', false
 		));
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {

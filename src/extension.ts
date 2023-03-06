@@ -376,12 +376,14 @@ function findOuterIndentation(
 						previousLinePos : new vscode.Position(lineNo, line.firstNonWhitespaceCharacterIndex);
 				}
 				break;
-			} else if ((near || side === 1) && (lineNo === doc.lineCount - 1 || lineNo === 0)) {
+			}
+			if ((near || side === 1) && (lineNo === doc.lineCount - 1 || lineNo === 0)) {
 				if ((before && side === 0) || (!before && side === 1)) {
 					selection[side] = new vscode.Position(lineNo, line.firstNonWhitespaceCharacterIndex);
 				} else {
 					selection[side] = doc.lineAt(lineNo).range.end;
 				}
+				break;
 			}
 			previousNo = lineNo;
 			previousIndent = indentation;
