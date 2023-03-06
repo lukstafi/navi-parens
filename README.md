@@ -143,6 +143,10 @@ This extension contributes the following settings:
 
 See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts) for diverse behavior examples. In tests, the character `@` stands for initial cursor position, and `^` for resulting cursor position. The test names starting with `'Tricky syntax navigation:'` indicate cases where there is no unique best or most logical navigation behavior. For such cases, the behavior of Navi Parens should be one that fits well in general, but might get changed if further usability corner cases arise.
 
+Navi Parens will not perform an action when it does not make logical sense, e.g. there is no outer scope to jump out of, or there is no next/previous scope within the current scope to go to the end of (even if there are more scopes outside of the current scope). This design is intentional, so that you can quickly repeat a command until you get stuck, where you can make a navigational decision (e.g. whether to leave the current scope).
+
+One context where the current behavior might be a bit limiting is when the cursor is placed at the header line of an indentation scope, but not at the beginning of it. Jumping past next scope will find a scope nested inside the subsequent more-indented lines, rather than jumping to the end of the indentation scope. However, jumping down out of the scope will also not jump to the endo of the indentation scope, instead it will jump to outside of an encompassing scope (if any). One way to conceptualize this is to think of the header line of an indentation scope as a multi-character block scope delimiter. A position inside a delimiter is neither fully inside, nor fully outside the delimited scope.
+
 Currently, multiple cursors are not supported. It's unlikely that I'll add multiple cursors handling, unless other users ask for it.
 
 Navi Parens ignores defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.

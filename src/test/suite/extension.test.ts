@@ -1247,6 +1247,7 @@ end
 	  		elif condition:
 					pass
 			`,
+			// Heisenbug -- do not enable.
 			'goToEndScope', mode, 'python', true
 		));
 		test('Tab-space syntax navigation: next scope using IND ' + mode, testCase(
@@ -1280,6 +1281,7 @@ end
 		  	elif@ condition:
 					pass
 			`,
+			// Heisenbug -- do not enable.
 			'goPastPreviousScope', mode, 'python', true
 		));
 	}
