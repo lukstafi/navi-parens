@@ -734,7 +734,7 @@ suite('Extension Test Suite', () => {
 	pass
 	pass@
 			`,
-			'goToUpScope', mode, 'python', true
+			'goToUpScope', mode, 'python'
 		));
 		test('Regression: respect indentation for finding end of scope ' + mode, testCase(
 			`
@@ -742,7 +742,7 @@ if true:
   pass
 @	pass^
 			`,
-			'goToEndScope', mode, 'python', true
+			'goToEndScope', mode, 'python'
 		));
 		test('Regression: go to end scope from empty line ' + mode, testCase(
 			`
@@ -752,7 +752,7 @@ if true:
 	pass^
 end
 			`,
-			'goToEndScope', mode, 'python', true
+			'goToEndScope', mode, 'python'
 		));
 		test('Tricky syntax navigation: either go to down scope or go past next scope should ' +
 			'find end of scope 1 ' + mode,
@@ -776,7 +776,7 @@ end
 				pass;
 			^end
 			`,
-			'goPastNextScope', mode, 'pascal', true
+			'goPastNextScope', mode, 'pascal'
 		));
 
 	}

@@ -356,9 +356,13 @@ function findOuterIndentation(
 				continue;
 			}
       // Note: indentation is different than `firstNonWhitespaceCharacterIndex`.
+			// Note: allow begin/end-of-scope to find the begin/end of text and other-end indentation
+			// to be "unmatched".
 			const indentation = countVisibleIndentation(textEditor, line);
 			if (entryIndent < 0) { entryIndent = indentation; }
-			else if (indentation < entryIndent) {
+			else if (indentation < entryIndent ||
+				(line.isEmptyOrWhitespace && (lineNo === doc.lineCount - 1 || lineNo === 0) &&
+					(near || side === 1))) {
 				if (near) {
 					if ((before && side === 0) || (!before && side === 1)) {
 						selection[side] = new vscode.Position(previousNo, previousFirstNonWhitespace);
@@ -372,6 +376,12 @@ function findOuterIndentation(
 						previousLinePos : new vscode.Position(lineNo, line.firstNonWhitespaceCharacterIndex);
 				}
 				break;
+			} else if ((near || side === 1) && (lineNo === doc.lineCount - 1 || lineNo === 0)) {
+				if ((before && side === 0) || (!before && side === 1)) {
+					selection[side] = new vscode.Position(lineNo, line.firstNonWhitespaceCharacterIndex);
+				} else {
+					selection[side] = doc.lineAt(lineNo).range.end;
+				}
 			}
 			previousNo = lineNo;
 			previousIndent = indentation;
