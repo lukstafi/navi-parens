@@ -206,7 +206,7 @@ Initial release of Navi Parens.
 * Clears out pending issues.
 * Includes OCaml array delimiters in defaults.
 
-### 1.2.2
+### 1.2.3
 
 * Fixes to handling indentation scopes that touch beginning/end-of-document.
 * Special-case behavior where the cursor is at the start of the indentation header line.

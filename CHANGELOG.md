@@ -1,5 +1,16 @@
 # Change Log
 
+## [1.2.3] -- 2023-03-07
+
+### Fixed
+
+- Fixes to handling indentation scopes that touch beginning/end-of-document.
+
+### Changed
+
+- Special-case behavior where the cursor is at the start of a block scope -- do not consider the position as inside the scope.
+
+
 ## [1.2.2] -- 2023-02-23
 
 ### Changed

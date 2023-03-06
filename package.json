@@ -4,7 +4,7 @@
   "displayName": "Navi Parens",
   "description": "Navigate structured code with convenient key shortcuts.",
   "icon": "iconSmall.png",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "engines": {
     "vscode": "^1.73.0"
   },
