@@ -1,9 +1,9 @@
 # navi-parens README
 
-Navi Parens is a Visual Studio Code extension that provides structured code navigation similar to what's available in Emacs.
+_Navi Parens_ is a Visual Studio Code extension that provides structured code navigation similar to what's available in Emacs.
 It also provides additional key bindings for moving the cursor without "fingers leaving the home row".
 
-Navi Parens also provides Markmacs Mode, which emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor-scope marker are moved with it. Moreover, Markmacs-Mode adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
+_Navi Parens_ also provides _Markmacs Mode_, which emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor-scope marker are moved with it. Moreover, _Markmacs Mode_ adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
 
 ## Keywords
 
@@ -13,7 +13,7 @@ VSCode, Structured Code Navigation, Emacs S-Expressions, Atom Block Travel, Jump
 
 ### Overview
 
-Navi Parens provides commands for moving the cursor around smoothly from the innermost parentheses to the outermost code blocks and in between. It also offers keybindings centered around the `J, K, L, I` keys and the `Alt` modifier. E.g. moves of the cursor: `Alt+J` one character left, `Ctrl+Alt+J` one scope left, `Alt+K` one line up, `Ctrl+Alt+K` to outside the beginning of the scope around the cursor.
+_Navi Parens_ provides commands for moving the cursor around smoothly from the innermost parentheses to the outermost code blocks and in between. It also offers keybindings centered around the `J, K, L, I` keys and the `Alt` modifier. E.g. moves of the cursor: `Alt+J` one character left, `Ctrl+Alt+J` one scope left, `Alt+K` one line up, `Ctrl+Alt+K` to outside the beginning of the scope around the cursor.
 
 ![Overview](animations/overview.gif)
 * Activates the extension.
@@ -68,7 +68,7 @@ Extra key bindings:
 * `deleteRight`: `alt+d`
 * `deleteWordRight`: `ctrl+alt+d`
 
-Navi Parens combines two sources of structure information:
+_Navi Parens_ combines two sources of structure information:
 * Brackets, braces, parentheses.
 * Code blocks.
 
@@ -82,7 +82,7 @@ The `Raw` mode for bracket scopes is useful as it enables navigating within comm
 
 ### Some use cases
 
-First Navi Parens-specific command activates the scope navigation modes indicator.
+First _Navi Parens_-specific command activates the scope navigation modes indicator.
 
 ![activation](animations/activation.gif)
 
@@ -104,7 +104,7 @@ Navigation with `Raw` bracket mode.
 
 ## MarkMacs Mode
 
-Markmacs emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor marker and a scope marker are moved with it. Moreover, VSC Markmacs adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
+_Markmacs Mode_ emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor marker and a scope marker are moved with it. Moreover, VSC Markmacs adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
 
 ### Features
 
@@ -135,7 +135,7 @@ This extension contributes the following settings:
     * bind `cursorUp` to both `alt+i` and `ctrl+alt+o`.
 * `navi-parens.blockScopeMode`: an enum selecting where the non-bracket structure information comes from.
   * `Semantic`: the semantic analyzers integrated with VSCode. The default.
-  * `Indentation`: Navi Parens constructs symbols based on indentation. Details below.
+  * `Indentation`: _Navi Parens_ constructs symbols based on indentation. Details below.
   * `None`: same behavior as if there were no symbol definitions in text.
   * `ctrl+shift+alt+p` toggles between `Semantic` and `Indentation`.
 * `navi-parens.bracketScopeMode`: an enum selecting how to get the bracket structure information.
@@ -162,19 +162,19 @@ This extension contributes the following settings:
 
 ## Technical Details
 
-See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts) for diverse behavior examples. In tests, the character `@` stands for initial cursor position, and `^` for resulting cursor position. The test names starting with `'Tricky syntax navigation:'` indicate cases where there is no unique best or most logical navigation behavior. For such cases, the behavior of Navi Parens should be one that fits well in general, but might get changed if further usability corner cases arise.
+See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts) for diverse behavior examples. In tests, the character `@` stands for initial cursor position, and `^` for resulting cursor position. The test names starting with `'Tricky syntax navigation:'` indicate cases where there is no unique best or most logical navigation behavior. For such cases, the behavior of _Navi Parens_ should be one that fits well in general, but might get changed if further usability corner cases arise.
 
-Navi Parens will not perform an action when it does not make logical sense, e.g. there is no outer scope to jump out of, or there is no next/previous scope within the current scope to go to the end of (even if there are more scopes outside of the current scope). This design is intentional, so that you can quickly repeat a command until you get stuck, where you can make a navigational decision (e.g. whether to leave the current scope).
+_Navi Parens_ will not perform an action when it does not make logical sense, e.g. there is no outer scope to jump out of, or there is no next/previous scope within the current scope to go to the end of (even if there are more scopes outside of the current scope). This design is intentional, so that you can quickly repeat a command until you get stuck, where you can make a navigational decision (e.g. whether to leave the current scope).
 
 One context where the current behavior might be a bit limiting is when the cursor is placed at the header line of an indentation scope, but not at the beginning of it. Jumping past next scope will find a scope nested inside the subsequent more-indented lines, rather than jumping to the end of the indentation scope. However, jumping down out of the scope will also not jump to the endo of the indentation scope, instead it will jump to outside of an encompassing scope (if any). One way to conceptualize this is to think of the header line of an indentation scope as a multi-character block scope delimiter. A position inside a delimiter is neither fully inside, nor fully outside the delimited scope.
 
 Currently, multiple cursors are not supported. It's unlikely that I'll add multiple cursors handling, unless other users ask for it.
 
-Navi Parens ignores defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.
+_Navi Parens_ ignores defined-symbols that are out-of-order with respect to the syntactic structure, e.g. Python class field definitions inside methods.
 
-If Navi Parens logs assertion failure, maybe the language has delimiters other than those in the configuration.
+If _Navi Parens_ logs assertion failure, maybe the language has delimiters other than those in the configuration.
 
-Some Navi Parens commands will misbehave if they are executed before a document editor is fully initialized. Specifically, the `Semantic` and `JumpToBrackets` modes require the corresponding initializations, while the `Indentation` and `Raw` modes are good-to-go right away since they only look at the text of a document.
+Some _Navi Parens_ commands will misbehave if they are executed before a document editor is fully initialized. Specifically, the `Semantic` and `JumpToBrackets` modes require the corresponding initializations, while the `Indentation` and `Raw` modes are good-to-go right away since they only look at the text of a document.
 
 Whitespace-only lines are ignored in computing indentation scopes, which might leave to undesired behavior when you navigate out of a newly-opened line.
 
@@ -194,7 +194,7 @@ The main/only feature that is still missing is multiple cursors support.
 
 ### 0.9
 
-Initial release of Navi Parens.
+Initial release of _Navi Parens_.
 
 ### 0.9.9
 
@@ -234,6 +234,6 @@ Initial release of Navi Parens.
 
 ### 2.0.0
 
-* Introduces Markmacs Mode.
+* Introduces _Markmacs Mode_.
 
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog
