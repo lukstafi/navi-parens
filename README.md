@@ -3,11 +3,15 @@
 Navi Parens is a Visual Studio Code extension that provides structured code navigation similar to what's available in Emacs.
 It also provides additional key bindings for moving the cursor without "fingers leaving the home row".
 
+Navi Parens also provides Markmacs Mode, which emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor-scope marker are moved with it. Moreover, Markmacs-Mode adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
+
 ## Keywords
 
-VSCode, Structured Code Navigation, Emacs S-Expressions, Atom Block Travel, Jump, Selection, Keymaps, Key Shortcuts, Home Row Cursor Movement
+VSCode, Structured Code Navigation, Emacs S-Expressions, Atom Block Travel, Jump, Selection, Keymaps, Key Shortcuts, Home Row Cursor Movement, LaTeX, WYSIWYG, TeXmacs
 
-## Overview
+## Navi Parens
+
+### Overview
 
 Navi Parens provides commands for moving the cursor around smoothly from the innermost parentheses to the outermost code blocks and in between. It also offers keybindings centered around the `J, K, L, I` keys and the `Alt` modifier. E.g. moves of the cursor: `Alt+J` one character left, `Ctrl+Alt+J` one scope left, `Alt+K` one line up, `Ctrl+Alt+K` to outside the beginning of the scope around the cursor.
 
@@ -19,7 +23,7 @@ Navi Parens provides commands for moving the cursor around smoothly from the inn
 * Navigates across functions.
 * Switches to `RAW` to demonstrate navigating within docu-comments.
 
-## Features
+### Features
 
 Commands:
 * `goPastNextScope`: `ctrl+alt+l` Go past the next same-level closing bracket/scope
@@ -76,7 +80,7 @@ An indentation scope comprises a less-indented line followed by at least one mor
 
 The `Raw` mode for bracket scopes is useful as it enables navigating within comments or string literals, and does not cause "jitter" like the `JumpToBracket` mode does. However, it is less reliable since it will count brackets even if they were not intended as delimiters.
 
-## Some use cases
+### Some use cases
 
 First Navi Parens-specific command activates the scope navigation modes indicator.
 
@@ -98,6 +102,23 @@ Navigation with `Raw` bracket mode.
 
 ![Raw bracket scope mode](animations/rawbrackets.gif)
 
+## MarkMacs Mode
+
+Markmacs emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor marker and a scope marker are moved with it. Moreover, VSC Markmacs adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
+
+### Features
+
+- Intercepts cursor position changes, and moves/adds a Markdown or LaTeX code (depending on context) to highlight the nearest scope (braces, parentheses, brackets) encompassing the cursor, with a color split indicating the cursor position.
+  - The actual cursor and edit actions happen in the markdown / latex pane, but user's focus can be in the preview pane.
+- Adds snippets, keybindings for the snippets commands.
+- Adds a command to cycle through alternatives of what's to the left of the cursor.
+    - E.g. $S$ -> $\Sigma$ -> $\sum$ -> $S$; $P$ -> $\Pi$ -> $\prod$ -> $P$; $f$ -> $\phi$ -> $\varphi$ -> $f$...
+- Adds context-sensitive commands to extend the object at cursor to the right, bottom, left and up. For Markdown tables, adds columns or rows; for Mermaid diagrams, adds siblings or children or parents.
+
+### Requirements
+
+- [Mermaid VS Code extension](https://github.com/mjbvz/vscode-markdown-mermaid) to make full use of the graph editing functionality.
+  - There's [a PanDoc filter](https://github.com/raghur/mermaid-filter) for [Mermaid](http://mermaid.js.org/#/).
 
 ## Extension Settings
 
@@ -210,5 +231,9 @@ Initial release of Navi Parens.
 
 * Fixes to handling indentation scopes that touch beginning/end-of-document.
 * Special-case behavior where the cursor is at the start of the indentation header line.
+
+### 2.0.0
+
+* Introduces Markmacs Mode.
 
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog

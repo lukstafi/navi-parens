@@ -1,5 +1,11 @@
 # Change Log
 
+## [2.0.0] -- current
+
+### Added
+
+- Initial release of Markmacs Mode.
+
 ## [1.2.3] -- 2023-03-07
 
 ### Fixed
