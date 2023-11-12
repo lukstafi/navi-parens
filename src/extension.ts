@@ -47,12 +47,12 @@ let openingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.leng
 let naviStatusBarItem: vscode.StatusBarItem;
 
 // TODO: customizable colors.
-const markmacsBegDarkTheme = "\\colorbox{brown}{";
-const markmacsMidDarkTheme = "}\\colorbox\{maroon}{";
-const markmacsEndDarkTheme = "}\\colorbox{peru}{}";
-const markmacsBegLightTheme = "\\colorbox{beige}{";
-const markmacsMidLightTheme = "}\\colorbox{antiquewhite}{";
-const markmacsEndLightTheme = "}\\colorbox{papayawhip}{}";
+const markmacsBegLightTheme = "\\textcolor{firebrick}{";
+const markmacsMidLightTheme = "}\\textcolor\{maroon}{";
+const markmacsEndLightTheme = "}\\textcolor{peru}{}";
+const markmacsBegDarkTheme = "\\textcolor{chartreuse}{";
+const markmacsMidDarkTheme = "}\\textcolor{navajowhite}{";
+const markmacsEndDarkTheme = "}\\textcolor{papayawhip}{}";
 let isCurrentThemeLight =
 	vscode.window.activeColorTheme.kind === 1 /* Light */ ||
 	vscode.window.activeColorTheme.kind === 4 /* HighContrastLight */;
