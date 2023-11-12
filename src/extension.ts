@@ -898,18 +898,37 @@ function isMarkmacsContext(doc: vscode.TextDocument, pos: vscode.Position): bool
 	return mm === undefined ? false : mm;
 }
 
+let lastNestedBS: vscode.Position | null = null;
+let lastNestedBE: vscode.Position | null = null;
+
 async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	const doc = textEditor.document;
 	if (!isMarkmacsContext(doc, textEditor.selection.active)) {
 		return;
 	}
-	// const savedSelection = textEditor.selection;
-	const oldPos = textEditor.selection.active;
-	await removeCursorMarkers(textEditor);
-	const pos = doc.positionAt(doc.offsetAt(oldPos) - markmacsBeg.length);
-	let state = await updateStateForPosition(textEditor);
+	const nestedPos = textEditor.selection.active;
+	const pos = doc.positionAt(doc.offsetAt(nestedPos) - markmacsBeg.length);
 	const configuration = vscode.workspace.getConfiguration();
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	let nestedBracketScope =
+		bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, /*before=*/true, nestedPos) :
+			bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, /*before=*/true, nestedPos) : null;
+	if (!nestedBracketScope) {
+		return;
+	}
+	const nestedAtS = oneOfAtPoint(doc, false, bracketsMode === "Raw", false, nestedBracketScope.start);
+	const nbs = nestedAtS ? nestedBracketScope.start.translate(0, nestedAtS.length) : nestedBracketScope.start;
+	const nestedAtE = oneOfAtPoint(doc, true, bracketsMode === "Raw", true, nestedBracketScope.end);
+	const nbe = nestedAtE ? nestedBracketScope.end.translate(0, -1 * nestedAtE.length) : nestedBracketScope.end;
+	if (lastNestedBS && lastNestedBE && lastNestedBS.isEqual(nbs) && lastNestedBE.isEqual(nbe) &&
+		doc.getText(new vscode.Range(nbs.translate(0, -1 * markmacsBeg.length), nbs)) === markmacsBeg &&
+		doc.getText(new vscode.Range(nbe, nbe.translate(0, markmacsEnd.length))) === markmacsEnd
+	) {
+		return;
+	}
+	lastNestedBS = nbs;
+	lastNestedBE = nbe;
+	await removeCursorMarkers(textEditor);
 	let bracketScope =
 		bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, /*before=*/true, pos) :
 			bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, /*before=*/true, pos) : null;
