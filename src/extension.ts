@@ -832,16 +832,18 @@ function isCursorMarked(doc: vscode.TextDocument, pos: vscode.Position): boolean
 
 async function removeCursorMarkers(textEditor: vscode.TextEditor, skipCursors: boolean) {
 	const doc = textEditor.document;
-	const text = doc.getText();
-	const cursors = textEditor.selections.map(sel => sel.active);
-	let atPos = text.length;
-	for (const delim of [markmacsMidDarkTheme, markmacsMidLightTheme]) {
+	for (const light of [true, false]) {
+		const delim = light ? markmacsMidLightTheme : markmacsMidDarkTheme;
+		const text = doc.getText();
+		const cursors = textEditor.selections.map(sel => sel.active);
+		let atPos = text.length;
 		while ((atPos = text.lastIndexOf(delim, atPos - 1)) >= 0) {
 			const pos = doc.positionAt(atPos);
 			if (skipCursors && cursors.includes(pos) && isCursorMarked(doc, pos)) {
 				continue;
 			}
-			for (const delim of [markmacsEndLightTheme, markmacsEndDarkTheme]) {
+			{
+				const delim = light ? markmacsEndLightTheme : markmacsEndDarkTheme;
 				const matched = text.indexOf(delim, atPos);
 				if (matched >= 0) {
 					await textEditor.edit(
@@ -854,7 +856,8 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor, skipCursors: b
 					(edit: vscode.TextEditorEdit) =>
 						edit.replace(new vscode.Range(pos, doc.positionAt(atPos + delim.length)), ''));
 			}
-			for (const delim of [markmacsBegLightTheme, markmacsBegDarkTheme]) {
+			{
+				const delim = light ? markmacsBegLightTheme : markmacsBegDarkTheme;
 				const matched = text.lastIndexOf(delim, atPos);
 				if (matched >= 0) {
 					await textEditor.edit(
