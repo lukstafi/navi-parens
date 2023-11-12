@@ -890,13 +890,12 @@ function isMarkmacsContext(doc: vscode.TextDocument, pos: vscode.Position): bool
 
 async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	const doc = textEditor.document;
-	const pos = textEditor.selection.active;
-	console.log(`DEBUG: navi-parens.markmacsUpdate: context ${isMarkmacsContext(doc, pos)}.`);
-	if (!isMarkmacsContext(doc, pos)) {
+	if (!isMarkmacsContext(doc, textEditor.selection.active)) {
 		return;
 	}
 	// const savedSelection = textEditor.selection;
 	await removeCursorMarkers(textEditor);
+	const pos = textEditor.selection.active;
 	let state = await updateStateForPosition(textEditor);
 	const configuration = vscode.workspace.getConfiguration();
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
@@ -910,7 +909,6 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	const bs = lookingAtS ? bracketScope.start.translate(0, lookingAtS.length) : bracketScope.start;
 	const lookingAtE = oneOfAtPoint(doc, true, bracketsMode === "Raw", true, bracketScope.end);
 	const be = lookingAtE ? bracketScope.end.translate(0, -1 * lookingAtE.length) : bracketScope.end;
-	// const mid = doc.positionAt(doc.offsetAt(selection.active) + markmacsMid.length);
 	const mid = textEditor.selection.active;
 	if (isMarkmacsContext(doc, mid)) {
 		await addCursorMarker(
@@ -919,9 +917,11 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 }
 
 let markmacsUpdateInProgress = false;
+let lastUpdatedPosition: vscode.Position | null = null;
 
 async function markmacsUpdate(textEditor: vscode.TextEditor) {
-	if (markmacsUpdateInProgress) {
+	if (markmacsUpdateInProgress ||
+		lastUpdatedPosition && lastUpdatedPosition.isEqual(textEditor.selection.active)) {
 		return;
 	}
 	try {
@@ -929,6 +929,7 @@ async function markmacsUpdate(textEditor: vscode.TextEditor) {
 		await markmacsUpdateUnsafe(textEditor);
 	} finally {
 		markmacsUpdateInProgress = false;
+		lastUpdatedPosition = textEditor.selection.active;
 	}
 }
 
@@ -939,6 +940,7 @@ async function toggleMarkmacsMode(textEditor: vscode.TextEditor) {
 		vscode.ConfigurationTarget.Global, true);
 	console.log(`navi-parens.toggleMarkmacsMode: ${isMarkmacsMode}.`);
 	if (isMarkmacsMode) {
+		lastUpdatedPosition = null;
 		await markmacsUpdate(textEditor);
 	} else {
 		await removeCursorMarkers(textEditor);
