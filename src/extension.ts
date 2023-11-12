@@ -1,11 +1,12 @@
 import { assert } from 'console';
+// import { off } from 'process';
 import * as vscode from 'vscode';
 
 interface DocumentNavigationState {
 	/** Whether current state has potentially been invalidated, due to a document change. */
 	needsUpdate: boolean;
 
-  /** Cache for the symbol trees for the whole document. Lazily updated. */
+	/** Cache for the symbol trees for the whole document. Lazily updated. */
 	rootSymbols: vscode.DocumentSymbol[];
 
 	/** A stack of ancestor symbols with the current symbol at the last (top) position. */
@@ -30,7 +31,7 @@ let documentStates = new Map<vscode.Uri, DocumentNavigationState>();
 
 // In case of doubt, add more parentheses.
 function escapeRegExps(strings: string[]) {
-	return strings.map(s => '('+s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')+')'); // $& means the whole matched string
+	return strings.map(s => '(' + s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')'); // $& means the whole matched string
 }
 
 let closingBrackets: string[] = [")", "]", "}", ">"];
@@ -132,7 +133,7 @@ async function updateStateForPosition(textEditor: vscode.TextEditor): Promise<Do
 
 	// Locality bias: smaller position changes get processed quicker.
 	let parentSymbol;
-	while (!!(parentSymbol = state.lastSymbolAndAncestors.pop()) && !parentSymbol?.range.contains(pos)) {}	
+	while (!!(parentSymbol = state.lastSymbolAndAncestors.pop()) && !parentSymbol?.range.contains(pos)) { }
 	let children: vscode.DocumentSymbol[] = [];
 	if (!parentSymbol || !parentSymbol.range.contains(pos)) {
 		children = state.rootSymbols;
@@ -187,7 +188,7 @@ function previousPosition(doc: vscode.TextDocument, pos: vscode.Position) {
  * If there is no outer scope, returns `null`.
  */
 async function findOuterBracket(
-		textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): Promise<vscode.Selection | null> {
+	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): Promise<vscode.Selection | null> {
 	const doc = textEditor.document;
 	// TODO(3): the rules do not handle multicharacter brackets.
 
@@ -200,8 +201,8 @@ async function findOuterBracket(
 	if (openingBrackets.includes(characterAtPoint(doc, pos))) {
 		// From an opening bracket, we can only move left.
 		if (leftPos && leftPos !== pos && !allBrackets.includes(characterAtPoint(doc, leftPos))) {
-		// Moving left into a bracket position always crosses a scope (exiting on open or entering on close).
-		let leftLeft = leftPos.character === 0 ? null : doc.validatePosition(leftPos.translate(0, -1));
+			// Moving left into a bracket position always crosses a scope (exiting on open or entering on close).
+			let leftLeft = leftPos.character === 0 ? null : doc.validatePosition(leftPos.translate(0, -1));
 			if (leftLeft && !closingBrackets.includes(characterAtPoint(doc, leftLeft))) {
 				// Not worth moving next to a sibling-scope bracket, otherwise good.
 				from = leftPos;
@@ -220,7 +221,7 @@ async function findOuterBracket(
 	let jumpBack = await jumpToBracket(textEditor, jumpPos);
 	if (jumpPos.isBefore(pos) && jumpBack.isAfterOrEqual(pos)) {
 		if (!(from.isEqual(jumpBack) &&
-				closingBrackets.includes(characterAtPoint(doc, jumpBack)))) {
+			closingBrackets.includes(characterAtPoint(doc, jumpBack)))) {
 			console.assert(false,
 				`Unexpected Jump To Bracket behavior with jumps ${strP(from)} -> ${strP(jumpPos)} -> ${strP(jumpBack)}.`);
 		}
@@ -263,7 +264,7 @@ function oneOfAtPoint(doc: vscode.TextDocument, closingDelimiters: boolean, isRa
 		(before ? openingBeforeRawRegex : openingAfterRawRegex);
 	const delimLength = closingDelimiters ? closingRawMaxLength : openingRawMaxLength;
 	const direction = before ? -1 : 1;
-	
+
 	const translPos = pos.translate(0,
 		direction * (direction < 0 ? Math.min(delimLength, pos.character) : delimLength));
 	const textAtPoint = doc.getText(doc.validateRange(new vscode.Selection(pos, translPos)));
@@ -355,7 +356,7 @@ function findOuterIndentation(
 				passingEmptyLine = true;
 				continue;
 			}
-      // Note: indentation is different than `firstNonWhitespaceCharacterIndex`.
+			// Note: indentation is different than `firstNonWhitespaceCharacterIndex`.
 			// Note: allow begin/end-of-scope to find the begin/end of text and other-end indentation
 			// to be "unmatched".
 			const indentation = countVisibleIndentation(textEditor, line);
@@ -447,7 +448,7 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 		if (state.leftVisibleRange) {
 			textEditor.revealRange(state.lastVisibleRange);
 		}
-		return;	
+		return;
 	}
 	const maybeBracketOverride = await findBracketScopeOverPos(textEditor, before, result);
 	if (maybeBracketOverride && (!blockScope || !maybeBracketOverride.contains(blockScope)) &&
@@ -521,7 +522,7 @@ async function findSiblingBracket(
 						return null;
 					}
 					const entryPos = before ? jumpPos.translate(0, lookingAtJump.length) : jumpPos;
-					return new vscode.Selection(entryPos, offsetPos.translate(0, direction*lookingAtDecr.length));
+					return new vscode.Selection(entryPos, offsetPos.translate(0, direction * lookingAtDecr.length));
 				}
 				offset += direction * (lookingAtDecr.length - 1);
 			} else {
@@ -567,7 +568,7 @@ function findSiblingIndentation(
 			passingEmptyLine = true;
 			continue;
 		}
-    // Note: indentation is different than `firstNonWhitespaceCharacterIndex`.
+		// Note: indentation is different than `firstNonWhitespaceCharacterIndex`.
 		const indentation = countVisibleIndentation(textEditor, line);
 		if (noIndent < 0) {
 			noIndent = indentation;
@@ -644,7 +645,7 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 	if (bracketScope && scopeLimit && !scopeLimit.intersection(bracketScope)) {
 		bracketScope = null;
 	}
-	
+
 	let targetPos = null;
 	if (blockScope && bracketScope &&
 		!blockScope.anchor.isEqual(pos) && blockScope.contains(pos) &&
@@ -691,14 +692,14 @@ export async function goToEmptyLine(textEditor: vscode.TextEditor, select: boole
 	let targetPos = null;
 	for (let line = pos.line + direction; 0 <= line && line < doc.lineCount; line += direction) {
 		const text = doc.lineAt(line);
-		if (text.isEmptyOrWhitespace) { 
+		if (text.isEmptyOrWhitespace) {
 			targetPos = new vscode.Position(line, 0);
 			break;
-		 }
+		}
 	}
 	if (!targetPos) {
 		targetPos = before ? doc.validatePosition(doc.positionAt(0))
-			: doc.validatePosition(doc.lineAt(doc.lineCount-1).range.end);
+			: doc.validatePosition(doc.lineAt(doc.lineCount - 1).range.end);
 	}
 	const anchor = select ? textEditor.selection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
@@ -721,10 +722,10 @@ export async function goPastWord(textEditor: vscode.TextEditor, select: boolean,
 		let offsetPos = doc.positionAt(offset);
 		// Beginning-of-line and end-of-line cases.
 		while ((previousOffsetPos && offsetPos.isEqual(previousOffsetPos)) ||
-			  (offsetPos.character === 0 && direction === -1)) {
+			(offsetPos.character === 0 && direction === -1)) {
 			offset += direction;
 			if (offset < 0 || offset > lastOffset ||
-				  (previouslyLookingAt && previouslyLookingAt.match(wordCharRegex))) {
+				(previouslyLookingAt && previouslyLookingAt.match(wordCharRegex))) {
 				targetPos = offsetPos;
 				break;
 			}
@@ -733,7 +734,7 @@ export async function goPastWord(textEditor: vscode.TextEditor, select: boolean,
 		if (targetPos) { break; }
 		let lookingAtPos = offsetPos.translate(0, Math.min(direction, 0));
 		const lookingAt = characterAtPoint(doc, lookingAtPos);
-		if (previouslyLookingAt && previouslyLookingAt.match(wordCharRegex) && !lookingAt.match(wordCharRegex)) { 
+		if (previouslyLookingAt && previouslyLookingAt.match(wordCharRegex) && !lookingAt.match(wordCharRegex)) {
 			targetPos = offsetPos;
 			break;
 		}
@@ -751,7 +752,7 @@ function updateStatusBarItem(blockScopeMode: string | undefined, bracketScopeMod
 		(blockScopeMode === 'Indentation' ? 'IND' : (blockScopeMode === 'None' ? 'NON' : '---'));
 	const bracketMode = bracketScopeMode === 'JumpToBracket' ? 'JTB' :
 		(bracketScopeMode === 'Raw' ? 'RAW' : (bracketScopeMode === 'None' ? 'NON' : '---'));
-	naviStatusBarItem.text = `Navi: ${blockMode}/${bracketMode}`;
+	naviStatusBarItem.text = `Navi: ${blockMode}/${bracketMode}${isMarkmacsMode ? '/MM' : ''}`;
 	naviStatusBarItem.show();
 }
 
@@ -858,7 +859,8 @@ export function activate(context: vscode.ExtensionContext) {
 	}, null, context.subscriptions);
 
 	function newCommand(
-			command: string, callback: (textEditor: vscode.TextEditor, ...args: any[]) => void) {
+		command: string, callback: (textEditor: vscode.TextEditor, ...args: any[]) => void
+	) {
 		context.subscriptions.push(vscode.commands.registerTextEditorCommand(command, callback));
 	}
 
@@ -903,6 +905,6 @@ export function activate(context: vscode.ExtensionContext) {
 		configuration.get<string>('navi-parens.bracketScopeMode'));
 }
 
-export function deactivate() {}
+export function deactivate() { }
 
 // And just some parting (parenthesized) comments.
