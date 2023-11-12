@@ -821,12 +821,7 @@ function markmacsRange(doc: vscode.TextDocument, pos: vscode.Position): vscode.R
 	return null;
 }
 
-function isCursorMarked(doc: vscode.TextDocument, pos: vscode.Position): boolean {
-	return doc.getText(new vscode.Range(
-		pos, doc.positionAt(doc.offsetAt(pos) + markmacsMid.length))) === markmacsMid;
-}
-
-async function removeCursorMarkers(textEditor: vscode.TextEditor, skipCursor: boolean) {
+async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 	const doc = textEditor.document;
 	for (const light of [true, false]) {
 		const delim = light ? markmacsMidLightTheme : markmacsMidDarkTheme;
@@ -835,9 +830,6 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor, skipCursor: bo
 		let atPos = text.length;
 		while ((atPos = text.lastIndexOf(delim, atPos - 1)) >= 0) {
 			const pos = doc.positionAt(atPos);
-			if (skipCursor && cursor.isEqual(pos) && isCursorMarked(doc, pos)) {
-				continue;
-			}
 			{
 				const delim = light ? markmacsEndLightTheme : markmacsEndDarkTheme;
 				const matched = text.indexOf(delim, atPos);
@@ -899,12 +891,12 @@ function isMarkmacsContext(doc: vscode.TextDocument, pos: vscode.Position): bool
 async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	const doc = textEditor.document;
 	const pos = textEditor.selection.active;
-	console.log(`DEBUG: navi-parens.markmacsUpdate: context ${isMarkmacsContext(doc, pos)}, marked ${isCursorMarked(doc, pos)}.`);
-	if (!isMarkmacsContext(doc, pos) || isCursorMarked(doc, pos)) {
+	console.log(`DEBUG: navi-parens.markmacsUpdate: context ${isMarkmacsContext(doc, pos)}.`);
+	if (!isMarkmacsContext(doc, pos)) {
 		return;
 	}
 	// const savedSelection = textEditor.selection;
-	await removeCursorMarkers(textEditor, /*skipCursors=*/true);
+	await removeCursorMarkers(textEditor);
 	let state = await updateStateForPosition(textEditor);
 	const configuration = vscode.workspace.getConfiguration();
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
@@ -920,7 +912,7 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	const be = lookingAtE ? bracketScope.end.translate(0, -1 * lookingAtE.length) : bracketScope.end;
 	// const mid = doc.positionAt(doc.offsetAt(selection.active) + markmacsMid.length);
 	const mid = textEditor.selection.active;
-	if (isMarkmacsContext(doc, mid) && !isCursorMarked(doc, mid)) {
+	if (isMarkmacsContext(doc, mid)) {
 		await addCursorMarker(
 			textEditor, /*begPos=*/bs, /*endPos=*/be);
 	}
@@ -949,7 +941,7 @@ async function toggleMarkmacsMode(textEditor: vscode.TextEditor) {
 	if (isMarkmacsMode) {
 		await markmacsUpdate(textEditor);
 	} else {
-		await removeCursorMarkers(textEditor, /*skipCursors=*/false);
+		await removeCursorMarkers(textEditor);
 	}
 }
 
