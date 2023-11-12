@@ -11,7 +11,15 @@
   "categories": [
     "Other"
   ],
-  "keywords": ["structure", "navigation", "block", "jump", "selection", "WYSIWYG", "latex"],
+  "keywords": [
+    "structure",
+    "navigation",
+    "block",
+    "jump",
+    "selection",
+    "WYSIWYG",
+    "latex"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -132,6 +140,11 @@
         "command": "navi-parens.cycleBlockScopeMode",
         "title": "Cycle Block Scope Mode: switch the algorithm navigating code blocks",
         "shortTitle": "Cycle Block Scope Mode"
+      },
+      {
+        "command": "navi-parens.toggleMarkmacsMode",
+        "title": "Toggle Markmacs Mode: Turn on / off cursor and scope visualization",
+        "shortTitle": "Toggle Markmacs Mode"
       }
     ],
     "configuration": {
@@ -163,6 +176,12 @@
             "None"
           ],
           "default": "JumpToBracket",
+          "scope": "language-overridable"
+        },
+        "navi-parens.isMarkmacsMode": {
+          "markdownDescription": "Markmacs Mode enabled/disabled: whether to track cursor position",
+          "type": "boolean",
+          "default": "false",
           "scope": "language-overridable"
         },
         "navi-parens.closingBrackets": {
@@ -476,13 +495,15 @@
       },
       {
         "command": "navi-parens.cycleBracketScopeMode",
-        "key": "ctrl+alt+p",
-        "when": ""
+        "key": "ctrl+alt+p"
       },
       {
         "command": "navi-parens.cycleBlockScopeMode",
-        "key": "shift+ctrl+alt+p",
-        "when": ""
+        "key": "shift+ctrl+alt+p"
+      },
+      {
+        "command": "navi-parens.toggleMarkmacsMode",
+        "key": "ctrl+alt+m"
       }
     ]
   },
@@ -498,7 +519,7 @@
   "devDependencies": {
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.0",
-    "@types/node": "^16.18.4",
+    "@types/node": "^16.18.60",
     "@types/vscode": "^1.73.0",
     "@typescript-eslint/eslint-plugin": "^5.42.0",
     "@typescript-eslint/parser": "^5.42.0",

@@ -48,6 +48,7 @@ Commands:
 * `goPastPreviousWord`: `alt+h` Go past the previous word / beginning of current, ignoring language-specific rules
 * `selectPastNextWord`: `shift+alt+;` Select past the current/next word, ignoring language-specific rules
 * `selectPastPreviousWord`: `shift+alt+h` Select past the previous word / beginning of current, ignoring language-specific rules
+* `toggleMarkmacsMode`: `ctrl+alt+m` Turn on / off cursor and scope visualization for LaTeX and Mermaid
 
 The meaning of "near the beginning/end of a scope" is mode-specific.
 
@@ -104,11 +105,11 @@ Navigation with `Raw` bracket mode.
 
 ## MarkMacs Mode
 
-_Markmacs Mode_ emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor marker and a scope marker are moved with it. Moreover, VSC Markmacs adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
+_Markmacs Mode_ emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor marker and a scope marker are moved with it. Moreover, VSC Markmacs adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives. _Markmacs Mode_ is only active inside inline LaTeX, LaTeX and Mermaid blocks.
 
 ### Features
 
-- Intercepts cursor position changes, and moves/adds a Markdown or LaTeX code (depending on context) to highlight the nearest scope (braces, parentheses, brackets) encompassing the cursor, with a color split indicating the cursor position.
+- Intercepts cursor position changes, and moves/adds LaTeX code or Mermaid style to highlight the nearest scope (braces, parentheses, brackets) encompassing the cursor, with a color split indicating the cursor position.
   - The actual cursor and edit actions happen in the markdown / latex pane, but user's focus can be in the preview pane.
 - Adds snippets, keybindings for the snippets commands.
 - Adds a command to cycle through alternatives of what's to the left of the cursor.

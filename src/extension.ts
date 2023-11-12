@@ -46,6 +46,23 @@ let closingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.leng
 let openingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
 let naviStatusBarItem: vscode.StatusBarItem;
 
+// TODO: customizable colors.
+const markmacsBegDarkTheme = "\\colorbox{brown}{";
+const markmacsMidDarkTheme = "}\\colorbox\{maroon}{";
+const markmacsEndDarkTheme = "}\\colorbox{peru}{}";
+const markmacsBegLightTheme = "\\colorbox{beige}{";
+const markmacsMidLightTheme = "}\\colorbox{antiquewhite}{";
+const markmacsEndLightTheme = "}\\colorbox{papayawhip}{}";
+let isCurrentThemeLight =
+	vscode.window.activeColorTheme.kind === 1 /* Light */ ||
+	vscode.window.activeColorTheme.kind === 4 /* HighContrastLight */;
+let markmacsBeg =
+	isCurrentThemeLight ? markmacsBegLightTheme : markmacsBegDarkTheme;
+let markmacsMid =
+	isCurrentThemeLight ? markmacsMidLightTheme : markmacsMidDarkTheme;
+let markmacsEnd =
+	isCurrentThemeLight ? markmacsEndLightTheme : markmacsEndDarkTheme;
+
 /** From Navi Parens perspective, positions on the border of a scope are outside of the scope. */
 function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
 	return range.contains(pos) && !range.start.isEqual(pos) && !range.end.isEqual(pos);
@@ -747,7 +764,9 @@ export async function goPastWord(textEditor: vscode.TextEditor, select: boolean,
 	textEditor.revealRange(textEditor.selection);
 }
 
-function updateStatusBarItem(blockScopeMode: string | undefined, bracketScopeMode: string | undefined): void {
+function updateStatusBarItem(
+	blockScopeMode: string | undefined, bracketScopeMode: string | undefined, isMarkmacsMode: boolean | undefined
+): void {
 	const blockMode = blockScopeMode === 'Semantic' ? 'SEM' :
 		(blockScopeMode === 'Indentation' ? 'IND' : (blockScopeMode === 'None' ? 'NON' : '---'));
 	const bracketMode = bracketScopeMode === 'JumpToBracket' ? 'JTB' :
@@ -789,10 +808,131 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		}
 	}
 	if (event.affectsConfiguration('navi-parens.blockScopeMode') ||
-		event.affectsConfiguration('navi-parens.bracketScopeMode')
+		event.affectsConfiguration('navi-parens.bracketScopeMode') ||
+		event.affectsConfiguration('navi-parens.isMarkmacsMode')
 	) {
 		updateStatusBarItem(configuration.get<string>('navi-parens.blockScopeMode'),
-			configuration.get<string>('navi-parens.bracketScopeMode'));
+			configuration.get<string>('navi-parens.bracketScopeMode'),
+			configuration.get<boolean>('navi-parens.isMarkmacsMode'));
+	}
+}
+
+function markmacsRange(doc: vscode.TextDocument, pos: vscode.Position): vscode.Range | null {
+	return null;
+}
+
+function isCursorMarked(doc: vscode.TextDocument, pos: vscode.Position): boolean {
+	return (
+		doc.getText(new vscode.Range(
+			pos, doc.positionAt(doc.offsetAt(pos) + markmacsMid.length))) === markmacsMid &&
+		(doc.getText(new vscode.Range(doc.positionAt(doc.offsetAt(pos) - 1), pos)) !== '{' ||
+			doc.getText(new vscode.Range(
+				doc.positionAt(doc.offsetAt(pos) - markmacsBeg.length), pos)) === markmacsBeg));
+}
+
+async function removeCursorMarkers(textEditor: vscode.TextEditor, skipCursors: boolean) {
+	const doc = textEditor.document;
+	const text = doc.getText();
+	const cursors = textEditor.selections.map(sel => sel.active);
+	let atPos = text.length;
+	for (const delim of [markmacsMidDarkTheme, markmacsMidLightTheme]) {
+		while ((atPos = text.lastIndexOf(delim, atPos - 1)) >= 0) {
+			const pos = doc.positionAt(atPos);
+			if (skipCursors && cursors.includes(pos) && isCursorMarked(doc, pos)) {
+				continue;
+			}
+			for (const delim of [markmacsEndLightTheme, markmacsEndDarkTheme]) {
+				const matched = text.indexOf(delim, atPos);
+				if (matched >= 0) {
+					await textEditor.edit(
+						(edit: vscode.TextEditorEdit) =>
+							edit.replace(new vscode.Range(doc.positionAt(matched), doc.positionAt(matched + delim.length)), ''));
+				}
+			}
+			{
+				await textEditor.edit(
+					(edit: vscode.TextEditorEdit) =>
+						edit.replace(new vscode.Range(pos, doc.positionAt(atPos + delim.length)), ''));
+			}
+			for (const delim of [markmacsBegLightTheme, markmacsBegDarkTheme]) {
+				const matched = text.lastIndexOf(delim, atPos);
+				if (matched >= 0) {
+					await textEditor.edit(
+						(edit: vscode.TextEditorEdit) =>
+							edit.replace(new vscode.Range(doc.positionAt(matched), doc.positionAt(matched + delim.length)), ''));
+				}
+			}
+		}
+	}
+}
+
+function addCursorMarker(
+	textEditor: vscode.TextEditor,
+	edit: vscode.TextEditorEdit, midPos: vscode.Position, begPos: vscode.Position | undefined,
+	endPos: vscode.Position | undefined
+) {
+	const doc = textEditor.document;
+	const offset = doc.offsetAt(midPos);
+	if (!begPos || begPos.isEqual(midPos)) {
+		begPos = doc.positionAt(offset - 1);
+	}
+	if (!endPos || endPos.isEqual(midPos)) {
+		endPos = doc.positionAt(offset + 1);
+	}
+	edit.insert(endPos, markmacsEnd);
+	edit.insert(midPos, markmacsMid);
+	edit.insert(begPos, markmacsBeg);
+}
+
+function isMarkmacsContext(doc: vscode.TextDocument, pos: vscode.Position): boolean {
+	// TODO: check for a LaTeX context.
+	const configuration = vscode.workspace.getConfiguration();
+	const mm = configuration.get<boolean>("navi-parens.isMarkmacsMode");
+	return mm === undefined ? false : mm;
+}
+
+async function markmacsUpdate(textEditor: vscode.TextEditor, selections: readonly vscode.Selection[]) {
+	for (const selection of selections) {
+		const pos = selection.active;
+		const doc = textEditor.document;
+		console.log(`DEBUG: navi-parens.markmacsUpdate: context ${isMarkmacsContext(doc, pos)}, marked ${isCursorMarked(doc, pos)}.`);
+		if (!isMarkmacsContext(doc, pos) || isCursorMarked(doc, pos)) {
+			return;
+		}
+	}
+	const savedSelection = textEditor.selection;
+	// FIXME: move selection to the right spot.
+	const pos = savedSelection.active;
+	let state = await updateStateForPosition(textEditor);
+	const configuration = vscode.workspace.getConfiguration();
+	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	let bracketScope =
+		bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, /*before=*/true, pos) :
+			bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, /*before=*/true, pos) : null;
+	// textEditor.edit((editBuilder: vscode.TextEditorEdit) => {})
+	await removeCursorMarkers(textEditor, /*skipCursors=*/true);
+	for (const selection of selections) {
+		const pos = selection.active;
+		const doc = textEditor.document;
+		if (isMarkmacsContext(doc, pos) && !isCursorMarked(doc, pos)) {
+			await textEditor.edit((editBuilder: vscode.TextEditorEdit) => addCursorMarker(
+				textEditor, editBuilder, /*midPos=*/pos, /*begPos=*/bracketScope?.start,
+					/*endPos=*/bracketScope?.end));
+		}
+	}
+}
+
+async function toggleMarkmacsMode(textEditor: vscode.TextEditor) {
+	const configuration = vscode.workspace.getConfiguration();
+	const isMarkmacsMode = !configuration.get<boolean>("navi-parens.isMarkmacsMode");
+	await configuration.update("navi-parens.isMarkmacsMode", isMarkmacsMode,
+		vscode.ConfigurationTarget.Global, true);
+	console.log(`navi-parens.toggleMarkmacsMode: ${isMarkmacsMode}.`);
+	if (isMarkmacsMode) {
+		await removeCursorMarkers(textEditor, /*skipCursors=*/true);
+		await markmacsUpdate(textEditor, textEditor.selections);
+	} else {
+		await removeCursorMarkers(textEditor, /*skipCursors=*/false);
 	}
 }
 
@@ -851,12 +991,26 @@ export function activate(context: vscode.ExtensionContext) {
 		openingRawMaxLength = Math.max(...openingBracketsRaw.map(delim => delim.length));
 	}
 	vscode.workspace.onDidChangeConfiguration(configurationChangeUpdate);
+	vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) =>
+		markmacsUpdate(event.textEditor, event.selections));
 
 	vscode.workspace.onDidChangeTextDocument(event => {
 		const uri = event.document.uri;
 		const state = documentStates.get(uri);
 		if (state) { state.needsUpdate = true; }
 	}, null, context.subscriptions);
+
+	vscode.window.onDidChangeActiveColorTheme(() => {
+		isCurrentThemeLight =
+			vscode.window.activeColorTheme.kind === 1 /* Light */ ||
+			vscode.window.activeColorTheme.kind === 4 /* HighContrastLight */;
+		markmacsBeg =
+			isCurrentThemeLight ? markmacsBegLightTheme : markmacsBegDarkTheme;
+		markmacsMid =
+			isCurrentThemeLight ? markmacsMidLightTheme : markmacsMidDarkTheme;
+		markmacsEnd =
+			isCurrentThemeLight ? markmacsEndLightTheme : markmacsEndDarkTheme;
+	});
 
 	function newCommand(
 		command: string, callback: (textEditor: vscode.TextEditor, ...args: any[]) => void
@@ -886,6 +1040,7 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.selectToNextEmptyLine', textEditor => goToEmptyLine(textEditor, true, false));
 	newCommand('navi-parens.selectPastPreviousWord', textEditor => goPastWord(textEditor, true, true));
 	newCommand('navi-parens.selectPastNextWord', textEditor => goPastWord(textEditor, true, false));
+	newCommand('navi-parens.toggleMarkmacsMode', toggleMarkmacsMode);
 
 	// Register a command that is invoked when the status bar item is selected
 	const naviCommandId = 'navi-parens.showScopeModes';
@@ -894,15 +1049,17 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Navi Parens: ' +
 			configuration.get<string>('navi-parens.blockScopeMode') + '/' +
 			configuration.get<string>('navi-parens.bracketScopeMode') +
+			(configuration.get<boolean>('navi-parens.isMarkmacsMode') ? '/MarkmacsMode' : '') +
 			' (`ctrl+shift+alt+p` changes block scope mode / ' +
-			'`ctrl+alt+p` changes bracket scope mode).');
+			'`ctrl+alt+p` changes bracket scope mode / `ctrl+alt+m` changes Markmacs mode).');
 	}));
 	// Create a new status bar item.
 	naviStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	naviStatusBarItem.command = naviCommandId;
 	context.subscriptions.push(naviStatusBarItem);
 	updateStatusBarItem(configuration.get<string>('navi-parens.blockScopeMode'),
-		configuration.get<string>('navi-parens.bracketScopeMode'));
+		configuration.get<string>('navi-parens.bracketScopeMode'),
+		configuration.get<boolean>('navi-parens.isMarkmacsMode'));
 }
 
 export function deactivate() { }
