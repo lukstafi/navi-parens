@@ -36,14 +36,14 @@ function escapeRegExps(strings: string[]) {
 
 let closingBrackets: string[] = [")", "]", "}", ">"];
 let openingBrackets: string[] = ["(", "[", "{", "<"];
-let closingBracketsRaw: string[] = [" *)", ")", "]", "}", "</p>", "</div>"];
-let openingBracketsRaw: string[] = ["(* ", "(", "[", "{", "<p>", "<div"];
-let closingBeforeRawRegex = new RegExp('(' + escapeRegExps(closingBracketsRaw).join('|') + ')$', 'u');
-let openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw).join('|') + ')$', 'u');
-let closingAfterRawRegex = new RegExp('^(' + escapeRegExps(closingBracketsRaw).join('|') + ')', 'u');
-let openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw).join('|') + ')', 'u');
-let closingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
-let openingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
+let closingBracketsRaw: string[] | null = null;
+let openingBracketsRaw: string[] | null = null;
+let closingBeforeRawRegex: RegExp | null = null;
+let openingBeforeRawRegex: RegExp | null = null;
+let closingAfterRawRegex: RegExp | null = null;
+let openingAfterRawRegex: RegExp | null = null;
+let closingRawMaxLength: number | null = null;
+let openingRawMaxLength: number | null = null;
 let naviStatusBarItem: vscode.StatusBarItem;
 
 // TODO: customizable colors.
@@ -281,6 +281,11 @@ function oneOfAtPoint(doc: vscode.TextDocument, closingDelimiters: boolean, isRa
 		const delimiters = closingDelimiters ? closingBrackets : openingBrackets;
 		return delimiters.includes(lookingAt) ? lookingAt : null;
 	}
+	if (!closingAfterRawRegex || !closingBeforeRawRegex || !openingAfterRawRegex ||
+		!openingBeforeRawRegex || !closingRawMaxLength || !openingRawMaxLength) {
+		assert(false, 'Navi Parens is not initialized!');
+		return null;
+	};
 	const delimiters = closingDelimiters ? (before ? closingBeforeRawRegex : closingAfterRawRegex) :
 		(before ? openingBeforeRawRegex : openingAfterRawRegex);
 	const delimLength = closingDelimiters ? closingRawMaxLength : openingRawMaxLength;
