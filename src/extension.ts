@@ -190,8 +190,8 @@ function atPosition(doc: vscode.TextDocument, offset: number) {
 		pos = doc.positionAt(offset + 1);
 	}
 	// else if (pos.isEqual(doc.positionAt(offset + 1))) {
-		// In case endline is represented as two characters in the document.
-		// pos = doc.positionAt(offset - 1);
+	// In case endline is represented as two characters in the document.
+	// pos = doc.positionAt(offset - 1);
 	// }
 	return pos;
 }
@@ -321,16 +321,16 @@ function findOuterBracketRaw(
 			if (direction[side] === -1 && offsetPos.character === 0) {
 				continue;
 			}
-			let lookingAt = oneOfAtPoint(doc, incrIsClosing[side], true, beforeFor[side], offsetPos);
-			if (lookingAt) { ++nesting; delta = lookingAt.length * direction[side]; }
-			else {
-				lookingAt = oneOfAtPoint(doc, decrIsClosing[side], true, beforeFor[side], offsetPos);
-				if (lookingAt) {
-					--nesting; delta = lookingAt.length * direction[side];
-					if (nesting === -1) {
-						selection[side] = offsetPos.translate(0, lookingAt.length * direction[side]);
-						break;
-					}
+			const lookingAtIncr = oneOfAtPoint(doc, incrIsClosing[side], true, beforeFor[side], offsetPos);
+			const lookingAtDecr = oneOfAtPoint(doc, decrIsClosing[side], true, beforeFor[side], offsetPos);
+			const isIncr = lookingAtIncr && (!lookingAtDecr || lookingAtIncr.length > lookingAtDecr.length);
+			const lookingAt = isIncr ? lookingAtIncr : lookingAtDecr;
+			if (lookingAt && isIncr) { ++nesting; delta = lookingAt.length * direction[side]; }
+			else if (lookingAt && !isIncr) {
+				--nesting; delta = lookingAt.length * direction[side];
+				if (nesting === -1) {
+					selection[side] = offsetPos.translate(0, lookingAt.length * direction[side]);
+					break;
 				}
 			}
 		}
