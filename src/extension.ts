@@ -51,7 +51,7 @@ const markmacsBegLightTheme = "\\textcolor{firebrick}{";
 const markmacsMidLightTheme = "}\\textcolor\{maroon}{";
 const markmacsEndLightTheme = "}\\textcolor{peru}{}";
 const markmacsBegDarkTheme = "\\textcolor{chartreuse}{";
-const markmacsMidDarkTheme = "}\\textcolor{navajowhite}{";
+const markmacsMidDarkTheme = "}\\textcolor{olivedrab}{";
 const markmacsEndDarkTheme = "}\\textcolor{papayawhip}{}";
 let isCurrentThemeLight =
 	vscode.window.activeColorTheme.kind === 1 /* Light */ ||
@@ -183,13 +183,17 @@ function characterAtPoint(doc: vscode.TextDocument, pos: vscode.Position): strin
 	return doc.getText(new vscode.Range(pos, pos.translate(0, 1)));
 }
 
-function nextPosition(doc: vscode.TextDocument, pos: vscode.Position) {
-	let rightPos = doc.positionAt(doc.offsetAt(pos) + 1);
-	if (rightPos.isEqual(pos)) {
+function atPosition(doc: vscode.TextDocument, offset: number) {
+	let pos = doc.positionAt(offset);
+	if (pos.isEqual(doc.positionAt(offset - 1))) {
 		// In case endline is represented as two characters in the document.
-		rightPos = doc.positionAt(doc.offsetAt(pos) + 2);
+		pos = doc.positionAt(offset + 1);
 	}
-	return rightPos;
+	// else if (pos.isEqual(doc.positionAt(offset + 1))) {
+		// In case endline is represented as two characters in the document.
+		// pos = doc.positionAt(offset - 1);
+	// }
+	return pos;
 }
 
 function previousPosition(doc: vscode.TextDocument, pos: vscode.Position) {
@@ -837,11 +841,15 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 				await textEditor.edit(
 					(edit: vscode.TextEditorEdit) =>
 						edit.replace(new vscode.Range(pos, doc.positionAt(atPos + delim.length)), ''));
-				if (atPos < cursor) {
+				if (atPos + delim.length < cursor) {
 					cursor -= delim.length;
+				} else if (atPos < cursor) {
+					cursor = atPos + 1;
 				}
-				if (atPos < anchor) {
+				if (atPos + delim.length < anchor) {
 					anchor -= delim.length;
+				} else if (atPos < anchor) {
+					anchor = atPos + 1;
 				}
 			}
 			{
@@ -851,11 +859,15 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 					await textEditor.edit(
 						(edit: vscode.TextEditorEdit) =>
 							edit.replace(new vscode.Range(doc.positionAt(matched), doc.positionAt(matched + delim.length)), ''));
-					if (matched < cursor) {
+					if (matched + delim.length < cursor) {
 						cursor -= delim.length;
+					} else if (matched <= cursor) {
+						cursor = matched + 1;
 					}
-					if (matched < anchor) {
+					if (matched + delim.length < anchor) {
 						anchor -= delim.length;
+					} else if (matched <= anchor) {
+						anchor = matched + 1;
 					}
 				}
 			}
@@ -866,11 +878,15 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 					await textEditor.edit(
 						(edit: vscode.TextEditorEdit) =>
 							edit.replace(new vscode.Range(doc.positionAt(matched), doc.positionAt(matched + delim.length)), ''));
-					if (matched < cursor) {
+					if (matched + delim.length < cursor) {
 						cursor -= delim.length;
+					} else if (matched <= cursor) {
+						cursor = matched - 1;
 					}
-					if (matched < anchor) {
+					if (matched + delim.length < anchor) {
 						anchor -= delim.length;
+					} else if (matched <= anchor) {
+						anchor = matched - 1;
 					}
 				}
 			}
@@ -878,9 +894,11 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 	}
 	if (cursor !== doc.offsetAt(textEditor.selection.active) ||
 		anchor !== doc.offsetAt(textEditor.selection.anchor)) {
-		textEditor.selection = new vscode.Selection(doc.positionAt(cursor), doc.positionAt(anchor));
+		textEditor.selection = new vscode.Selection(atPosition(doc, cursor), atPosition(doc, anchor));
 	}
 }
+
+let isMarkmacsMid = true;
 
 async function addCursorMarker(
 	textEditor: vscode.TextEditor, begPos: vscode.Position, endPos: vscode.Position
@@ -893,29 +911,51 @@ async function addCursorMarker(
 	if (pos < beg || end < pos) {
 		return;
 	}
-	const text = doc.getText();
-	// function indexOrNull(substr: string) {
-	// 	const i = text.indexOf(substr, pos);
-	// 	return i >= pos && i < end ? i : null;
-	// }
-	// const mid = indexOrNull(' ') || indexOrNull('{') || indexOrNull('(') || indexOrNull('[') ||
-	// 	indexOrNull('\n\r') || indexOrNull('\n') || pos;
+	const leftText = doc.getText(new vscode.Range(begPos, textEditor.selection.active));
+	const rightText = doc.getText(new vscode.Range(textEditor.selection.active, endPos));
+	function indexOrNull(substr: string) {
+		const i = rightText.indexOf(substr);
+		return i >= 0 && i < rightText.length ? i + pos : null;
+	}
+	let mid = pos;
+	if (leftText.lastIndexOf('\\') > leftText.lastIndexOf(' ')) {
+		const altMid =
+			indexOrNull(' ') || indexOrNull('(') || indexOrNull('[') || indexOrNull('\n\r') || indexOrNull('\n');
+		if (altMid) {
+			mid = altMid;
+			isMarkmacsMid = true;
+		} else {
+			isMarkmacsMid = false;
+		}
+	} else {
+		isMarkmacsMid = true;
+	}
 	await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(end), markmacsEnd));
-	// await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(mid), markmacsMid));
+	if (isMarkmacsMid) {
+		await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(mid), markmacsMid));
+	}
 	await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(beg), markmacsBeg));
 	let anchorTo = anchor;
-	if (anchor > beg) {
+	if (anchor >= beg) {
 		anchorTo += markmacsBeg.length;
 	}
-	// if (anchor > mid) {
-	// 	anchorTo += markmacsMid.length;
-	// }
+	let posTo = pos;
+	if (pos >= beg) {
+		posTo += markmacsBeg.length;
+	}
+	if (isMarkmacsMid && anchor > mid) {
+		anchorTo += markmacsMid.length;
+	}
+	if (isMarkmacsMid && pos > mid) {
+		posTo += markmacsMid.length;
+	}
 	if (anchor > end) {
 		anchorTo += markmacsEnd.length;
 	}
-	if (pos > beg) {
-		textEditor.selection = new vscode.Selection(doc.positionAt(pos + markmacsBeg.length), doc.positionAt(anchorTo));
+	if (pos > end) {
+		posTo += markmacsEnd.length;
 	}
+	textEditor.selection = new vscode.Selection(atPosition(doc, posTo), atPosition(doc, anchorTo));
 }
 
 function isMarkmacsContext(doc: vscode.TextDocument, pos: vscode.Position): boolean {
