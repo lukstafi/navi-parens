@@ -514,7 +514,9 @@ async function findSiblingBracket(
 		}
 		const lookingAtIncr = oneOfAtPoint(doc, incrIsClosing, raw, before, offsetPos);
 		const lookingAtDecr = oneOfAtPoint(doc, !incrIsClosing, raw, before, offsetPos);
-		if (lookingAtIncr) {
+		const isIncr = lookingAtIncr && (!lookingAtDecr || lookingAtIncr.length > lookingAtDecr.length);
+		const lookingAt = isIncr ? lookingAtIncr : lookingAtDecr;
+		if (isIncr) {
 			const lookingAtIncrPos = offsetPos.translate(0, Math.min(direction * lookingAtIncr.length, 0));
 			if (raw) {
 				if (!updated) { jumpPos = lookingAtIncrPos; lookingAtJump = lookingAtIncr; }
@@ -537,8 +539,7 @@ async function findSiblingBracket(
 					return new vscode.Selection(entryPos, targetPos);
 				}
 			}
-		}
-		if (lookingAtDecr) {
+		} else if (lookingAtDecr) {
 			const lookingAtDecrPos = offsetPos.translate(0, Math.min(direction * lookingAtDecr.length, 0));
 			if (raw) {
 				--nesting; updated = true;
@@ -906,7 +907,7 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 let isMarkmacsMid = true;
 
 async function addCursorMarker(
-	textEditor: vscode.TextEditor, begPos: vscode.Position, endPos: vscode.Position
+	textEditor: vscode.TextEditor, begPos: vscode.Position, endPos: vscode.Position, endIsMultiline: boolean
 ) {
 	const doc = textEditor.document;
 	const beg = doc.offsetAt(begPos);
@@ -1011,8 +1012,9 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	const bs = lookingAtS ? bracketScope.start.translate(0, lookingAtS.length) : bracketScope.start;
 	const lookingAtE = oneOfAtPoint(doc, true, bracketsMode === "Raw", true, bracketScope.end);
 	const be = lookingAtE ? bracketScope.end.translate(0, -1 * lookingAtE.length) : bracketScope.end;
+	const endIsMultiline = !!(lookingAtE && lookingAtE.length > 1);
 	await addCursorMarker(
-		textEditor, /*begPos=*/bs, /*endPos=*/be);
+		textEditor, /*begPos=*/bs, /*endPos=*/be, endIsMultiline);
 }
 
 let markmacsUpdateInProgress = false;
