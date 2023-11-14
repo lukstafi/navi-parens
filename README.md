@@ -3,7 +3,7 @@
 _Navi Parens_ is a Visual Studio Code extension that provides structured code navigation similar to what's available in Emacs.
 It also provides additional key bindings for moving the cursor without "fingers leaving the home row".
 
-_Navi Parens_ also provides _Markmacs Mode_, which emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor-scope marker are moved with it. Moreover, _Markmacs Mode_ adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
+_Navi Parens_ also provides _Markmacs Mode_, which emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor-scope markers are moved with it. Moreover, _Markmacs Mode_ adds some commands, such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
 
 ## Keywords
 
@@ -68,6 +68,8 @@ Extra key bindings:
 * `cursorEndSelect`: `shift+alt+e`
 * `deleteRight`: `alt+d`
 * `deleteWordRight`: `ctrl+alt+d`
+
+I suggest mapping `Caps Lock` to `alt` (rather than `ctrl`) to facilitate using the above bindings.
 
 _Navi Parens_ combines two sources of structure information:
 * Brackets, braces, parentheses.
@@ -167,7 +169,7 @@ See [integration tests `Extension Test Suite`](src/test/suite/extension.test.ts)
 
 _Navi Parens_ will not perform an action when it does not make logical sense, e.g. there is no outer scope to jump out of, or there is no next/previous scope within the current scope to go to the end of (even if there are more scopes outside of the current scope). This design is intentional, so that you can quickly repeat a command until you get stuck, where you can make a navigational decision (e.g. whether to leave the current scope).
 
-One context where the current behavior might be a bit limiting is when the cursor is placed at the header line of an indentation scope, but not at the beginning of it. Jumping past next scope will find a scope nested inside the subsequent more-indented lines, rather than jumping to the end of the indentation scope. However, jumping down out of the scope will also not jump to the endo of the indentation scope, instead it will jump to outside of an encompassing scope (if any). One way to conceptualize this is to think of the header line of an indentation scope as a multi-character block scope delimiter. A position inside a delimiter is neither fully inside, nor fully outside the delimited scope.
+One context where the current behavior might be a bit limiting is when the cursor is placed at the header line of an indentation scope, but not at the beginning of it. Jumping past next scope will find a scope nested inside the subsequent more-indented lines, rather than jumping to the end of the indentation scope. However, jumping down out of the scope will also not jump to the end of the indentation scope, instead it will jump to outside of an encompassing scope (if any). One way to conceptualize this is to think of the header line of an indentation scope as a multi-character block scope delimiter. A position inside a delimiter is neither fully inside, nor fully outside the delimited scope.
 
 Currently, multiple cursors are not supported. It's unlikely that I'll add multiple cursors handling, unless other users ask for it.
 
@@ -177,15 +179,9 @@ If _Navi Parens_ logs assertion failure, maybe the language has delimiters other
 
 Some _Navi Parens_ commands will misbehave if they are executed before a document editor is fully initialized. Specifically, the `Semantic` and `JumpToBrackets` modes require the corresponding initializations, while the `Indentation` and `Raw` modes are good-to-go right away since they only look at the text of a document.
 
-Whitespace-only lines are ignored in computing indentation scopes, which might leave to undesired behavior when you navigate out of a newly-opened line.
+Whitespace-only lines are ignored in computing indentation scopes, which might lead to undesired behavior when you navigate out of a newly-opened line.
 
-## Notes from a former Emacser
-
-Coming from Emacs, I appreciate and suggest:
-* Using the Breadcrumbs navigation (semantic outline) on top of editors.
-* Using the Go Forward `alt+right arrow` and Go Back `alt+left arrow`.
-* Mapping `Caps Lock` to `alt` (rather than `ctrl`) to facilitate using the above bindings.
-
+TODO: commandline to run tests.
 
 ## Release Notes
 
@@ -236,5 +232,7 @@ Initial release of _Navi Parens_.
 ### 2.0.0
 
 * Introduces _Markmacs Mode_.
+* Fixes tricky multicharacter delimiter handling for the RAW mode.
+* Includes LaTeX matrix and equation environment delimiters in defaults.
 
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog
