@@ -36,22 +36,27 @@ function escapeRegExps(strings: string[]) {
 
 let closingBrackets: string[] = [")", "]", "}", ">"];
 let openingBrackets: string[] = ["(", "[", "{", "<"];
+let separatorsJTB: string[] = [",", ";"];
 let closingBracketsRaw: string[] | null = null;
 let openingBracketsRaw: string[] | null = null;
+let separatorsRaw: string[] | null = null;
 let closingBeforeRawRegex: RegExp | null = null;
 let openingBeforeRawRegex: RegExp | null = null;
+let separatorsBeforeRawRegex: RegExp | null = null;
 let closingAfterRawRegex: RegExp | null = null;
 let openingAfterRawRegex: RegExp | null = null;
+let separatorsAfterRawRegex: RegExp | null = null;
 let closingRawMaxLength: number | null = null;
 let openingRawMaxLength: number | null = null;
+let separatorsRawMaxLength: number | null = null;
 let naviStatusBarItem: vscode.StatusBarItem;
 
 // TODO: customizable colors.
 const markmacsBegLightTheme = "\\textcolor{firebrick}{";
-const markmacsMidLightTheme = "}\\textcolor\{maroon}{";
+const markmacsMidLightTheme = "|";
 const markmacsEndLightTheme = "}\\textcolor{peru}{}";
 const markmacsBegDarkTheme = "\\textcolor{chartreuse}{";
-const markmacsMidDarkTheme = "}\\textcolor{olivedrab}{";
+const markmacsMidDarkTheme = "|";
 const markmacsEndDarkTheme = "}\\textcolor{papayawhip}{}";
 let isCurrentThemeLight =
 	vscode.window.activeColorTheme.kind === 1 /* Light */ ||
@@ -216,7 +221,7 @@ async function findOuterBracket(
 	// If we are touching a bracket from the outside and we wouldn't cross a scope moving beside, jump from there
 	// rather than current position, to minimize jumpToBracket calls.
 	let from = pos;
-	const allBrackets = openingBrackets.concat(closingBrackets);
+	const allBrackets = openingBrackets.concat(closingBrackets).concat(separatorsJTB);
 	let leftPos = pos.character === 0 ? null : doc.validatePosition(pos.translate(0, -1));
 	let rightPos = doc.validatePosition(pos.translate(0, 1));
 	if (openingBrackets.includes(characterAtPoint(doc, pos))) {
@@ -272,23 +277,36 @@ async function findOuterBracket(
 	return null;
 }
 
-function oneOfAtPoint(doc: vscode.TextDocument, closingDelimiters: boolean, isRaw: boolean, before: boolean,
-	pos: vscode.Position): string | null {
+enum DelimiterType {
+	opening,
+	closing,
+	separator
+}
+
+function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw: boolean,
+	before: boolean, pos: vscode.Position): string | null {
 	if (!isRaw) {
 		const direction = before ? -1 : 1;
 		let lookingAtPos = pos.translate(0, Math.min(direction, 0));
 		const lookingAt = characterAtPoint(doc, lookingAtPos);
-		const delimiters = closingDelimiters ? closingBrackets : openingBrackets;
+		const delimiters =
+			delimiter === DelimiterType.closing ? closingBrackets : DelimiterType.opening ? openingBrackets
+				: separatorsJTB;
 		return delimiters.includes(lookingAt) ? lookingAt : null;
 	}
 	if (!closingAfterRawRegex || !closingBeforeRawRegex || !openingAfterRawRegex ||
-		!openingBeforeRawRegex || !closingRawMaxLength || !openingRawMaxLength) {
+		!openingBeforeRawRegex || !separatorsAfterRawRegex ||
+		!separatorsBeforeRawRegex || !closingRawMaxLength || !openingRawMaxLength || !separatorsRawMaxLength) {
 		assert(false, 'Navi Parens is not initialized!');
 		return null;
 	};
-	const delimiters = closingDelimiters ? (before ? closingBeforeRawRegex : closingAfterRawRegex) :
-		(before ? openingBeforeRawRegex : openingAfterRawRegex);
-	const delimLength = closingDelimiters ? closingRawMaxLength : openingRawMaxLength;
+	const delimiters =
+		delimiter === DelimiterType.closing ? (before ? closingBeforeRawRegex : closingAfterRawRegex) :
+			delimiter === DelimiterType.opening ? (before ? openingBeforeRawRegex : openingAfterRawRegex) :
+				(before ? separatorsBeforeRawRegex : separatorsAfterRawRegex);
+	const delimLength =
+		delimiter === DelimiterType.closing ? closingRawMaxLength :
+			delimiter === DelimiterType.opening ? openingRawMaxLength : separatorsRawMaxLength;
 	const direction = before ? -1 : 1;
 
 	const translPos = pos.translate(0,
@@ -325,21 +343,37 @@ function findOuterBracketRaw(
 			if (direction[side] === -1 && offsetPos.character === 0) {
 				continue;
 			}
-			const lookingAtIncr = oneOfAtPoint(doc, incrIsClosing[side], true, beforeFor[side], offsetPos);
-			const lookingAtDecr = oneOfAtPoint(doc, decrIsClosing[side], true, beforeFor[side], offsetPos);
-			const isIncr = lookingAtIncr && (!lookingAtDecr || lookingAtIncr.length > lookingAtDecr.length);
-			const lookingAt = isIncr ? lookingAtIncr : lookingAtDecr;
+			const lookingAtIncr =
+				oneOfAtPoint(doc, incrIsClosing[side] ? DelimiterType.closing : DelimiterType.opening, true,
+					beforeFor[side], offsetPos);
+			const lookingAtDecr =
+				oneOfAtPoint(doc, decrIsClosing[side] ? DelimiterType.closing : DelimiterType.opening, true,
+					beforeFor[side], offsetPos);
+			const lookingAtSep =
+				useSeparators() ? oneOfAtPoint(doc, DelimiterType.separator, true, beforeFor[side], offsetPos) : null;
+			const isIncr =
+				lookingAtIncr && (!lookingAtDecr || lookingAtIncr.length > lookingAtDecr.length)
+				&& (!lookingAtSep || lookingAtIncr.length > lookingAtSep.length);
+			const isDecr =
+				!isIncr && lookingAtDecr
+				&& (!lookingAtSep || lookingAtDecr.length > lookingAtSep.length);
+			const lookingAt = isIncr ? lookingAtIncr : (isDecr ? lookingAtDecr : lookingAtSep);
 			const isPastCursor =
 				lookingAt && (delta < 0 ? offset <= cursor : cursor < offset + lookingAt.length);
 			if (isIncr && isPastCursor) {
 				++nesting; delta = lookingAtIncr.length * direction[side];
 			}
-			else if (lookingAtDecr && !isIncr && isPastCursor) {
+			else if (isDecr && isPastCursor) {
 				--nesting; delta = lookingAtDecr.length * direction[side];
 				if (nesting === -1) {
 					selection[side] = offsetPos.translate(0, lookingAtDecr.length * direction[side]);
 					break;
 				}
+			}
+			else if (lookingAtSep && !isIncr && !isDecr && isPastCursor && nesting === 0) {
+				--nesting; delta = lookingAtSep.length * direction[side];
+				selection[side] = offsetPos.translate(0, lookingAtSep.length * direction[side]);
+				break;
 			}
 		}
 	}
@@ -442,11 +476,17 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 	const doc = textEditor.document;
 	if (near && bracketScope) {
 		const cursor = doc.offsetAt(pos);
-		const lookingAtS = oneOfAtPoint(doc, false, bracketsMode === "Raw", false, bracketScope.start);
+		const lookingAtS =
+			oneOfAtPoint(doc, DelimiterType.opening, bracketsMode === "Raw", false, bracketScope.start) ||
+			(useSeparators() ?
+				oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, bracketScope.start) : null);
 		const altTranslS = doc.offsetAt(bracketScope.start) - cursor;
 		const translS = altTranslS > 0 ? altTranslS : lookingAtS ? lookingAtS.length : 0;
 		const bs = lookingAtS ? bracketScope.start.translate(0, translS) : bracketScope.start;
-		const lookingAtE = oneOfAtPoint(doc, true, bracketsMode === "Raw", true, bracketScope.end);
+		const lookingAtE =
+			oneOfAtPoint(doc, DelimiterType.closing, bracketsMode === "Raw", true, bracketScope.end) ||
+			(useSeparators() ?
+				oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, bracketScope.end) : null);
 		const altTranslE = cursor - doc.offsetAt(bracketScope.end);
 		const translE = altTranslE > 0 ? altTranslE : lookingAtE ? lookingAtE.length : 0;
 		const be = lookingAtE ? bracketScope.end.translate(0, -1 * translE) : bracketScope.end;
@@ -525,8 +565,10 @@ async function findSiblingBracket(
 		if (before && offsetPos.character === 0) {
 			continue;
 		}
-		const lookingAtIncr = oneOfAtPoint(doc, incrIsClosing, raw, before, offsetPos);
-		const lookingAtDecr = oneOfAtPoint(doc, !incrIsClosing, raw, before, offsetPos);
+		const lookingAtIncr =
+			oneOfAtPoint(doc, incrIsClosing ? DelimiterType.closing : DelimiterType.opening, raw, before, offsetPos);
+		const lookingAtDecr =
+			oneOfAtPoint(doc, incrIsClosing ? DelimiterType.opening : DelimiterType.closing, raw, before, offsetPos);
 		const isIncr = lookingAtIncr && (!lookingAtDecr || lookingAtIncr.length > lookingAtDecr.length);
 		if (isIncr) {
 			const lookingAtIncrPos = offsetPos.translate(0, Math.min(direction * lookingAtIncr.length, 0));
@@ -811,6 +853,12 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 			openingBrackets = openingBracketsConfig;
 		}
 	}
+	if (event.affectsConfiguration('navi-parens.separatorsJTB')) {
+		const separatorsJTBConfig = configuration.get<string[]>("navi-parens.separatorsJTB");
+		if (separatorsJTBConfig) {
+			separatorsJTB = separatorsJTBConfig;
+		}
+	}
 	if (event.affectsConfiguration('navi-parens.closingBracketsRaw')) {
 		const closingBracketsRawConfig = configuration.get<string[]>("navi-parens.closingBracketsRaw");
 		if (closingBracketsRawConfig) {
@@ -827,6 +875,15 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 			openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw).join('|') + ')$', 'u');
 			openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw).join('|') + ')', 'u');
 			openingRawMaxLength = Math.max(...openingBracketsRaw.map(delim => delim.length));
+		}
+	}
+	if (event.affectsConfiguration('navi-parens.separatorsRaw')) {
+		const separatorsRawConfig = configuration.get<string[]>("navi-parens.separatorsRaw");
+		if (separatorsRawConfig) {
+			separatorsRaw = separatorsRawConfig;
+			separatorsBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsRaw).join('|') + ')$', 'u');
+			separatorsAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsRaw).join('|') + ')', 'u');
+			separatorsRawMaxLength = Math.max(...separatorsRaw.map(delim => delim.length));
 		}
 	}
 	if (event.affectsConfiguration('navi-parens.blockScopeMode') ||
@@ -919,7 +976,7 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 let isMarkmacsMid = true;
 
 async function addCursorMarker(
-	textEditor: vscode.TextEditor, begPos: vscode.Position, endPos: vscode.Position, endIsMultiline: boolean
+	textEditor: vscode.TextEditor, begPos: vscode.Position, endPos: vscode.Position
 ) {
 	const doc = textEditor.document;
 	const beg = doc.offsetAt(begPos);
@@ -984,6 +1041,12 @@ function isMarkmacsContext(doc: vscode.TextDocument, pos: vscode.Position): bool
 	return mm === undefined ? false : mm;
 }
 
+function useSeparators(): boolean {
+	const configuration = vscode.workspace.getConfiguration();
+	const mm = configuration.get<boolean>("navi-parens.useSeparators");
+	return mm === undefined ? false : mm;
+}
+
 let lastNestedBS: vscode.Position | null = null;
 let lastNestedBE: vscode.Position | null = null;
 
@@ -1001,9 +1064,15 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	if (!nestedBracketScope) {
 		return;
 	}
-	const nestedAtS = oneOfAtPoint(doc, false, bracketsMode === "Raw", false, nestedBracketScope.start);
+	const nestedAtS =
+		oneOfAtPoint(doc, DelimiterType.opening, bracketsMode === "Raw", false, nestedBracketScope.start) ||
+		(useSeparators() ?
+			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, nestedBracketScope.start) : null);
 	const nbs = nestedAtS ? nestedBracketScope.start.translate(0, nestedAtS.length) : nestedBracketScope.start;
-	const nestedAtE = oneOfAtPoint(doc, true, bracketsMode === "Raw", true, nestedBracketScope.end);
+	const nestedAtE =
+		oneOfAtPoint(doc, DelimiterType.closing, bracketsMode === "Raw", true, nestedBracketScope.end) ||
+		(useSeparators() ?
+			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, nestedBracketScope.end) : null);
 	const nbe = nestedAtE ? nestedBracketScope.end.translate(0, -1 * nestedAtE.length) : nestedBracketScope.end;
 	if (lastNestedBS && lastNestedBE && lastNestedBS.isEqual(nbs) && lastNestedBE.isBeforeOrEqual(nbe) &&
 		doc.getText(new vscode.Range(doc.positionAt(doc.offsetAt(nbs) - markmacsBeg.length), nbs)) === markmacsBeg &&
@@ -1021,13 +1090,17 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	if (!bracketScope) {
 		return;
 	}
-	const lookingAtS = oneOfAtPoint(doc, false, bracketsMode === "Raw", false, bracketScope.start);
+	const lookingAtS =
+		oneOfAtPoint(doc, DelimiterType.opening, bracketsMode === "Raw", false, bracketScope.start) ||
+		(useSeparators() ?
+			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, bracketScope.start) : null);
 	const bs = lookingAtS ? bracketScope.start.translate(0, lookingAtS.length) : bracketScope.start;
-	const lookingAtE = oneOfAtPoint(doc, true, bracketsMode === "Raw", true, bracketScope.end);
+	const lookingAtE =
+		oneOfAtPoint(doc, DelimiterType.closing, bracketsMode === "Raw", true, bracketScope.end) ||
+		(useSeparators() ?
+			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, bracketScope.end) : null);
 	const be = lookingAtE ? bracketScope.end.translate(0, -1 * lookingAtE.length) : bracketScope.end;
-	const endIsMultiline = !!(lookingAtE && lookingAtE.length > 1);
-	await addCursorMarker(
-		textEditor, /*begPos=*/bs, /*endPos=*/be, endIsMultiline);
+	await addCursorMarker(textEditor, /*begPos=*/bs, /*endPos=*/be);
 }
 
 let markmacsUpdateInProgress = false;
@@ -1047,16 +1120,28 @@ async function markmacsUpdate(textEditor: vscode.TextEditor) {
 	}
 }
 
+let nonMarkmacsModeUseSep = false;
+
 async function toggleMarkmacsMode(textEditor: vscode.TextEditor) {
 	const configuration = vscode.workspace.getConfiguration();
 	const isMarkmacsMode = !configuration.get<boolean>("navi-parens.isMarkmacsMode");
+	const useSeparators = !configuration.get<boolean>("navi-parens.useSeparators");
 	await configuration.update("navi-parens.isMarkmacsMode", isMarkmacsMode,
 		vscode.ConfigurationTarget.Global, true);
 	console.log(`navi-parens.toggleMarkmacsMode: ${isMarkmacsMode}.`);
 	if (isMarkmacsMode) {
+		nonMarkmacsModeUseSep = useSeparators;
 		lastUpdatedPosition = null;
+		if (!useSeparators) {
+			await configuration.update("navi-parens.useSeparators", true,
+				vscode.ConfigurationTarget.Global, true);
+		}
 		await markmacsUpdate(textEditor);
 	} else {
+		if (useSeparators !== nonMarkmacsModeUseSep) {
+			await configuration.update("navi-parens.useSeparators", nonMarkmacsModeUseSep,
+				vscode.ConfigurationTarget.Global, true);
+		}
 		await removeCursorMarkers(textEditor);
 	}
 }
@@ -1101,6 +1186,10 @@ export function activate(context: vscode.ExtensionContext) {
 	if (openingBracketsConfig) {
 		openingBrackets = openingBracketsConfig;
 	}
+	const separatorsJTBConfig = configuration.get<string[]>("navi-parens.separatorsJTB");
+	if (separatorsJTBConfig) {
+		separatorsJTB = separatorsJTBConfig;
+	}
 	const closingBracketsRawConfig = configuration.get<string[]>("navi-parens.closingBracketsRaw");
 	if (closingBracketsRawConfig) {
 		closingBracketsRaw = closingBracketsRawConfig;
@@ -1114,6 +1203,13 @@ export function activate(context: vscode.ExtensionContext) {
 		openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw).join('|') + ')$', 'u');
 		openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw).join('|') + ')', 'u');
 		openingRawMaxLength = Math.max(...openingBracketsRaw.map(delim => delim.length));
+	}
+	const separatorsRawConfig = configuration.get<string[]>("navi-parens.separatorsRaw");
+	if (separatorsRawConfig) {
+		separatorsRaw = separatorsRawConfig;
+		separatorsBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsRaw).join('|') + ')$', 'u');
+		separatorsAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsRaw).join('|') + ')', 'u');
+		separatorsRawMaxLength = Math.max(...separatorsRaw.map(delim => delim.length));
 	}
 	vscode.workspace.onDidChangeConfiguration(configurationChangeUpdate);
 	vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) =>

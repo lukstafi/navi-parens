@@ -145,17 +145,26 @@ This extension contributes the following settings:
   * `JumpToBracket`: uses `editor.action.jumpToBracket` (i.e. `ctrl+shift+\`). The default.
   * `Raw`: only the bracket characters are considered, without context.
   * `ctrl+shift+alt+p` toggles between `Semantic` and `Raw`.
+* `navi-parens.useSeparators`: Whether to use `navi-parens.separatorsRaw` for finding outer scope.
+  * Defaults to `false`, but toggling on the Markmacs Mode sets it to true; toggling off Markmacs Mode restores the previous setting.
+  * If `true`, the separators encountered at the current scope will be considered as closing it.
 * `navi-parens.closingBrackets`: the superset of supported closing delimiters.
   * Defaults to `[")", "]", "}", ">"]`.
   * Can be language specific.
 * `navi-parens.openingBrackets`: the superset of supported opening delimiters.
   * Defaults to `["(", "[", "{", "<"]`.
   * Can be language specific.
-* `navi-parens.closingBracketsForRaw`: the closing delimiters for `bracketScopeProvider.Raw`.
+* `navi-parens.separatorsJTB`: The separators for the `JumpToBracket` `bracketScopeMode` when `useSeparators` is true.
+  * Defaults to `[",", ";"]`.
+  * Can be language specific.
+* `navi-parens.closingBracketsRaw`: the closing delimiters for the `Raw` `bracketScopeMode`.
   * Defaults to `[" *)", ")", "]", "}", "</p>", "</div>"]`.
   * Can be language specific.
-* `navi-parens.openingBracketsForRaw`: the opening delimiters for `bracketScopeProvider.Raw`.
+* `navi-parens.openingBracketsRaw`: the opening delimiters for the `Raw` `bracketScopeMode`.
   * Defaults to `["(* ", "(", "[", "{", "<p>", "<div"]`.
+  * Can be language specific.
+* `navi-parens.separatorsRaw`: The separators for the `Raw` `bracketScopeMode` when `useSeparators` is true.
+  * Defaults to `["////", "&"]` -- which is specifically (and only) useful in LaTeX.
   * Can be language specific.
 * `navi-parens.pastWordRegex`: the regular expression defining words by which the `alt+h`/`alt+;` commands navigate.
   * Defaults to `"\\p{General_Category=Letter}|[0-9]|_"`.
@@ -234,5 +243,6 @@ Initial release of _Navi Parens_.
 * Introduces _Markmacs Mode_.
 * Fixes tricky multicharacter delimiter handling for the RAW mode.
 * Includes LaTeX matrix and equation environment delimiters in defaults.
+* Introduces a _Use Separators_ setting, where additional separators close the scope of the cursor when looking for the outer scope.
 
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog

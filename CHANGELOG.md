@@ -5,6 +5,7 @@
 ### Added
 
 - Initial release of Markmacs Mode.
+- _Use Separators_ setting, where additional separators close the scope of the cursor when looking for the outer scope.
 
 ## [1.2.3] -- 2023-03-07
 

@@ -206,6 +206,16 @@
           ],
           "scope": "language-overridable"
         },
+        "navi-parens.separatorsJTB": {
+          "markdownDescription":
+            "The separators for the `JumpToBracket` `bracketScopeMode` when `useSeparators` is true",
+          "type": "array",
+          "default": [
+            ",",
+            ";"
+          ],
+          "scope": "language-overridable"
+        },
         "navi-parens.closingBracketsRaw": {
           "markdownDescription": "The closing delimiters for the `Raw` `bracketScopeMode`",
           "type": "array",
@@ -279,6 +289,22 @@
             "<p>",
             "<div"
           ],
+          "scope": "language-overridable"
+        },
+        "navi-parens.separatorsRaw": {
+          "markdownDescription":
+            "The separators for the `Raw` `bracketScopeMode` when `useSeparators` is true",
+          "type": "array",
+          "default": [
+            "\\\\",
+            " &"
+          ],
+          "scope": "language-overridable"
+        },
+        "navi-parens.useSeparators": {
+          "markdownDescription": "Whether to use `navi-parens.separatorsRaw` for finding outer scope",
+          "type": "boolean",
+          "default": "false",
           "scope": "language-overridable"
         },
         "navi-parens.pastWordRegex": {
