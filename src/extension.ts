@@ -308,10 +308,14 @@ function findOuterBracketRaw(
 	const incrIsClosing = before ? [true, false] : [false, true];
 	const decrIsClosing = [incrIsClosing[1], incrIsClosing[0]];
 	let selection: Array<vscode.Position | null> = [null, null];
+	const cursor = doc.offsetAt(pos);
 	for (const side of [0, 1]) {
 		let nesting = 0;
 		let delta = direction[side];
-		for (let offset = doc.offsetAt(pos); 0 <= offset && offset <= lastOffset; offset += delta) {
+		for (
+			let offset = cursor - delta * Math.max(closingRawMaxLength || 0, openingRawMaxLength || 0);
+			0 <= offset && offset <= lastOffset; offset += delta
+		) {
 			// Reset to the default delta.
 			delta = direction[side];
 			const offsetPos = doc.positionAt(offset);
@@ -325,11 +329,15 @@ function findOuterBracketRaw(
 			const lookingAtDecr = oneOfAtPoint(doc, decrIsClosing[side], true, beforeFor[side], offsetPos);
 			const isIncr = lookingAtIncr && (!lookingAtDecr || lookingAtIncr.length > lookingAtDecr.length);
 			const lookingAt = isIncr ? lookingAtIncr : lookingAtDecr;
-			if (lookingAt && isIncr) { ++nesting; delta = lookingAt.length * direction[side]; }
-			else if (lookingAt && !isIncr) {
-				--nesting; delta = lookingAt.length * direction[side];
+			const isPastCursor =
+				lookingAt && (delta < 0 ? offset <= cursor : cursor < offset + lookingAt.length);
+			if (isIncr && isPastCursor) {
+				++nesting; delta = lookingAtIncr.length * direction[side];
+			}
+			else if (lookingAtDecr && !isIncr && isPastCursor) {
+				--nesting; delta = lookingAtDecr.length * direction[side];
 				if (nesting === -1) {
-					selection[side] = offsetPos.translate(0, lookingAt.length * direction[side]);
+					selection[side] = offsetPos.translate(0, lookingAtDecr.length * direction[side]);
 					break;
 				}
 			}
@@ -433,10 +441,15 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos) : null;
 	const doc = textEditor.document;
 	if (near && bracketScope) {
+		const cursor = doc.offsetAt(pos);
 		const lookingAtS = oneOfAtPoint(doc, false, bracketsMode === "Raw", false, bracketScope.start);
-		const bs = lookingAtS ? bracketScope.start.translate(0, lookingAtS.length) : bracketScope.start;
+		const altTranslS = doc.offsetAt(bracketScope.start) - cursor;
+		const translS = altTranslS > 0 ? altTranslS : lookingAtS ? lookingAtS.length : 0;
+		const bs = lookingAtS ? bracketScope.start.translate(0, translS) : bracketScope.start;
 		const lookingAtE = oneOfAtPoint(doc, true, bracketsMode === "Raw", true, bracketScope.end);
-		const be = lookingAtE ? bracketScope.end.translate(0, -1 * lookingAtE.length) : bracketScope.end;
+		const altTranslE = cursor - doc.offsetAt(bracketScope.end);
+		const translE = altTranslE > 0 ? altTranslE : lookingAtE ? lookingAtE.length : 0;
+		const be = lookingAtE ? bracketScope.end.translate(0, -1 * translE) : bracketScope.end;
 		bracketScope = before ? new vscode.Selection(be, bs) : new vscode.Selection(bs, be);
 	}
 	const blockMode = configuration.get<string>("navi-parens.blockScopeMode");
@@ -515,7 +528,6 @@ async function findSiblingBracket(
 		const lookingAtIncr = oneOfAtPoint(doc, incrIsClosing, raw, before, offsetPos);
 		const lookingAtDecr = oneOfAtPoint(doc, !incrIsClosing, raw, before, offsetPos);
 		const isIncr = lookingAtIncr && (!lookingAtDecr || lookingAtIncr.length > lookingAtDecr.length);
-		const lookingAt = isIncr ? lookingAtIncr : lookingAtDecr;
 		if (isIncr) {
 			const lookingAtIncrPos = offsetPos.translate(0, Math.min(direction * lookingAtIncr.length, 0));
 			if (raw) {
@@ -924,7 +936,8 @@ async function addCursorMarker(
 		return i >= 0 && i < rightText.length ? i + pos : null;
 	}
 	let mid = pos;
-	if (leftText.lastIndexOf('\\') > leftText.lastIndexOf(' ')) {
+	if (leftText.lastIndexOf('\\') > leftText.lastIndexOf(' ') &&
+		leftText.lastIndexOf('\\') > leftText.lastIndexOf('}')) {
 		const altMid =
 			indexOrNull(' ') || indexOrNull('(') || indexOrNull('[') || indexOrNull('\n\r') || indexOrNull('\n');
 		if (altMid) {
