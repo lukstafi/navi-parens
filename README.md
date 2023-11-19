@@ -49,6 +49,18 @@ Commands:
 * `selectPastNextWord`: `shift+alt+;` Select past the current/next word, ignoring language-specific rules
 * `selectPastPreviousWord`: `shift+alt+h` Select past the previous word / beginning of current, ignoring language-specific rules
 * `toggleMarkmacsMode`: `ctrl+alt+m` Turn on / off cursor and scope visualization for LaTeX and Mermaid
+* `goRightOrSiblingScope`: `alt+l` Go right one character/separator, or to a sibling scope on the right
+* `goLeftOrSiblingScope`: `alt+j` Go left one character/separator, or to a sibling scope on the left
+* `goUpScopeOrArg`: `alt+i` Go to the end of the previous argument, or outside the opening of the current scope
+* `goDownScopeOrArg`: `alt+k` Go to the beginning of the next argument, or outside the closing of the current scope
+* `goBeginScopeOrArg`: `alt+a` Go near the opening of the current scope or argument
+* `goEndScopeOrArg`: `alt+e` Go near the closing of the current scope or argument
+* `selectRightOrSiblingScope`: `shift+alt+l` Like `goRightOrSiblingScope`, but extend the selection
+* `selectLeftOrSiblingScope`: `shift+alt+j` Like `goLeftOrSiblingScope`, but extend the selection
+* `selectUpScopeOrArg`: `shift+alt+i` Like `goUpScopeOrArg`, but extend the selection
+* `selectDownScopeOrArg`: `shift+alt+k` Like `goDownScopeOrArg`, but extend the selection
+* `selectBeginScopeOrArg`: `shift+alt+a` Like `goBeginScopeOrArg`, but extend the selection
+* `selectEndScopeOrArg`: `shift+alt+e` Like `goEndScopeOrArg`, but extend the selection
 
 The meaning of "near the beginning/end of a scope" is mode-specific.
 
@@ -145,17 +157,14 @@ This extension contributes the following settings:
   * `JumpToBracket`: uses `editor.action.jumpToBracket` (i.e. `ctrl+shift+\`). The default.
   * `Raw`: only the bracket characters are considered, without context.
   * `ctrl+shift+alt+p` toggles between `Semantic` and `Raw`.
-* `navi-parens.useSeparators`: Whether to use `navi-parens.separatorsRaw` for finding outer scope.
-  * Defaults to `false`, but toggling on the Markmacs Mode sets it to true; toggling off Markmacs Mode restores the previous setting.
-  * If `true`, the separators encountered at the current scope will be considered as closing it.
 * `navi-parens.closingBrackets`: the superset of supported closing delimiters.
   * Defaults to `[")", "]", "}", ">"]`.
   * Can be language specific.
 * `navi-parens.openingBrackets`: the superset of supported opening delimiters.
   * Defaults to `["(", "[", "{", "<"]`.
   * Can be language specific.
-* `navi-parens.separatorsJTB`: The separators for the `JumpToBracket` `bracketScopeMode` when `useSeparators` is true.
-  * Defaults to `[",", ";"]`.
+* `navi-parens.separatorsNoMM`: The separators for commands like `goUpScopeOrArg` when not in Markmacs Mode.
+  * Defaults to `[",", ";", "/[^a-zA-Z0-9]let /"]`.
   * Can be language specific.
 * `navi-parens.closingBracketsRaw`: the closing delimiters for the `Raw` `bracketScopeMode`.
   * Defaults to `[" *)", ")", "]", "}", "</p>", "</div>"]`.
@@ -163,8 +172,8 @@ This extension contributes the following settings:
 * `navi-parens.openingBracketsRaw`: the opening delimiters for the `Raw` `bracketScopeMode`.
   * Defaults to `["(* ", "(", "[", "{", "<p>", "<div"]`.
   * Can be language specific.
-* `navi-parens.separatorsRaw`: The separators for the `Raw` `bracketScopeMode` when `useSeparators` is true.
-  * Defaults to `["////", "&"]` -- which is specifically (and only) useful in LaTeX.
+* `navi-parens.separatorsMM`: The separators for commands like `goUpScopeOrArg` when in Markmacs Mode.
+  * Defaults to `["////", "&", "}{"]` -- which is specifically (and only) useful in LaTeX.
   * Can be language specific.
 * `navi-parens.pastWordRegex`: the regular expression defining words by which the `alt+h`/`alt+;` commands navigate.
   * Defaults to `"\\p{General_Category=Letter}|[0-9]|_"`.
@@ -243,6 +252,7 @@ Initial release of _Navi Parens_.
 * Introduces _Markmacs Mode_.
 * Fixes tricky multicharacter delimiter handling for the RAW mode.
 * Includes LaTeX matrix and equation environment delimiters in defaults.
-* Introduces a _Use Separators_ setting, where additional separators close the scope of the cursor when looking for the outer scope.
+* Introduces new commands `upOrPrevious`, `downOrNext`, where additional separators close the scope of the cursor when looking for the RAW outer scope.
+* Introduces new commands `upOrPrevious`, `downOrNext`, where additional separators close the scope of the cursor when looking for the RAW outer scope.
 
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog

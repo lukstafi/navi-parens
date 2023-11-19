@@ -5,7 +5,11 @@
 ### Added
 
 - Initial release of Markmacs Mode.
-- _Use Separators_ setting, where additional separators close the scope of the cursor when looking for the outer scope.
+- A new structured navigation command combo: an _up/down_ command where additional separators close the scope of the cursor when looking for the outer scope; and a _left/right_ command that behaves like `cursorLeft` / `cursorRight` but skips over (multicharacter) delimiters plus a new configurable `pseudoDelimiterToSkip` regexp.
+
+### Changed
+
+- Delimiters can now be configured via regexps -- a length > 2 string that starts & ends with `/` will have them removed and will not be escaped.
 
 ## [1.2.3] -- 2023-03-07
 

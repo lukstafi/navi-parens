@@ -206,9 +206,9 @@
           ],
           "scope": "language-overridable"
         },
-        "navi-parens.separatorsJTB": {
+        "navi-parens.separatorsNoMM": {
           "markdownDescription":
-            "The separators for the `JumpToBracket` `bracketScopeMode` when `useSeparators` is true",
+            "The separators for commands like `goUpScopeOrArg` when not in Markmacs Mode",
           "type": "array",
           "default": [
             ",",
@@ -291,20 +291,15 @@
           ],
           "scope": "language-overridable"
         },
-        "navi-parens.separatorsRaw": {
+        "navi-parens.separatorsMM": {
           "markdownDescription":
-            "The separators for the `Raw` `bracketScopeMode` when `useSeparators` is true",
+            "The separators for commands like `goUpScopeOrArg` when in the Markmacs Mode",
           "type": "array",
           "default": [
             "\\\\",
-            " &"
+            "&",
+            "}{"
           ],
-          "scope": "language-overridable"
-        },
-        "navi-parens.useSeparators": {
-          "markdownDescription": "Whether to use `navi-parens.separatorsRaw` for finding outer scope",
-          "type": "boolean",
-          "default": "false",
           "scope": "language-overridable"
         },
         "navi-parens.pastWordRegex": {

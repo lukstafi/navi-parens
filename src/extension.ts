@@ -317,7 +317,8 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 }
 
 function findOuterBracketRaw(
-	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): vscode.Selection | null {
+	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position, useSeparators: boolean
+): vscode.Selection | null {
 	const doc = textEditor.document;
 	// Target end first, then anchor end.
 	const direction = before ? [-1, 1] : [1, -1];
@@ -350,7 +351,7 @@ function findOuterBracketRaw(
 				oneOfAtPoint(doc, decrIsClosing[side] ? DelimiterType.closing : DelimiterType.opening, true,
 					beforeFor[side], offsetPos);
 			const lookingAtSep =
-				useSeparators() ? oneOfAtPoint(doc, DelimiterType.separator, true, beforeFor[side], offsetPos) : null;
+				useSeparators ? oneOfAtPoint(doc, DelimiterType.separator, true, beforeFor[side], offsetPos) : null;
 			const isIncr =
 				lookingAtIncr && (!lookingAtDecr || lookingAtIncr.length > lookingAtDecr.length)
 				&& (!lookingAtSep || lookingAtIncr.length > lookingAtSep.length);
@@ -391,7 +392,7 @@ async function findBracketScopeOverPos(
 	const configuration = vscode.workspace.getConfiguration();
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
 	let bracketScope = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
-		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos) : null;
+		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos, /*useSeparators=*/false) : null;
 	return bracketScope;
 }
 
@@ -464,7 +465,9 @@ function findOuterIndentation(
 	return null;
 }
 
-export async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, before: boolean, near: boolean) {
+export async function goToOuterScope(textEditor: vscode.TextEditor, select: boolean, before: boolean,
+	near: boolean, useSeparators: boolean
+) {
 	// State update might interact with the UI, save UI state early.
 	const savedSelection = textEditor.selection;
 	const pos = savedSelection.active;
@@ -472,20 +475,20 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 	const configuration = vscode.workspace.getConfiguration();
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
 	let bracketScope = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
-		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos) : null;
+		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos, useSeparators) : null;
 	const doc = textEditor.document;
 	if (near && bracketScope) {
 		const cursor = doc.offsetAt(pos);
 		const lookingAtS =
 			oneOfAtPoint(doc, DelimiterType.opening, bracketsMode === "Raw", false, bracketScope.start) ||
-			(useSeparators() ?
+			(useSeparators ?
 				oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, bracketScope.start) : null);
 		const altTranslS = doc.offsetAt(bracketScope.start) - cursor;
 		const translS = altTranslS > 0 ? altTranslS : lookingAtS ? lookingAtS.length : 0;
 		const bs = lookingAtS ? bracketScope.start.translate(0, translS) : bracketScope.start;
 		const lookingAtE =
 			oneOfAtPoint(doc, DelimiterType.closing, bracketsMode === "Raw", true, bracketScope.end) ||
-			(useSeparators() ?
+			(useSeparators ?
 				oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, bracketScope.end) : null);
 		const altTranslE = cursor - doc.offsetAt(bracketScope.end);
 		const translE = altTranslE > 0 ? altTranslE : lookingAtE ? lookingAtE.length : 0;
@@ -715,7 +718,7 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 		await findSiblingBracket(textEditor, bracketsMode === "Raw", before, pos);
 
 	let bracketsLimit = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
-		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos) : null;
+		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos, /*useSeparators=*/false) : null;
 	if (bracketsLimit) {
 		scopeLimit = scopeLimit ? (scopeLimit.intersection(bracketsLimit) ?? null) : bracketsLimit;
 	}
@@ -1041,12 +1044,6 @@ function isMarkmacsContext(doc: vscode.TextDocument, pos: vscode.Position): bool
 	return mm === undefined ? false : mm;
 }
 
-function useSeparators(): boolean {
-	const configuration = vscode.workspace.getConfiguration();
-	const mm = configuration.get<boolean>("navi-parens.useSeparators");
-	return mm === undefined ? false : mm;
-}
-
 let lastNestedBS: vscode.Position | null = null;
 let lastNestedBE: vscode.Position | null = null;
 
@@ -1060,19 +1057,18 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
 	let nestedBracketScope =
 		bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, /*before=*/true, nestedPos) :
-			bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, /*before=*/true, nestedPos) : null;
+			bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, /*before=*/true, nestedPos,
+			  /*useSeparators=*/true) : null;
 	if (!nestedBracketScope) {
 		return;
 	}
 	const nestedAtS =
 		oneOfAtPoint(doc, DelimiterType.opening, bracketsMode === "Raw", false, nestedBracketScope.start) ||
-		(useSeparators() ?
-			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, nestedBracketScope.start) : null);
+			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, nestedBracketScope.start);
 	const nbs = nestedAtS ? nestedBracketScope.start.translate(0, nestedAtS.length) : nestedBracketScope.start;
 	const nestedAtE =
 		oneOfAtPoint(doc, DelimiterType.closing, bracketsMode === "Raw", true, nestedBracketScope.end) ||
-		(useSeparators() ?
-			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, nestedBracketScope.end) : null);
+			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, nestedBracketScope.end);
 	const nbe = nestedAtE ? nestedBracketScope.end.translate(0, -1 * nestedAtE.length) : nestedBracketScope.end;
 	if (lastNestedBS && lastNestedBE && lastNestedBS.isEqual(nbs) && lastNestedBE.isBeforeOrEqual(nbe) &&
 		doc.getText(new vscode.Range(doc.positionAt(doc.offsetAt(nbs) - markmacsBeg.length), nbs)) === markmacsBeg &&
@@ -1086,19 +1082,17 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	const pos = textEditor.selection.active;
 	let bracketScope =
 		bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, /*before=*/true, pos) :
-			bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, /*before=*/true, pos) : null;
+			bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, /*before=*/true, pos, /*useSeparators=*/true) : null;
 	if (!bracketScope) {
 		return;
 	}
 	const lookingAtS =
 		oneOfAtPoint(doc, DelimiterType.opening, bracketsMode === "Raw", false, bracketScope.start) ||
-		(useSeparators() ?
-			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, bracketScope.start) : null);
+			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, bracketScope.start);
 	const bs = lookingAtS ? bracketScope.start.translate(0, lookingAtS.length) : bracketScope.start;
 	const lookingAtE =
 		oneOfAtPoint(doc, DelimiterType.closing, bracketsMode === "Raw", true, bracketScope.end) ||
-		(useSeparators() ?
-			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, bracketScope.end) : null);
+			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, bracketScope.end);
 	const be = lookingAtE ? bracketScope.end.translate(0, -1 * lookingAtE.length) : bracketScope.end;
 	await addCursorMarker(textEditor, /*begPos=*/bs, /*endPos=*/be);
 }
@@ -1120,28 +1114,16 @@ async function markmacsUpdate(textEditor: vscode.TextEditor) {
 	}
 }
 
-let nonMarkmacsModeUseSep = false;
-
 async function toggleMarkmacsMode(textEditor: vscode.TextEditor) {
 	const configuration = vscode.workspace.getConfiguration();
 	const isMarkmacsMode = !configuration.get<boolean>("navi-parens.isMarkmacsMode");
-	const useSeparators = !configuration.get<boolean>("navi-parens.useSeparators");
 	await configuration.update("navi-parens.isMarkmacsMode", isMarkmacsMode,
 		vscode.ConfigurationTarget.Global, true);
 	console.log(`navi-parens.toggleMarkmacsMode: ${isMarkmacsMode}.`);
 	if (isMarkmacsMode) {
-		nonMarkmacsModeUseSep = useSeparators;
 		lastUpdatedPosition = null;
-		if (!useSeparators) {
-			await configuration.update("navi-parens.useSeparators", true,
-				vscode.ConfigurationTarget.Global, true);
-		}
 		await markmacsUpdate(textEditor);
 	} else {
-		if (useSeparators !== nonMarkmacsModeUseSep) {
-			await configuration.update("navi-parens.useSeparators", nonMarkmacsModeUseSep,
-				vscode.ConfigurationTarget.Global, true);
-		}
 		await removeCursorMarkers(textEditor);
 	}
 }
@@ -1243,14 +1225,22 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.goPastPreviousScope', textEditor => goPastSiblingScope(textEditor, false, true));
 	newCommand('navi-parens.selectPastNextScope', textEditor => goPastSiblingScope(textEditor, true, false));
 	newCommand('navi-parens.selectPastPreviousScope', textEditor => goPastSiblingScope(textEditor, true, true));
-	newCommand('navi-parens.goToUpScope', textEditor => goToOuterScope(textEditor, false, true, false));
-	newCommand('navi-parens.goToDownScope', textEditor => goToOuterScope(textEditor, false, false, false));
-	newCommand('navi-parens.selectToUpScope', textEditor => goToOuterScope(textEditor, true, true, false));
-	newCommand('navi-parens.selectToDownScope', textEditor => goToOuterScope(textEditor, true, false, false));
-	newCommand('navi-parens.goToBeginScope', textEditor => goToOuterScope(textEditor, false, true, true));
-	newCommand('navi-parens.goToEndScope', textEditor => goToOuterScope(textEditor, false, false, true));
-	newCommand('navi-parens.selectToBeginScope', textEditor => goToOuterScope(textEditor, true, true, true));
-	newCommand('navi-parens.selectToEndScope', textEditor => goToOuterScope(textEditor, true, false, true));
+	newCommand('navi-parens.goToUpScope', textEditor => goToOuterScope(textEditor, false, true, false, false));
+	newCommand('navi-parens.goToDownScope', textEditor => goToOuterScope(textEditor, false, false, false, false));
+	newCommand('navi-parens.selectToUpScope', textEditor => goToOuterScope(textEditor, true, true, false, false));
+	newCommand('navi-parens.selectToDownScope', textEditor => goToOuterScope(textEditor, true, false, false, false));
+	newCommand('navi-parens.goUpScopeOrArg', textEditor => goToOuterScope(textEditor, false, true, false, true));
+	newCommand('navi-parens.goDownScopeOrArg', textEditor => goToOuterScope(textEditor, false, false, false, true));
+	newCommand('navi-parens.selectUpScopeOrArg', textEditor => goToOuterScope(textEditor, true, true, false, true));
+	newCommand('navi-parens.selectDownScopeOrArg', textEditor => goToOuterScope(textEditor, true, false, false, true));
+	newCommand('navi-parens.goToBeginScope', textEditor => goToOuterScope(textEditor, false, true, true, false));
+	newCommand('navi-parens.goToEndScope', textEditor => goToOuterScope(textEditor, false, false, true, false));
+	newCommand('navi-parens.selectToBeginScope', textEditor => goToOuterScope(textEditor, true, true, true, false));
+	newCommand('navi-parens.selectToEndScope', textEditor => goToOuterScope(textEditor, true, false, true, false));
+	newCommand('navi-parens.goBeginScopeOrArg', textEditor => goToOuterScope(textEditor, false, true, true, true));
+	newCommand('navi-parens.goEndScopeOrArg', textEditor => goToOuterScope(textEditor, false, false, true, true));
+	newCommand('navi-parens.selectBeginScopeOrArg', textEditor => goToOuterScope(textEditor, true, true, true, true));
+	newCommand('navi-parens.selectEndScopeOrArg', textEditor => goToOuterScope(textEditor, true, false, true, true));
 	newCommand('navi-parens.cycleBracketScopeMode', cycleBracketScopeMode);
 	newCommand('navi-parens.cycleBlockScopeMode', cycleBlockScopeMode);
 	newCommand('navi-parens.goToPreviousEmptyLine', textEditor => goToEmptyLine(textEditor, false, true));
