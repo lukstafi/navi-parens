@@ -319,7 +319,8 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		!pseudoSeparatorMMAfterRawRegex || !pseudoSeparatorNoMMAfterRawRegex ||
 		!pseudoSeparatorNoMMBeforeRawRegex || !pseudoSeparatorMMBeforeRawRegex ||
 		!closingRawMaxLength ||
-		!openingRawMaxLength || !separatorsMMMaxLength || !separatorsNoMMMaxLength) {
+		!openingRawMaxLength || !separatorsMMMaxLength || !separatorsNoMMMaxLength
+	) {
 		assert(closingAfterRawRegex, 'Navi Parens is not initialized!');
 		assert(closingBeforeRawRegex, 'Navi Parens is not initialized!');
 		assert(openingAfterRawRegex, 'Navi Parens is not initialized!');
@@ -879,45 +880,22 @@ export async function goPastCharacter(textEditor: vscode.TextEditor, select: boo
 	const doc = textEditor.document;
 	const pos = textEditor.selection.active;
 	const direction = before ? -1 : 1;
-	const isMarkmacs = isMarkmacsMode();
-	const conf = vscode.workspace.getConfiguration();
-	const extraRegexStr =
-		isMarkmacs ? conf.get<string>('navi-parens.pseudoSeparatorMM') :
-			conf.get<string>('navi-parens.pseudoSeparatorNoMM');
-	// FIXME: not implemented yet
-	if (!extraRegexStr) { return; }
-	const wordCharRegex = new RegExp(extraRegexStr, 'gu');
-	const lookingAtIncr = oneOfAtPoint(doc, DelimiterType.opening, true, before, pos);
-	const lookingAtDecr = oneOfAtPoint(doc, DelimiterType.closing, true, before, pos);
-	const lookingAtSep = oneOfAtPoint(doc, DelimiterType.separator, true, before, pos);
+	// const isMarkmacs = isMarkmacsMode();
+	const lookingAt =
+		oneOfAtPoint(doc, DelimiterType.opening, true, before, pos) ||
+		oneOfAtPoint(doc, DelimiterType.closing, true, before, pos) ||
+		oneOfAtPoint(doc, DelimiterType.separator, true, before, pos) ||
+		oneOfAtPoint(doc, DelimiterType.pseudoSeparator, true, before, pos);
 	let targetPos = null;
-	let previouslyLookingAt = null;
-	let previousOffsetPos = null;
-	const lastOffset = doc.offsetAt(doc.validatePosition(new vscode.Position(doc.lineCount, 0)));
-	for (let offset = doc.offsetAt(pos); 0 <= offset && offset <= lastOffset; offset += direction) {
-		let offsetPos = doc.positionAt(offset);
-		// Beginning-of-line and end-of-line cases.
-		while ((previousOffsetPos && offsetPos.isEqual(previousOffsetPos)) ||
-			(offsetPos.character === 0 && direction === -1)) {
-			offset += direction;
-			if (offset < 0 || offset > lastOffset ||
-				(previouslyLookingAt && previouslyLookingAt.match(wordCharRegex))) {
-				targetPos = offsetPos;
-				break;
-			}
-			offsetPos = doc.positionAt(offset);
+	if (lookingAt) {
+		targetPos = pos.translate(0, direction * lookingAt.length);
+	} else {
+		targetPos = doc.positionAt(doc.offsetAt(pos) + direction);
+		if (pos.isEqual(targetPos)) {
+			targetPos = doc.positionAt(doc.offsetAt(pos) + (direction * 2));
 		}
-		if (targetPos) { break; }
-		let lookingAtPos = offsetPos.translate(0, Math.min(direction, 0));
-		const lookingAt = characterAtPoint(doc, lookingAtPos);
-		if (previouslyLookingAt && previouslyLookingAt.match(wordCharRegex) && !lookingAt.match(wordCharRegex)) {
-			targetPos = offsetPos;
-			break;
-		}
-		previouslyLookingAt = lookingAt;
-		previousOffsetPos = offsetPos;
 	}
-	if (!targetPos || !previouslyLookingAt || !previouslyLookingAt.match(wordCharRegex)) { return; }
+	if (!targetPos) { return; }
 	const anchor = select ? textEditor.selection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
 	textEditor.revealRange(textEditor.selection);
