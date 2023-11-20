@@ -41,12 +41,20 @@ let closingBracketsRaw: string[] | null = null;
 let openingBracketsRaw: string[] | null = null;
 let separatorsMM: string[] | null = null;
 let separatorsNoMM: string[] | null = null;
+let pseudoSeparatorMM: string[] | null = null;
+let pseudoSeparatorNoMM: string[] | null = null;
 let closingBeforeRawRegex: RegExp | null = null;
 let openingBeforeRawRegex: RegExp | null = null;
-let separatorsBeforeRawRegex: RegExp | null = null;
+let separatorsMMBeforeRawRegex: RegExp | null = null;
+let separatorsNoMMBeforeRawRegex: RegExp | null = null;
+let pseudoSeparatorMMBeforeRawRegex: RegExp | null = null;
+let pseudoSeparatorNoMMBeforeRawRegex: RegExp | null = null;
 let closingAfterRawRegex: RegExp | null = null;
 let openingAfterRawRegex: RegExp | null = null;
-let separatorsAfterRawRegex: RegExp | null = null;
+let separatorsMMAfterRawRegex: RegExp | null = null;
+let separatorsNoMMAfterRawRegex: RegExp | null = null;
+let pseudoSeparatorMMAfterRawRegex: RegExp | null = null;
+let pseudoSeparatorNoMMAfterRawRegex: RegExp | null = null;
 let closingRawMaxLength: number | null = null;
 let openingRawMaxLength: number | null = null;
 let separatorsMMMaxLength: number | null = null;
@@ -282,7 +290,8 @@ async function findOuterBracket(
 enum DelimiterType {
 	opening,
 	closing,
-	separator
+	separator,
+	pseudoSeparator
 }
 
 function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw: boolean,
@@ -292,21 +301,45 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		let lookingAtPos = pos.translate(0, Math.min(direction, 0));
 		const lookingAt = characterAtPoint(doc, lookingAtPos);
 		const delimiters =
-			delimiter === DelimiterType.closing ? closingBrackets : DelimiterType.opening ? openingBrackets
-				: separatorsJTB;
+			delimiter === DelimiterType.closing ? closingBrackets :
+				delimiter === DelimiterType.opening ? openingBrackets
+					: delimiter === DelimiterType.separator ? separatorsJTB : [];
 		return delimiters.includes(lookingAt) ? lookingAt : null;
 	}
-	if (!closingAfterRawRegex || !closingBeforeRawRegex || !openingAfterRawRegex ||
-		!openingBeforeRawRegex || !separatorsAfterRawRegex ||
-		!separatorsBeforeRawRegex || !closingRawMaxLength || !openingRawMaxLength ||
-		!separatorsMMMaxLength || !separatorsNoMMMaxLength) {
-		assert(false, 'Navi Parens is not initialized!');
+	if (!closingAfterRawRegex || !closingBeforeRawRegex || !openingAfterRawRegex || !openingBeforeRawRegex ||
+		!separatorsMMAfterRawRegex || !separatorsNoMMAfterRawRegex ||
+		!separatorsNoMMBeforeRawRegex || !separatorsMMBeforeRawRegex ||
+		!pseudoSeparatorMMAfterRawRegex || !pseudoSeparatorNoMMAfterRawRegex ||
+		!pseudoSeparatorNoMMBeforeRawRegex || !pseudoSeparatorMMBeforeRawRegex ||
+		!closingRawMaxLength ||
+		!openingRawMaxLength || !separatorsMMMaxLength || !separatorsNoMMMaxLength) {
+		assert(closingAfterRawRegex, 'Navi Parens is not initialized!');
+		assert(closingBeforeRawRegex, 'Navi Parens is not initialized!');
+		assert(openingAfterRawRegex, 'Navi Parens is not initialized!');
+		assert(openingBeforeRawRegex, 'Navi Parens is not initialized!');
+		assert(separatorsMMAfterRawRegex, 'Navi Parens is not initialized!');
+		assert(separatorsNoMMAfterRawRegex, 'Navi Parens is not initialized!');
+		assert(separatorsNoMMBeforeRawRegex, 'Navi Parens is not initialized!');
+		assert(separatorsMMBeforeRawRegex, 'Navi Parens is not initialized!');
+		assert(pseudoSeparatorMMAfterRawRegex, 'Navi Parens is not initialized!');
+		assert(pseudoSeparatorNoMMAfterRawRegex, 'Navi Parens is not initialized!');
+		assert(pseudoSeparatorNoMMBeforeRawRegex, 'Navi Parens is not initialized!');
+		assert(pseudoSeparatorMMBeforeRawRegex, 'Navi Parens is not initialized!');
+		assert(closingRawMaxLength, 'Navi Parens is not initialized!');
+		assert(openingRawMaxLength, 'Navi Parens is not initialized!');
+		assert(separatorsMMMaxLength, 'Navi Parens is not initialized!');
+		assert(separatorsNoMMMaxLength, 'Navi Parens is not initialized!');
 		return null;
 	};
 	const delimiters =
 		delimiter === DelimiterType.closing ? (before ? closingBeforeRawRegex : closingAfterRawRegex) :
 			delimiter === DelimiterType.opening ? (before ? openingBeforeRawRegex : openingAfterRawRegex) :
-				(before ? separatorsBeforeRawRegex : separatorsAfterRawRegex);
+				delimiter === DelimiterType.pseudoSeparator ?
+					(isMarkmacsMode() ?
+						(before ? pseudoSeparatorMMBeforeRawRegex : pseudoSeparatorMMAfterRawRegex) :
+						(before ? pseudoSeparatorNoMMBeforeRawRegex : pseudoSeparatorNoMMAfterRawRegex)) :
+					isMarkmacsMode() ? (before ? separatorsMMBeforeRawRegex : separatorsMMAfterRawRegex) :
+						(before ? separatorsNoMMBeforeRawRegex : separatorsNoMMAfterRawRegex);
 	const delimLength =
 		delimiter === DelimiterType.closing ? closingRawMaxLength :
 			delimiter === DelimiterType.opening ? openingRawMaxLength :
@@ -844,9 +877,12 @@ export async function goPastCharacter(textEditor: vscode.TextEditor, select: boo
 	const extraRegexStr =
 		isMarkmacs ? conf.get<string>('navi-parens.pseudoSeparatorMM') :
 			conf.get<string>('navi-parens.pseudoSeparatorNoMM');
-			// FIXME: not implemented yet
+	// FIXME: not implemented yet
 	if (!extraRegexStr) { return; }
 	const wordCharRegex = new RegExp(extraRegexStr, 'gu');
+	const lookingAtIncr = oneOfAtPoint(doc, DelimiterType.opening, true, before, pos);
+	const lookingAtDecr = oneOfAtPoint(doc, DelimiterType.closing, true, before, pos);
+	const lookingAtSep = oneOfAtPoint(doc, DelimiterType.separator, true, before, pos);
 	let targetPos = null;
 	let previouslyLookingAt = null;
 	let previousOffsetPos = null;
@@ -879,6 +915,7 @@ export async function goPastCharacter(textEditor: vscode.TextEditor, select: boo
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
 	textEditor.revealRange(textEditor.selection);
 }
+
 function updateStatusBarItem(
 	blockScopeMode: string | undefined, bracketScopeMode: string | undefined, isMarkmacsMode: boolean | undefined
 ): void {
@@ -932,8 +969,8 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		const separatorsMMConfig = configuration.get<string[]>("navi-parens.separatorsMM");
 		if (separatorsMMConfig) {
 			separatorsMM = separatorsMMConfig;
-			separatorsBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsMM).join('|') + ')$', 'u');
-			separatorsAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsMM).join('|') + ')', 'u');
+			separatorsMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsMM).join('|') + ')$', 'u');
+			separatorsMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsMM).join('|') + ')', 'u');
 			separatorsMMMaxLength = Math.max(...separatorsMM.map(delim => delim.length));
 		}
 	}
@@ -941,9 +978,25 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		const separatorsNoMMConfig = configuration.get<string[]>("navi-parens.separatorsNoMM");
 		if (separatorsNoMMConfig) {
 			separatorsNoMM = separatorsNoMMConfig;
-			separatorsBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsNoMM).join('|') + ')$', 'u');
-			separatorsAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsNoMM).join('|') + ')', 'u');
+			separatorsNoMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsNoMM).join('|') + ')$', 'u');
+			separatorsNoMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsNoMM).join('|') + ')', 'u');
 			separatorsNoMMMaxLength = Math.max(...separatorsNoMM.map(delim => delim.length));
+		}
+	}
+	if (event.affectsConfiguration('navi-parens.pseudoSeparatorMM')) {
+		const pseudoSeparatorMMConfig = configuration.get<string[]>("navi-parens.pseudoSeparatorMM");
+		if (pseudoSeparatorMMConfig) {
+			pseudoSeparatorMM = pseudoSeparatorMMConfig;
+			pseudoSeparatorMMBeforeRawRegex = new RegExp('(' + pseudoSeparatorMM + ')$', 'u');
+			pseudoSeparatorMMAfterRawRegex = new RegExp('^(' + pseudoSeparatorMM + ')', 'u');
+		}
+	}
+	if (event.affectsConfiguration('navi-parens.pseudoSeparatorNoMM')) {
+		const pseudoSeparatorNoMMConfig = configuration.get<string[]>("navi-parens.pseudoSeparatorNoMM");
+		if (pseudoSeparatorNoMMConfig) {
+			pseudoSeparatorNoMM = pseudoSeparatorNoMMConfig;
+			pseudoSeparatorNoMMBeforeRawRegex = new RegExp('(' + pseudoSeparatorNoMM + ')$', 'u');
+			pseudoSeparatorNoMMAfterRawRegex = new RegExp('^(' + pseudoSeparatorNoMM + ')', 'u');
 		}
 	}
 	if (event.affectsConfiguration('navi-parens.blockScopeMode') ||
@@ -1125,11 +1178,11 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	}
 	const nestedAtS =
 		oneOfAtPoint(doc, DelimiterType.opening, bracketsMode === "Raw", false, nestedBracketScope.start) ||
-			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, nestedBracketScope.start);
+		oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, nestedBracketScope.start);
 	const nbs = nestedAtS ? nestedBracketScope.start.translate(0, nestedAtS.length) : nestedBracketScope.start;
 	const nestedAtE =
 		oneOfAtPoint(doc, DelimiterType.closing, bracketsMode === "Raw", true, nestedBracketScope.end) ||
-			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, nestedBracketScope.end);
+		oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, nestedBracketScope.end);
 	const nbe = nestedAtE ? nestedBracketScope.end.translate(0, -1 * nestedAtE.length) : nestedBracketScope.end;
 	if (lastNestedBS && lastNestedBE && lastNestedBS.isEqual(nbs) && lastNestedBE.isBeforeOrEqual(nbe) &&
 		doc.getText(new vscode.Range(doc.positionAt(doc.offsetAt(nbs) - markmacsBeg.length), nbs)) === markmacsBeg &&
@@ -1149,11 +1202,11 @@ async function markmacsUpdateUnsafe(textEditor: vscode.TextEditor) {
 	}
 	const lookingAtS =
 		oneOfAtPoint(doc, DelimiterType.opening, bracketsMode === "Raw", false, bracketScope.start) ||
-			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, bracketScope.start);
+		oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", false, bracketScope.start);
 	const bs = lookingAtS ? bracketScope.start.translate(0, lookingAtS.length) : bracketScope.start;
 	const lookingAtE =
 		oneOfAtPoint(doc, DelimiterType.closing, bracketsMode === "Raw", true, bracketScope.end) ||
-			oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, bracketScope.end);
+		oneOfAtPoint(doc, DelimiterType.separator, bracketsMode === "Raw", true, bracketScope.end);
 	const be = lookingAtE ? bracketScope.end.translate(0, -1 * lookingAtE.length) : bracketScope.end;
 	await addCursorMarker(textEditor, /*begPos=*/bs, /*endPos=*/be);
 }
@@ -1250,16 +1303,28 @@ export function activate(context: vscode.ExtensionContext) {
 	const separatorsMMConfig = configuration.get<string[]>("navi-parens.separatorsMM");
 	if (separatorsMMConfig) {
 		separatorsMM = separatorsMMConfig;
-		separatorsBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsMM).join('|') + ')$', 'u');
-		separatorsAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsMM).join('|') + ')', 'u');
+		separatorsMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsMM).join('|') + ')$', 'u');
+		separatorsMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsMM).join('|') + ')', 'u');
 		separatorsMMMaxLength = Math.max(...separatorsMM.map(delim => delim.length));
 	}
 	const separatorsNoMMConfig = configuration.get<string[]>("navi-parens.separatorsNoMM");
 	if (separatorsNoMMConfig) {
 		separatorsNoMM = separatorsNoMMConfig;
-		separatorsBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsNoMM).join('|') + ')$', 'u');
-		separatorsAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsNoMM).join('|') + ')', 'u');
+		separatorsNoMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsNoMM).join('|') + ')$', 'u');
+		separatorsNoMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsNoMM).join('|') + ')', 'u');
 		separatorsNoMMMaxLength = Math.max(...separatorsNoMM.map(delim => delim.length));
+	}
+	const pseudoSeparatorMMConfig = configuration.get<string[]>("navi-parens.pseudoSeparatorMM");
+	if (pseudoSeparatorMMConfig) {
+		pseudoSeparatorMM = pseudoSeparatorMMConfig;
+		pseudoSeparatorMMBeforeRawRegex = new RegExp('(' + pseudoSeparatorMM + ')$', 'u');
+		pseudoSeparatorMMAfterRawRegex = new RegExp('^(' + pseudoSeparatorMM + ')', 'u');
+	}
+	const pseudoSeparatorNoMMConfig = configuration.get<string[]>("navi-parens.pseudoSeparatorNoMM");
+	if (pseudoSeparatorNoMMConfig) {
+		pseudoSeparatorNoMM = pseudoSeparatorNoMMConfig;
+		pseudoSeparatorNoMMBeforeRawRegex = new RegExp('(' + pseudoSeparatorNoMM + ')$', 'u');
+		pseudoSeparatorNoMMAfterRawRegex = new RegExp('^(' + pseudoSeparatorNoMM + ')', 'u');
 	}
 	vscode.workspace.onDidChangeConfiguration(configurationChangeUpdate);
 	vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) =>
