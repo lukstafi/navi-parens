@@ -145,6 +145,66 @@
         "command": "navi-parens.toggleMarkmacsMode",
         "title": "Toggle Markmacs Mode: Turn on / off cursor and scope visualization",
         "shortTitle": "Toggle Markmacs Mode"
+      },
+      {
+        "command": "navi-parens.goRightOrSiblingScope",
+        "title": "Go right one character/separator, or to a sibling scope on the right",
+        "shortTitle": "Go Right Or Sibling Scope"
+      },
+      {
+        "command": "navi-parens.goLeftOrSiblingScope",
+        "title": "Go left one character/separator, or to a sibling scope on the left",
+        "shortTitle": "Go Left Or Sibling Scope"
+      },
+      {
+        "command": "navi-parens.goUpScopeOrArg",
+        "title": "Go to the end of the previous argument, or outside the opening of the current scope",
+        "shortTitle": "Go Up Scope Or Arg"
+      },
+      {
+        "command": "navi-parens.goDownScopeOrArg",
+        "title": "Go to the beginning of the next argument, or outside the closing of the current scope",
+        "shortTitle": "Go Down Scope Or Arg"
+      },
+      {
+        "command": "navi-parens.goBeginScopeOrArg",
+        "title": "Go near the opening of the current scope or argument",
+        "shortTitle": "Go Begin Scope Or Arg"
+      },
+      {
+        "command": "navi-parens.goEndScopeOrArg",
+        "title": "Go near the closing of the current scope or argument",
+        "shortTitle": "Go End Scope Or Arg"
+      },
+      {
+        "command": "navi-parens.selectRightOrSiblingScope",
+        "title": "Like `goRightOrSiblingScope`, but extend the selection",
+        "shortTitle": "Select Right Or Sibling Scope"
+      },
+      {
+        "command": "navi-parens.selectLeftOrSiblingScope",
+        "title": "Like `goLeftOrSiblingScope`, but extend the selection",
+        "shortTitle": "Select Left Or Sibling Scope"
+      },
+      {
+        "command": "navi-parens.selectUpScopeOrArg",
+        "title": "Like `goUpScopeOrArg`, but extend the selection",
+        "shortTitle": "Select Up Scope Or Arg"
+      },
+      {
+        "command": "navi-parens.selectDownScopeOrArg",
+        "title": "Like `goDownScopeOrArg`, but extend the selection",
+        "shortTitle": "Select Down Scope Or Arg"
+      },
+      {
+        "command": "navi-parens.selectBeginScopeOrArg",
+        "title": "Like `goBeginScopeOrArg`, but extend the selection",
+        "shortTitle": "Select Begin Scope Or Arg"
+      },
+      {
+        "command": "navi-parens.selectEndScopeOrArg",
+        "title": "Like `goEndScopeOrArg`, but extend the selection",
+        "shortTitle": "Select End Scope Or Arg"
       }
     ],
     "configuration": {
@@ -207,8 +267,7 @@
           "scope": "language-overridable"
         },
         "navi-parens.separatorsNoMM": {
-          "markdownDescription":
-            "The separators for commands like `goUpScopeOrArg` when not in Markmacs Mode",
+          "markdownDescription": "The separators for commands like `goUpScopeOrArg` when not in Markmacs Mode",
           "type": "array",
           "default": [
             ",",
@@ -292,8 +351,7 @@
           "scope": "language-overridable"
         },
         "navi-parens.separatorsMM": {
-          "markdownDescription":
-            "The separators for commands like `goUpScopeOrArg` when in the Markmacs Mode",
+          "markdownDescription": "The separators for commands like `goUpScopeOrArg` when in the Markmacs Mode",
           "type": "array",
           "default": [
             "\\\\",
@@ -303,9 +361,21 @@
           "scope": "language-overridable"
         },
         "navi-parens.pastWordRegex": {
-          "markdownDescription": "Where the non-bracket structure information comes from. If `Semantic`, uses VSCode symbol providers. If `Indentation`, generates symbols from indentation. If `None`, there are no symbols",
+          "markdownDescription": "The regexp for the commands `goPastNextWord`, `goPastPreviousWord`",
           "type": "string",
           "default": "\\p{General_Category=Letter}|[0-9]|_",
+          "scope": "language-overridable"
+        },
+        "navi-parens.pseudoSeparatorNoMM": {
+          "markdownDescription": "A regexp for additional separators to skip in the commands `goRightOrSiblingScope`, `goLeftOrSiblingScope` when not in Markmacs Mode",
+          "type": "string",
+          "default": "for|while",
+          "scope": "language-overridable"
+        },
+        "navi-parens.pseudoSeparatorMM": {
+          "markdownDescription": "A regexp for additional separators to skip in the commands `goRightOrSiblingScope`, `goLeftOrSiblingScope` in Markmacs Mode",
+          "type": "string",
+          "default": "\\\\[a-zA-Z0-9]*{?",
           "scope": "language-overridable"
         }
       }
@@ -324,17 +394,17 @@
       {
         "command": "cursorRight",
         "key": "alt+l",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "cursorLeft",
         "key": "alt+j",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "cursorUp",
         "key": "alt+i",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "list.focusUp",
@@ -364,7 +434,7 @@
       {
         "command": "cursorDown",
         "key": "alt+k",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "list.focusDown",
@@ -389,12 +459,12 @@
       {
         "command": "cursorHome",
         "key": "alt+a",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "cursorEnd",
         "key": "alt+e",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "cursorWordLeft",
@@ -409,37 +479,37 @@
       {
         "command": "cursorRightSelect",
         "key": "shift+alt+l",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "cursorLeftSelect",
         "key": "shift+alt+j",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "cursorUpSelect",
         "key": "shift+alt+i",
-        "when": "textInputFocus && config.navi-parens.rebind"
+        "when": "textInputFocus && config.navi-parens.rebind && !editorTextFocus"
       },
       {
         "command": "cursorUpSelect",
         "key": "ctrl+shift+alt+o",
-        "when": "textInputFocus && !config.navi-parens.rebind"
+        "when": "textInputFocus && !config.navi-parens.rebind && !editorTextFocus"
       },
       {
         "command": "cursorDownSelect",
         "key": "shift+alt+k",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "cursorHomeSelect",
         "key": "shift+alt+a",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "cursorEndSelect",
         "key": "shift+alt+e",
-        "when": "textInputFocus"
+        "when": "textInputFocus && !editorTextFocus"
       },
       {
         "command": "cursorWordLeftSelect",
@@ -572,7 +642,68 @@
       {
         "command": "navi-parens.toggleMarkmacsMode",
         "key": "ctrl+alt+m"
+      },
+      {
+        "command": "navi-parens.goRightOrSiblingScope",
+        "key": "alt+l",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.goLeftOrSiblingScope",
+        "key": "alt+j",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.goUpScopeOrArg",
+        "key": "alt+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.goDownScopeOrArg",
+        "key": "alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.goBeginScopeOrArg",
+        "key": "alt+a",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.goEndScopeOrArg",
+        "key": "alt+e",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.selectRightOrSiblingScope",
+        "key": "shift+alt+l",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.selectLeftOrSiblingScope",
+        "key": "shift+alt+j",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.selectUpScopeOrArg",
+        "key": "shift+alt+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.selectDownScopeOrArg",
+        "key": "shift+alt+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.selectBeginScopeOrArg",
+        "key": "shift+alt+a",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "navi-parens.selectEndScopeOrArg",
+        "key": "shift+alt+e",
+        "when": "editorTextFocus"
       }
+
     ]
   },
   "scripts": {
