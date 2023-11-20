@@ -29,9 +29,16 @@ interface DocumentNavigationState {
 }
 let documentStates = new Map<vscode.Uri, DocumentNavigationState>();
 
+function escapeRegExp(s: string) {
+	if (s.startsWith("/") && s.endsWith("/")) {
+		return s.substring(1, s.length - 1);
+	}
+	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
 // In case of doubt, add more parentheses.
 function escapeRegExps(strings: string[]) {
-	return strings.map(s => '(' + s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')'); // $& means the whole matched string
+	return strings.map(s => '(' + escapeRegExp(s) + ')').join('|');
 }
 
 let closingBrackets: string[] = [")", "]", "}", ">"];
@@ -951,8 +958,8 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		const closingBracketsRawConfig = configuration.get<string[]>("navi-parens.closingBracketsRaw");
 		if (closingBracketsRawConfig) {
 			closingBracketsRaw = closingBracketsRawConfig;
-			closingBeforeRawRegex = new RegExp('(' + escapeRegExps(closingBracketsRaw).join('|') + ')$', 'u');
-			closingAfterRawRegex = new RegExp('^(' + escapeRegExps(closingBracketsRaw).join('|') + ')', 'u');
+			closingBeforeRawRegex = new RegExp('(' + escapeRegExps(closingBracketsRaw) + ')$', 'u');
+			closingAfterRawRegex = new RegExp('^(' + escapeRegExps(closingBracketsRaw) + ')', 'u');
 			closingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
 		}
 	}
@@ -960,8 +967,8 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		const openingBracketsRawConfig = configuration.get<string[]>("navi-parens.openingBracketsRaw");
 		if (openingBracketsRawConfig) {
 			openingBracketsRaw = openingBracketsRawConfig;
-			openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw).join('|') + ')$', 'u');
-			openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw).join('|') + ')', 'u');
+			openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw) + ')$', 'u');
+			openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw) + ')', 'u');
 			openingRawMaxLength = Math.max(...openingBracketsRaw.map(delim => delim.length));
 		}
 	}
@@ -969,8 +976,8 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		const separatorsMMConfig = configuration.get<string[]>("navi-parens.separatorsMM");
 		if (separatorsMMConfig) {
 			separatorsMM = separatorsMMConfig;
-			separatorsMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsMM).join('|') + ')$', 'u');
-			separatorsMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsMM).join('|') + ')', 'u');
+			separatorsMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsMM) + ')$', 'u');
+			separatorsMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsMM) + ')', 'u');
 			separatorsMMMaxLength = Math.max(...separatorsMM.map(delim => delim.length));
 		}
 	}
@@ -978,8 +985,8 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		const separatorsNoMMConfig = configuration.get<string[]>("navi-parens.separatorsNoMM");
 		if (separatorsNoMMConfig) {
 			separatorsNoMM = separatorsNoMMConfig;
-			separatorsNoMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsNoMM).join('|') + ')$', 'u');
-			separatorsNoMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsNoMM).join('|') + ')', 'u');
+			separatorsNoMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsNoMM) + ')$', 'u');
+			separatorsNoMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsNoMM) + ')', 'u');
 			separatorsNoMMMaxLength = Math.max(...separatorsNoMM.map(delim => delim.length));
 		}
 	}
@@ -1289,29 +1296,29 @@ export function activate(context: vscode.ExtensionContext) {
 	const closingBracketsRawConfig = configuration.get<string[]>("navi-parens.closingBracketsRaw");
 	if (closingBracketsRawConfig) {
 		closingBracketsRaw = closingBracketsRawConfig;
-		closingBeforeRawRegex = new RegExp('(' + escapeRegExps(closingBracketsRaw).join('|') + ')$', 'u');
-		closingAfterRawRegex = new RegExp('^(' + escapeRegExps(closingBracketsRaw).join('|') + ')', 'u');
+		closingBeforeRawRegex = new RegExp('(' + escapeRegExps(closingBracketsRaw) + ')$', 'u');
+		closingAfterRawRegex = new RegExp('^(' + escapeRegExps(closingBracketsRaw) + ')', 'u');
 		closingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
 	}
 	const openingBracketsRawConfig = configuration.get<string[]>("navi-parens.openingBracketsRaw");
 	if (openingBracketsRawConfig) {
 		openingBracketsRaw = openingBracketsRawConfig;
-		openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw).join('|') + ')$', 'u');
-		openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw).join('|') + ')', 'u');
+		openingBeforeRawRegex = new RegExp('(' + escapeRegExps(openingBracketsRaw) + ')$', 'u');
+		openingAfterRawRegex = new RegExp('^(' + escapeRegExps(openingBracketsRaw) + ')', 'u');
 		openingRawMaxLength = Math.max(...openingBracketsRaw.map(delim => delim.length));
 	}
 	const separatorsMMConfig = configuration.get<string[]>("navi-parens.separatorsMM");
 	if (separatorsMMConfig) {
 		separatorsMM = separatorsMMConfig;
-		separatorsMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsMM).join('|') + ')$', 'u');
-		separatorsMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsMM).join('|') + ')', 'u');
+		separatorsMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsMM) + ')$', 'u');
+		separatorsMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsMM) + ')', 'u');
 		separatorsMMMaxLength = Math.max(...separatorsMM.map(delim => delim.length));
 	}
 	const separatorsNoMMConfig = configuration.get<string[]>("navi-parens.separatorsNoMM");
 	if (separatorsNoMMConfig) {
 		separatorsNoMM = separatorsNoMMConfig;
-		separatorsNoMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsNoMM).join('|') + ')$', 'u');
-		separatorsNoMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsNoMM).join('|') + ')', 'u');
+		separatorsNoMMBeforeRawRegex = new RegExp('(' + escapeRegExps(separatorsNoMM) + ')$', 'u');
+		separatorsNoMMAfterRawRegex = new RegExp('^(' + escapeRegExps(separatorsNoMM) + ')', 'u');
 		separatorsNoMMMaxLength = Math.max(...separatorsNoMM.map(delim => delim.length));
 	}
 	const pseudoSeparatorMMConfig = configuration.get<string[]>("navi-parens.pseudoSeparatorMM");
@@ -1386,9 +1393,9 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.selectPastNextWord', textEditor => goPastWord(textEditor, true, false));
 	newCommand('navi-parens.toggleMarkmacsMode', toggleMarkmacsMode);
 	newCommand('navi-parens.goLeftOrSiblingScope', textEditor => goPastCharacter(textEditor, false, true));
-	newCommand('navi-parens.goRightOrSiblingScope', textEditor => goPastWord(textEditor, false, false));
+	newCommand('navi-parens.goRightOrSiblingScope', textEditor => goPastCharacter(textEditor, false, false));
 	newCommand('navi-parens.selectLeftOrSiblingScope', textEditor => goPastCharacter(textEditor, false, true));
-	newCommand('navi-parens.selectRightOrSiblingScope', textEditor => goPastWord(textEditor, false, false));
+	newCommand('navi-parens.selectRightOrSiblingScope', textEditor => goPastCharacter(textEditor, false, false));
 
 	// Register a command that is invoked when the status bar item is selected
 	const naviCommandId = 'navi-parens.showScopeModes';
