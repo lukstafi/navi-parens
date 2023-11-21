@@ -342,6 +342,7 @@
             "\\begin{aligned}",
             "\\begin{align}",
             "\\begin{CD}",
+            "/\\\\[a-zA-Z0-9]*\\{/",
             "(** ",
             "(* ",
             "(",
@@ -372,13 +373,13 @@
         "navi-parens.pseudoSeparatorNoMM": {
           "markdownDescription": "A regexp for additional separators to skip in the commands `goRightOrSiblingScope`, `goLeftOrSiblingScope` when not in Markmacs Mode",
           "type": "string",
-          "default": "\\\\(([a-zA-Z0-9]+|[^{])(\\{)?|\\{)",
+          "default": "\\\\([a-zA-Z0-9]+|[^{])",
           "scope": "language-overridable"
         },
         "navi-parens.pseudoSeparatorMM": {
           "markdownDescription": "A regexp for additional separators to skip in the commands `goRightOrSiblingScope`, `goLeftOrSiblingScope` in Markmacs Mode",
           "type": "string",
-          "default": "\\\\(([a-zA-Z0-9]+|[^{])(\\{)?|\\{)",
+          "default": "\\\\([a-zA-Z0-9]+|[^{])",
           "scope": "language-overridable"
         },
         "navi-parens.oneLinerMin": {
