@@ -51,14 +51,14 @@ Commands:
 * `toggleMarkmacsMode`: `ctrl+alt+m` Turn on / off cursor and scope visualization for LaTeX and Mermaid
 * `goRightOrSiblingScope`: `alt+l` Go right one character/separator, or to a sibling scope on the right
 * `goLeftOrSiblingScope`: `alt+j` Go left one character/separator, or to a sibling scope on the left
-* `goUpScopeOrArg`: `alt+i` Go to the end of the previous argument, or outside the opening of the current scope
-* `goDownScopeOrArg`: `alt+k` Go to the beginning of the next argument, or outside the closing of the current scope
+* `goUpOneLiner`: `alt+i` Go left / up at least `oneLinerMin` characters, stopping on a scope boundary
+* `goDownOneLiner`: `alt+k` Go right / down at least `oneLinerMin` characters, stopping on a scope boundary
 * `goBeginScopeOrArg`: `alt+a` Go near the opening of the current scope or argument
 * `goEndScopeOrArg`: `alt+e` Go near the closing of the current scope or argument
 * `selectRightOrSiblingScope`: `shift+alt+l` Like `goRightOrSiblingScope`, but extend the selection
 * `selectLeftOrSiblingScope`: `shift+alt+j` Like `goLeftOrSiblingScope`, but extend the selection
-* `selectUpScopeOrArg`: `shift+alt+i` Like `goUpScopeOrArg`, but extend the selection
-* `selectDownScopeOrArg`: `shift+alt+k` Like `goDownScopeOrArg`, but extend the selection
+* `selectUpOneLiner`: `shift+alt+i` Like `goUpOneLiner`, but extend the selection
+* `selectDownOneLiner`: `shift+alt+k` Like `goDownOneLiner`, but extend the selection
 * `selectBeginScopeOrArg`: `shift+alt+a` Like `goBeginScopeOrArg`, but extend the selection
 * `selectEndScopeOrArg`: `shift+alt+e` Like `goEndScopeOrArg`, but extend the selection
 
@@ -163,7 +163,7 @@ This extension contributes the following settings:
 * `navi-parens.openingBrackets`: the superset of supported opening delimiters.
   * Defaults to `["(", "[", "{", "<"]`.
   * Can be language specific.
-* `navi-parens.separatorsNoMM`: The separators for commands like `goUpScopeOrArg` when not in Markmacs Mode.
+* `navi-parens.separatorsNoMM`: The separators for commands like `goBeginScopeOrArg`, `goUpOneLiner` when not in Markmacs Mode.
   * Defaults to `[",", ";", "/[^a-zA-Z0-9]let /"]`.
   * Can be language specific.
 * `navi-parens.closingBracketsRaw`: the closing delimiters for the `Raw` `bracketScopeMode`.
@@ -172,7 +172,7 @@ This extension contributes the following settings:
 * `navi-parens.openingBracketsRaw`: the opening delimiters for the `Raw` `bracketScopeMode`.
   * Defaults to `["(* ", "(", "[", "{", "<p>", "<div"]`.
   * Can be language specific.
-* `navi-parens.separatorsMM`: The separators for commands like `goUpScopeOrArg` when in Markmacs Mode.
+* `navi-parens.separatorsMM`: The separators for commands like `goBeginScopeOrArg`, `goUpOneLiner` when in Markmacs Mode.
   * Defaults to `["////", "&", "}{"]` -- which is specifically (and only) useful in LaTeX.
   * Can be language specific.
 * `navi-parens.pastWordRegex`: the regular expression defining words by which the `alt+h`/`alt+;` commands navigate.

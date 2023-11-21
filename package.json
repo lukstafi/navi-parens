@@ -157,14 +157,14 @@
         "shortTitle": "Go Left Or Sibling Scope"
       },
       {
-        "command": "navi-parens.goUpScopeOrArg",
-        "title": "Go to the end of the previous argument, or outside the opening of the current scope",
-        "shortTitle": "Go Up Scope Or Arg"
+        "command": "navi-parens.goUpOneLiner",
+        "title": "Go left / up at least `oneLinerMin` characters, stopping on a scope boundary",
+        "shortTitle": "Go Up One Liner"
       },
       {
-        "command": "navi-parens.goDownScopeOrArg",
-        "title": "Go to the beginning of the next argument, or outside the closing of the current scope",
-        "shortTitle": "Go Down Scope Or Arg"
+        "command": "navi-parens.goDownOneLiner",
+        "title": "Go right / down at least `oneLinerMin` characters, stopping on a scope boundary",
+        "shortTitle": "Go Down One Liner"
       },
       {
         "command": "navi-parens.goBeginScopeOrArg",
@@ -187,14 +187,14 @@
         "shortTitle": "Select Left Or Sibling Scope"
       },
       {
-        "command": "navi-parens.selectUpScopeOrArg",
-        "title": "Like `goUpScopeOrArg`, but extend the selection",
-        "shortTitle": "Select Up Scope Or Arg"
+        "command": "navi-parens.selectUpOneLiner",
+        "title": "Like `goUpOneLiner`, but extend the selection",
+        "shortTitle": "Select Up One Liner"
       },
       {
-        "command": "navi-parens.selectDownScopeOrArg",
-        "title": "Like `goDownScopeOrArg`, but extend the selection",
-        "shortTitle": "Select Down Scope Or Arg"
+        "command": "navi-parens.selectDownOneLiner",
+        "title": "Like `goDownOneLiner`, but extend the selection",
+        "shortTitle": "Select Down One Liner"
       },
       {
         "command": "navi-parens.selectBeginScopeOrArg",
@@ -267,11 +267,14 @@
           "scope": "language-overridable"
         },
         "navi-parens.separatorsNoMM": {
-          "markdownDescription": "The separators for commands like `goUpScopeOrArg` when not in Markmacs Mode",
+          "markdownDescription": "The separators for commands like `goBeginScopeOrArg`, `goUpOneLiner` when not in Markmacs Mode",
           "type": "array",
           "default": [
             ",",
-            ";"
+            ";",
+            "&",
+            "\\\\",
+            "}{"
           ],
           "scope": "language-overridable"
         },
@@ -351,7 +354,7 @@
           "scope": "language-overridable"
         },
         "navi-parens.separatorsMM": {
-          "markdownDescription": "The separators for commands like `goUpScopeOrArg` when in the Markmacs Mode",
+          "markdownDescription": "The separators for commands like `goBeginScopeOrArg`, `goUpOneLiner` when in the Markmacs Mode",
           "type": "array",
           "default": [
             "\\\\",
@@ -376,6 +379,12 @@
           "markdownDescription": "A regexp for additional separators to skip in the commands `goRightOrSiblingScope`, `goLeftOrSiblingScope` in Markmacs Mode",
           "type": "string",
           "default": "\\\\(([a-zA-Z0-9]+|[^{])(\\{)?|\\{)",
+          "scope": "language-overridable"
+        },
+        "navi-parens.oneLinerMin": {
+          "markdownDescription": "The minimal offset to traverse for the commands `goUpOneLiner`, `goDownOneLiner`",
+          "type": "number",
+          "default": "30",
           "scope": "language-overridable"
         }
       }
@@ -654,12 +663,12 @@
         "when": "editorTextFocus"
       },
       {
-        "command": "navi-parens.goUpScopeOrArg",
+        "command": "navi-parens.goUpOneLiner",
         "key": "alt+i",
         "when": "editorTextFocus"
       },
       {
-        "command": "navi-parens.goDownScopeOrArg",
+        "command": "navi-parens.goDownOneLiner",
         "key": "alt+k",
         "when": "editorTextFocus"
       },
@@ -684,12 +693,12 @@
         "when": "editorTextFocus"
       },
       {
-        "command": "navi-parens.selectUpScopeOrArg",
+        "command": "navi-parens.selectUpOneLiner",
         "key": "shift+alt+i",
         "when": "editorTextFocus"
       },
       {
-        "command": "navi-parens.selectDownScopeOrArg",
+        "command": "navi-parens.selectDownOneLiner",
         "key": "shift+alt+k",
         "when": "editorTextFocus"
       },

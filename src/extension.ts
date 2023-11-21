@@ -341,7 +341,8 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 }
 
 function findOuterBracketRaw(
-	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position, useSeparators: boolean
+	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position, useSeparators: boolean,
+	forOneLinerMin?: number | undefined
 ): vscode.Selection | null {
 	const doc = textEditor.document;
 	// Target end first, then anchor end.
@@ -355,6 +356,7 @@ function findOuterBracketRaw(
 	for (const side of [0, 1]) {
 		let nesting = 0;
 		let delta = direction[side];
+		let skippedChars = 0;
 		for (
 			let offset = cursor - delta * Math.max(closingRawMaxLength || 0, openingRawMaxLength || 0);
 			0 <= offset && offset <= lastOffset; offset += delta
@@ -385,18 +387,24 @@ function findOuterBracketRaw(
 			const lookingAt = isIncr ? lookingAtIncr : (isDecr ? lookingAtDecr : lookingAtSep);
 			const isPastCursor =
 				lookingAt && (delta < 0 ? offset <= cursor : cursor < offset + lookingAt.length);
-			if (isIncr && isPastCursor) {
+			const offsetChange = Math.abs(cursor - offset) - skippedChars;
+			if (isPastCursor && forOneLinerMin && side === 0 && (offsetChange > forOneLinerMin)) {
+				selection[side] = offsetPos.translate(0, lookingAt.length * direction[side]);
+				break;
+			}
+			else if (isIncr && isPastCursor) {
 				++nesting; delta = lookingAtIncr.length * direction[side];
 			}
 			else if (isDecr && isPastCursor) {
 				--nesting; delta = lookingAtDecr.length * direction[side];
-				if (nesting === -1) {
+				if ((!forOneLinerMin || side === 1) && nesting === -1) {
 					selection[side] = offsetPos.translate(0, lookingAtDecr.length * direction[side]);
 					break;
 				}
 			}
-			else if (lookingAtSep && !isIncr && !isDecr && isPastCursor && nesting === 0) {
-				--nesting; delta = lookingAtSep.length * direction[side];
+			else if (
+				(!forOneLinerMin || side === 1) && lookingAtSep && !isIncr && !isDecr && isPastCursor && nesting === 0
+			) {
 				selection[side] = offsetPos.translate(0, lookingAtSep.length * direction[side]);
 				break;
 			}
@@ -706,8 +714,7 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 	let state = await updateStateForPosition(textEditor);
 	const configuration = vscode.workspace.getConfiguration();
 	const blockMode = configuration.get<string>("navi-parens.blockScopeMode");
-	const pos = textEditor.selection.active;
-	console.assert(true, `Sibling from sel: ${strR(textEditor.selection)}`);
+	const pos = savedSelection.active;
 	let blockScope: vscode.Selection | null = null;
 	let scopeLimit: vscode.Range | null = null;
 	if (blockMode === "Semantic") {
@@ -874,6 +881,28 @@ export async function goPastCharacter(textEditor: vscode.TextEditor, select: boo
 	const anchor = select ? textEditor.selection.anchor : targetPos;
 	textEditor.selection = new vscode.Selection(anchor, targetPos);
 	textEditor.revealRange(textEditor.selection);
+}
+
+/** Go to a position within the `oneLinerMin` -- `oneLinerMax` offset range. */
+export async function goOneLiner(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
+	const savedSelection = textEditor.selection;
+	let state = await updateStateForPosition(textEditor);
+	const configuration = vscode.workspace.getConfiguration();
+	const oneLinerMin = configuration.get<number>("navi-parens.oneLinerMin");
+	const pos = savedSelection.active;
+	const bracketScope = findOuterBracketRaw(textEditor, before, pos, /*useSeparators=*/true, oneLinerMin);
+	if (!bracketScope) {
+		return;
+	}
+	const result = bracketScope.active;
+	const anchor = select ? savedSelection.anchor : result;
+	textEditor.selection = new vscode.Selection(anchor, result);
+	if (!state.lastVisibleRange.contains(textEditor.selection)) {
+		textEditor.revealRange(textEditor.selection);
+	} else if (state.leftVisibleRange) {
+		textEditor.revealRange(state.lastVisibleRange);
+	}
+
 }
 
 function updateStatusBarItem(
@@ -1319,10 +1348,10 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.goToDownScope', textEditor => goToOuterScope(textEditor, false, false, false, false));
 	newCommand('navi-parens.selectToUpScope', textEditor => goToOuterScope(textEditor, true, true, false, false));
 	newCommand('navi-parens.selectToDownScope', textEditor => goToOuterScope(textEditor, true, false, false, false));
-	newCommand('navi-parens.goUpScopeOrArg', textEditor => goToOuterScope(textEditor, false, true, false, true));
-	newCommand('navi-parens.goDownScopeOrArg', textEditor => goToOuterScope(textEditor, false, false, false, true));
-	newCommand('navi-parens.selectUpScopeOrArg', textEditor => goToOuterScope(textEditor, true, true, false, true));
-	newCommand('navi-parens.selectDownScopeOrArg', textEditor => goToOuterScope(textEditor, true, false, false, true));
+	newCommand('navi-parens.goUpOneLiner', textEditor => goOneLiner(textEditor, false, true));
+	newCommand('navi-parens.goDownOneLiner', textEditor => goOneLiner(textEditor, false, false));
+	newCommand('navi-parens.selectUpOneLiner', textEditor => goOneLiner(textEditor, true, true));
+	newCommand('navi-parens.selectDownOneLiner', textEditor => goOneLiner(textEditor, true, false));
 	newCommand('navi-parens.goToBeginScope', textEditor => goToOuterScope(textEditor, false, true, true, false));
 	newCommand('navi-parens.goToEndScope', textEditor => goToOuterScope(textEditor, false, false, true, false));
 	newCommand('navi-parens.selectToBeginScope', textEditor => goToOuterScope(textEditor, true, true, true, false));
