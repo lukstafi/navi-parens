@@ -1008,7 +1008,7 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		const conf = configuration.get<string>("navi-parens.pseudoSeparatorNoMM");
 		const pseudoSepNoMM = conf ? ['/' + conf + '/'] : [];
 		const re =
-			escapeRegExps([...pseudoSepNoMM, ...separatorsNoMM, ...openingBracketsRaw, ...closingBracketsRaw]);
+			escapeRegExps([...openingBracketsRaw, ...closingBracketsRaw, ...pseudoSepNoMM, ...separatorsNoMM]);
 		jointNoMMBeforeRawRegex = makeRegExp('(' + re + ')$');
 		jointNoMMAfterRawRegex = makeRegExp('^(' + re + ')');
 	}
@@ -1333,7 +1333,7 @@ export function activate(context: vscode.ExtensionContext) {
 		const conf = configuration.get<string>("navi-parens.pseudoSeparatorNoMM");
 		const pseudoSepNoMM = conf ? ['/' + conf + '/'] : [];
 		const re =
-			escapeRegExps([...pseudoSepNoMM, ...separatorsNoMM, ...openingBracketsRaw, ...closingBracketsRaw]);
+			escapeRegExps([...openingBracketsRaw, ...closingBracketsRaw, ...pseudoSepNoMM, ...separatorsNoMM]);
 		jointNoMMBeforeRawRegex = makeRegExp('(' + re + ')$');
 		jointNoMMAfterRawRegex = makeRegExp('^(' + re + ')');
 	}
