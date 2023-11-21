@@ -62,10 +62,10 @@ let naviStatusBarItem: vscode.StatusBarItem;
 
 // TODO: customizable colors.
 const markmacsBegLightTheme = "\\textcolor{firebrick}{";
-const markmacsMidLightTheme = "|";
+const markmacsMidLightTheme = "}\\textcolor{indianred}{";
 const markmacsEndLightTheme = "}\\textcolor{peru}{}";
 const markmacsBegDarkTheme = "\\textcolor{chartreuse}{";
-const markmacsMidDarkTheme = "|";
+const markmacsMidDarkTheme = "}\\textcolor{limegreen}{";
 const markmacsEndDarkTheme = "}\\textcolor{papayawhip}{}";
 let isCurrentThemeLight =
 	vscode.window.activeColorTheme.kind === 1 /* Light */ ||
@@ -76,6 +76,16 @@ let markmacsMid =
 	isCurrentThemeLight ? markmacsMidLightTheme : markmacsMidDarkTheme;
 let markmacsEnd =
 	isCurrentThemeLight ? markmacsEndLightTheme : markmacsEndDarkTheme;
+
+function makeRegExp(s: string) {
+	return new RegExp(s, 'u');
+}
+
+const markmacsSeparators =
+	[markmacsBegLightTheme, markmacsMidLightTheme, markmacsEndLightTheme,
+		markmacsBegDarkTheme, markmacsMidDarkTheme, markmacsEndDarkTheme];
+const markmacsBeforeRegex = makeRegExp('(' + escapeRegExps(markmacsSeparators) + ')$');
+const markmacsAfterRegex = makeRegExp('^(' + escapeRegExps(markmacsSeparators) + ')');
 
 /** From Navi Parens perspective, positions on the border of a scope are outside of the scope. */
 function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
@@ -290,7 +300,8 @@ enum DelimiterType {
 	opening,
 	closing,
 	separator,
-	jointDelimiters
+	markmacs,
+	jointDelimiters,
 }
 
 function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw: boolean,
@@ -331,11 +342,15 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 				delimiter === DelimiterType.separator ?
 					(isMarkmacsMode() ? (before ? separatorsMMBeforeRawRegex : separatorsMMAfterRawRegex) :
 						(before ? separatorsNoMMBeforeRawRegex : separatorsNoMMAfterRawRegex)) :
-					(isMarkmacsMode() ?
-						(before ? jointMMBeforeRawRegex : jointMMAfterRawRegex) :
-						(before ? jointNoMMBeforeRawRegex : jointNoMMAfterRawRegex));
+					delimiter === DelimiterType.markmacs ? (before ? markmacsBeforeRegex : markmacsAfterRegex) :
+						(isMarkmacsMode() ?
+							(before ? jointMMBeforeRawRegex : jointMMAfterRawRegex) :
+							(before ? jointNoMMBeforeRawRegex : jointNoMMAfterRawRegex));
 	const translPos = before ? doc.lineAt(pos.line).range.start : doc.lineAt(pos.line).range.end;
 	const textAtPoint = doc.getText(doc.validateRange(new vscode.Selection(pos, translPos)));
+	// if (delimiters === markmacsRegex) {
+	// 	console.log('found it');
+	// }
 	const matchResults = delimiters.exec(textAtPoint);
 	return matchResults?.[0] || null;
 }
@@ -368,6 +383,12 @@ function findOuterBracketRaw(
 			if (doc.offsetAt(offsetPos) !== offset) { continue; }
 			// In case there is nothing to the left to look at.
 			if (direction[side] === -1 && offsetPos.character === 0) {
+				continue;
+			}
+			const lookingAtMM = oneOfAtPoint(doc, DelimiterType.markmacs, true, beforeFor[side], offsetPos);
+			if (lookingAtMM) {
+				skippedChars += lookingAtMM.length;
+				delta = lookingAtMM.length * direction[side];
 				continue;
 			}
 			const lookingAtIncr =
@@ -598,6 +619,11 @@ async function findSiblingBracket(
 		// \r\n endline.
 		if (doc.offsetAt(offsetPos) !== offset) { continue; }
 		if (before && offsetPos.character === 0) {
+			continue;
+		}
+		const lookingAtMM = oneOfAtPoint(doc, DelimiterType.markmacs, true, before, offsetPos);
+		if (lookingAtMM) {
+			offset += (lookingAtMM.length - 1) * direction;
 			continue;
 		}
 		const lookingAtIncr =
@@ -864,9 +890,12 @@ export async function goPastWord(textEditor: vscode.TextEditor, select: boolean,
 
 export async function goPastCharacter(textEditor: vscode.TextEditor, select: boolean, before: boolean) {
 	const doc = textEditor.document;
-	const pos = textEditor.selection.active;
+	let pos = textEditor.selection.active;
 	const direction = before ? -1 : 1;
-	// const isMarkmacs = isMarkmacsMode();
+	const lookingAtMM = oneOfAtPoint(doc, DelimiterType.markmacs, true, before, pos);
+	if (lookingAtMM) {
+		pos = doc.positionAt(doc.offsetAt(pos) + lookingAtMM.length * direction);
+	}
 	const lookingAt = oneOfAtPoint(doc, DelimiterType.jointDelimiters, true, before, pos);
 	let targetPos = null;
 	if (lookingAt) {
@@ -914,10 +943,6 @@ function updateStatusBarItem(
 		(bracketScopeMode === 'Raw' ? 'RAW' : (bracketScopeMode === 'None' ? 'NON' : '---'));
 	naviStatusBarItem.text = `Navi: ${blockMode}/${bracketMode}${isMarkmacsMode ? '/MM' : ''}`;
 	naviStatusBarItem.show();
-}
-
-function makeRegExp(s: string) {
-	return new RegExp(s, 'u');
 }
 
 function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
@@ -970,7 +995,7 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		const conf = configuration.get<string>("navi-parens.pseudoSeparatorMM");
 		const pseudoSepMM = conf ? ['/' + conf + '/'] : [];
 		const re =
-			escapeRegExps([...pseudoSepMM, ...separatorsMM, ...openingBracketsRaw, ...closingBracketsRaw]);
+			escapeRegExps([...openingBracketsRaw, ...closingBracketsRaw, ...pseudoSepMM, ...separatorsMM]);
 		jointMMBeforeRawRegex = makeRegExp('(' + re + ')$');
 		jointMMAfterRawRegex = makeRegExp('^(' + re + ')');
 	}
@@ -1300,7 +1325,7 @@ export function activate(context: vscode.ExtensionContext) {
 		const conf = configuration.get<string>("navi-parens.pseudoSeparatorMM");
 		const pseudoSepMM = conf ? ['/' + conf + '/'] : [];
 		const re =
-			escapeRegExps([...pseudoSepMM, ...separatorsMM, ...openingBracketsRaw, ...closingBracketsRaw]);
+			escapeRegExps([...openingBracketsRaw, ...closingBracketsRaw, ...pseudoSepMM, ...separatorsMM]);
 		jointMMBeforeRawRegex = makeRegExp('(' + re + ')$');
 		jointMMAfterRawRegex = makeRegExp('^(' + re + ')');
 	}
