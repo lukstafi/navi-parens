@@ -359,8 +359,8 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 				(before ? separatorsNoMMBeforeRawRegex : separatorsNoMMAfterRawRegex)).exec(textAtPoint);
 		const markmacs = (before ? markmacsBeforeRegex : markmacsAfterRegex).exec(textAtPoint);
 		const pseudo =
-		(isMarkmacsMode() ?
-			(before ? pseudoSepMMBeforeRawRegex : pseudoSepMMAfterRawRegex) :
+			(isMarkmacsMode() ?
+				(before ? pseudoSepMMBeforeRawRegex : pseudoSepMMAfterRawRegex) :
 				(before ? pseudoSepNoMMBeforeRawRegex : pseudoSepNoMMAfterRawRegex)).exec(textAtPoint);
 		const unull = (x: RegExpExecArray | null) => x ? [x[0]] : [];
 		const matchResults =
@@ -445,6 +445,8 @@ function findOuterBracketRaw(
 			) {
 				selection[side] = offsetPos.translate(0, lookingAtSep.length * direction[side]);
 				break;
+			} else if (lookingAt) {
+				delta = lookingAt.length * direction[side];;
 			}
 		}
 	}
@@ -1049,21 +1051,10 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 		while ((atPos = text.lastIndexOf(delim, atPos - 1)) >= 0) {
 			const pos = doc.positionAt(atPos);
 			lastPos = pos;
-			{
-				await textEditor.edit(
-					(edit: vscode.TextEditorEdit) =>
-						edit.replace(new vscode.Range(pos, doc.positionAt(atPos + delim.length)), ''));
-				if (atPos + delim.length < cursor) {
-					cursor -= delim.length;
-				} else if (atPos < cursor) {
-					cursor = atPos + 1;
-				}
-				if (atPos + delim.length < anchor) {
-					anchor -= delim.length;
-				} else if (atPos < anchor) {
-					anchor = atPos + 1;
-				}
-			}
+			// The cursor adapts to edits, there's no need to re-position it.
+			await textEditor.edit(
+				(edit: vscode.TextEditorEdit) =>
+					edit.replace(new vscode.Range(pos, doc.positionAt(atPos + delim.length)), ''));
 			{
 				const delim = light ? markmacsMidLightTheme : markmacsMidDarkTheme;
 				const matched = text.lastIndexOf(delim, atPos);
@@ -1071,16 +1062,6 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 					await textEditor.edit(
 						(edit: vscode.TextEditorEdit) =>
 							edit.replace(new vscode.Range(doc.positionAt(matched), doc.positionAt(matched + delim.length)), ''));
-					if (matched + delim.length < cursor) {
-						cursor -= delim.length;
-					} else if (matched <= cursor) {
-						cursor = matched + 1;
-					}
-					if (matched + delim.length < anchor) {
-						anchor -= delim.length;
-					} else if (matched <= anchor) {
-						anchor = matched + 1;
-					}
 				}
 			}
 			{
@@ -1090,27 +1071,11 @@ async function removeCursorMarkers(textEditor: vscode.TextEditor) {
 					await textEditor.edit(
 						(edit: vscode.TextEditorEdit) =>
 							edit.replace(new vscode.Range(doc.positionAt(matched), doc.positionAt(matched + delim.length)), ''));
-					if (matched + delim.length < cursor) {
-						cursor -= delim.length;
-					} else if (matched <= cursor) {
-						cursor = matched - 1;
-					}
-					if (matched + delim.length < anchor) {
-						anchor -= delim.length;
-					} else if (matched <= anchor) {
-						anchor = matched - 1;
-					}
 				}
 			}
 		}
 	}
-	if (cursor !== doc.offsetAt(textEditor.selection.active) ||
-		anchor !== doc.offsetAt(textEditor.selection.anchor)) {
-		textEditor.selection = new vscode.Selection(atPosition(doc, cursor), atPosition(doc, anchor));
-	}
 }
-
-let isMarkmacsMid = true;
 
 async function addCursorMarker(
 	textEditor: vscode.TextEditor, begPos: vscode.Position, endPos: vscode.Position
@@ -1119,53 +1084,29 @@ async function addCursorMarker(
 	const beg = doc.offsetAt(begPos);
 	const end = doc.offsetAt(endPos);
 	let anchor = doc.offsetAt(textEditor.selection.anchor);
-	const pos = doc.offsetAt(textEditor.selection.active);
-	if (pos < beg || end < pos) {
+	const mid = doc.offsetAt(textEditor.selection.active);
+	if (mid < beg || end < mid) {
 		return;
 	}
-	const leftText = doc.getText(new vscode.Range(begPos, textEditor.selection.active));
-	const rightText = doc.getText(new vscode.Range(textEditor.selection.active, endPos));
-	function indexOrNull(substr: string) {
-		const i = rightText.indexOf(substr);
-		return i >= 0 && i < rightText.length ? i + pos : null;
-	}
-	let mid = pos;
-	if (leftText.lastIndexOf('\\') > leftText.lastIndexOf(' ') &&
-		leftText.lastIndexOf('\\') > leftText.lastIndexOf('}')) {
-		const altMid =
-			indexOrNull(' ') || indexOrNull('(') || indexOrNull('[') || indexOrNull('\n\r') || indexOrNull('\n');
-		if (altMid) {
-			mid = altMid;
-			isMarkmacsMid = true;
-		} else {
-			isMarkmacsMid = false;
-		}
-	} else {
-		isMarkmacsMid = true;
-	}
 	await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(end), markmacsEnd));
-	if (isMarkmacsMid) {
-		await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(mid), markmacsMid));
-	}
+	await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(mid), markmacsMid));
 	await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(beg), markmacsBeg));
+	// Reposition the cursor to be before the inserted markmacsMid.
 	let anchorTo = anchor;
 	if (anchor >= beg) {
 		anchorTo += markmacsBeg.length;
 	}
-	let posTo = pos;
-	if (pos >= beg) {
+	let posTo = mid;
+	if (mid >= beg) {
 		posTo += markmacsBeg.length;
 	}
-	if (isMarkmacsMid && anchor > mid) {
+	if (anchor > mid) {
 		anchorTo += markmacsMid.length;
-	}
-	if (isMarkmacsMid && pos > mid) {
-		posTo += markmacsMid.length;
 	}
 	if (anchor > end) {
 		anchorTo += markmacsEnd.length;
 	}
-	if (pos > end) {
+	if (mid > end) {
 		posTo += markmacsEnd.length;
 	}
 	textEditor.selection = new vscode.Selection(atPosition(doc, posTo), atPosition(doc, anchorTo));
