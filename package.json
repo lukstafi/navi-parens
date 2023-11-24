@@ -146,14 +146,14 @@
         "shortTitle": "Toggle Markmacs Mode"
       },
       {
-        "command": "navi-parens.goRightOrSiblingScope",
-        "title": "Go right one character/separator, or to a sibling scope on the right",
-        "shortTitle": "Go Right Or Sibling Scope"
+        "command": "navi-parens.goRightOverDelims",
+        "title": "Go right one character/separator/delimiter, i.e. skip over recognized delimiters",
+        "shortTitle": "Go Right Over Delimiters"
       },
       {
-        "command": "navi-parens.goLeftOrSiblingScope",
-        "title": "Go left one character/separator, or to a sibling scope on the left",
-        "shortTitle": "Go Left Or Sibling Scope"
+        "command": "navi-parens.goLeftOverDelims",
+        "title": "Go left one character/separator/delimiter, i.e. skip over recognized delimiters",
+        "shortTitle": "Go Left Over Delimiters"
       },
       {
         "command": "navi-parens.goUpOneLiner",
@@ -176,13 +176,13 @@
         "shortTitle": "Go End Scope Or Arg"
       },
       {
-        "command": "navi-parens.selectRightOrSiblingScope",
-        "title": "Like `goRightOrSiblingScope`, but extend the selection",
+        "command": "navi-parens.selectRightOverDelims",
+        "title": "Like `goRightOverDelims`, but extend the selection",
         "shortTitle": "Select Right Or Sibling Scope"
       },
       {
-        "command": "navi-parens.selectLeftOrSiblingScope",
-        "title": "Like `goLeftOrSiblingScope`, but extend the selection",
+        "command": "navi-parens.selectLeftOverDelims",
+        "title": "Like `goLeftOverDelims`, but extend the selection",
         "shortTitle": "Select Left Or Sibling Scope"
       },
       {
@@ -373,9 +373,9 @@
           "scope": "language-overridable"
         },
         "navi-parens.pseudoSeparatorMM": {
-          "markdownDescription": "A regexp for additional separators to skip in the commands `goRightOrSiblingScope`, `goLeftOrSiblingScope` in Markmacs Mode",
+          "markdownDescription": "A regexp for additional separators to skip in the commands `goRightOverDelims`, `goLeftOverDelims` in Markmacs Mode",
           "type": "string",
-          "default": "\\\\([a-zA-Z0-9]+|[^{])",
+          "default": "\\\\[a-zA-Z0-9]*[^{a-zA-Z0-9]",
           "scope": "language-overridable"
         },
         "navi-parens.oneLinerMin": {
@@ -410,7 +410,7 @@
       {
         "command": "cursorUp",
         "key": "alt+i",
-        "when": "textInputFocus && !editorTextFocus"
+        "when": "textInputFocus && !config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "list.focusUp",
@@ -435,12 +435,12 @@
       {
         "command": "cursorUp",
         "key": "ctrl+alt+o",
-        "when": "textInputFocus && !config.navi-parens.rebind"
+        "when": "textInputFocus && !config.navi-parens.rebind && !config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "cursorDown",
         "key": "alt+k",
-        "when": "textInputFocus && !editorTextFocus"
+        "when": "textInputFocus && !config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "list.focusDown",
@@ -463,59 +463,19 @@
         "when": "editorFocus && parameterHintsMultipleSignatures && parameterHintsVisible"
       },
       {
-        "command": "cursorHome",
-        "key": "alt+a",
-        "when": "textInputFocus && !editorTextFocus"
-      },
-      {
-        "command": "cursorEnd",
-        "key": "alt+e",
-        "when": "textInputFocus && !editorTextFocus"
-      },
-      {
-        "command": "cursorWordLeft",
-        "key": "alt+h",
-        "when": "textInputFocus"
-      },
-      {
-        "command": "cursorWordEndRight",
-        "key": "alt+;",
-        "when": "textInputFocus"
-      },
-      {
-        "command": "cursorRightSelect",
-        "key": "shift+alt+l",
-        "when": "textInputFocus && !editorTextFocus"
-      },
-      {
-        "command": "cursorLeftSelect",
-        "key": "shift+alt+j",
-        "when": "textInputFocus && !editorTextFocus"
-      },
-      {
         "command": "cursorUpSelect",
         "key": "shift+alt+i",
-        "when": "textInputFocus && config.navi-parens.rebind && !editorTextFocus"
+        "when": "textInputFocus && config.navi-parens.rebind && !config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "cursorUpSelect",
         "key": "ctrl+shift+alt+o",
-        "when": "textInputFocus && !config.navi-parens.rebind && !editorTextFocus"
+        "when": "textInputFocus && !config.navi-parens.rebind && !config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "cursorDownSelect",
         "key": "shift+alt+k",
-        "when": "textInputFocus && !editorTextFocus"
-      },
-      {
-        "command": "cursorHomeSelect",
-        "key": "shift+alt+a",
-        "when": "textInputFocus && !editorTextFocus"
-      },
-      {
-        "command": "cursorEndSelect",
-        "key": "shift+alt+e",
-        "when": "textInputFocus && !editorTextFocus"
+        "when": "textInputFocus && !config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "cursorWordLeftSelect",
@@ -650,64 +610,94 @@
         "key": "ctrl+alt+m"
       },
       {
-        "command": "navi-parens.goRightOrSiblingScope",
+        "command": "navi-parens.goRightOverDelims",
         "key": "alt+l",
         "when": "editorTextFocus"
       },
       {
-        "command": "navi-parens.goLeftOrSiblingScope",
+        "command": "navi-parens.goLeftOverDelims",
         "key": "alt+j",
         "when": "editorTextFocus"
       },
       {
+        "command": "cursorRightSelect",
+        "key": "shift+alt+l",
+        "when": "textInputFocus && !editorTextFocus"
+      },
+      {
+        "command": "cursorLeftSelect",
+        "key": "shift+alt+j",
+        "when": "textInputFocus && !editorTextFocus"
+      },
+      {
         "command": "navi-parens.goUpOneLiner",
         "key": "alt+i",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "navi-parens.goDownOneLiner",
         "key": "alt+k",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.isMarkmacsMode"
+      },
+      {
+        "command": "cursorHome",
+        "key": "alt+a",
+        "when": "editorTextFocus && !config.navi-parens.isMarkmacsMode"
+      },
+      {
+        "command": "cursorEnd",
+        "key": "alt+e",
+        "when": "editorTextFocus && !config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "navi-parens.goBeginScopeOrArg",
         "key": "alt+a",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "navi-parens.goEndScopeOrArg",
         "key": "alt+e",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.isMarkmacsMode"
       },
       {
-        "command": "navi-parens.selectRightOrSiblingScope",
+        "command": "navi-parens.selectRightOverDelims",
         "key": "shift+alt+l",
         "when": "editorTextFocus"
       },
       {
-        "command": "navi-parens.selectLeftOrSiblingScope",
+        "command": "navi-parens.selectLeftOverDelims",
         "key": "shift+alt+j",
         "when": "editorTextFocus"
       },
       {
         "command": "navi-parens.selectUpOneLiner",
         "key": "shift+alt+i",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "navi-parens.selectDownOneLiner",
         "key": "shift+alt+k",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "navi-parens.selectBeginScopeOrArg",
         "key": "shift+alt+a",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.isMarkmacsMode"
       },
       {
         "command": "navi-parens.selectEndScopeOrArg",
         "key": "shift+alt+e",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && config.navi-parens.isMarkmacsMode"
+      },
+      {
+        "command": "cursorHomeSelect",
+        "key": "shift+alt+a",
+        "when": "editorTextFocus && !config.navi-parens.isMarkmacsMode"
+      },
+      {
+        "command": "cursorEndSelect",
+        "key": "shift+alt+e",
+        "when": "editorTextFocus && !config.navi-parens.isMarkmacsMode"
       }
 
     ]

@@ -1342,10 +1342,10 @@ export function activate(context: vscode.ExtensionContext) {
 	newCommand('navi-parens.selectPastPreviousWord', textEditor => goPastWord(textEditor, true, true));
 	newCommand('navi-parens.selectPastNextWord', textEditor => goPastWord(textEditor, true, false));
 	newCommand('navi-parens.toggleMarkmacsMode', toggleMarkmacsMode);
-	newCommand('navi-parens.goLeftOrSiblingScope', textEditor => goPastCharacter(textEditor, false, true));
-	newCommand('navi-parens.goRightOrSiblingScope', textEditor => goPastCharacter(textEditor, false, false));
-	newCommand('navi-parens.selectLeftOrSiblingScope', textEditor => goPastCharacter(textEditor, false, true));
-	newCommand('navi-parens.selectRightOrSiblingScope', textEditor => goPastCharacter(textEditor, false, false));
+	newCommand('navi-parens.goLeftOverDelims', textEditor => goPastCharacter(textEditor, false, true));
+	newCommand('navi-parens.goRightOverDelims', textEditor => goPastCharacter(textEditor, false, false));
+	newCommand('navi-parens.selectLeftOverDelims', textEditor => goPastCharacter(textEditor, true, true));
+	newCommand('navi-parens.selectRightOverDelims', textEditor => goPastCharacter(textEditor, true, false));
 
 	// Register a command that is invoked when the status bar item is selected
 	const naviCommandId = 'navi-parens.showScopeModes';

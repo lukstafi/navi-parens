@@ -68,10 +68,10 @@ function testCase(content: string, command: string, mode: string, language: stri
 			'goToNextEmptyLine': () => myExtension.goToEmptyLine(textEditor, false, false),
 			'selectToPreviousEmptyLine': () => myExtension.goToEmptyLine(textEditor, true, true),
 			'selectToNextEmptyLine': () => myExtension.goToEmptyLine(textEditor, true, false),
-			'goRightOrSiblingScope': () => myExtension.goPastCharacter(textEditor, false, false),
-			'goLeftOrSiblingScope': () => myExtension.goPastCharacter(textEditor, false, true),
-			'selectRightOrSiblingScope': () => myExtension.goPastCharacter(textEditor, true, false),
-			'selectLeftOrSiblingScope': () => myExtension.goPastCharacter(textEditor, true, true),
+			'goRightOverDelims': () => myExtension.goPastCharacter(textEditor, false, false),
+			'goLeftOverDelims': () => myExtension.goPastCharacter(textEditor, false, true),
+			'selectRightOverDelims': () => myExtension.goPastCharacter(textEditor, true, false),
+			'selectLeftOverDelims': () => myExtension.goPastCharacter(textEditor, true, true),
 		}));
 		// TODO(2): enable symbol providers -- perhaps add mocks.
 		const modes = new Map([
