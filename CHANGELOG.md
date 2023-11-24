@@ -1,15 +1,24 @@
 # Change Log
 
-## [2.0.0] -- current
+## [1.3.0] -- 2023-11-23
 
 ### Added
 
-- Initial release of Markmacs Mode.
-- A new structured navigation command combo: an _up/down_ command where additional separators close the scope of the cursor when looking for the outer scope; and a _left/right_ command that behaves like `cursorLeft` / `cursorRight` but skips over (multicharacter) delimiters plus a new configurable `pseudoDelimiterToSkip` regexp.
+- Includes LaTeX matrix and equation environment delimiters in defaults.
+- Markmacs Mode with separators and bindings specific to LaTeX, a stepping stone to WYSIWYG-like support in v2.
+- Outer scope functionality: additional separators close the scope of the cursor; exposed in Markmacs Mode as `alt+a`, `alt+e`.
+- An _up/down_ command that skips at least `oneLinerMin` (default 30) characters and stops on a delimiter / separator.
+  - In Markmacs Mode it is bound to `alt+i` / `alt+k`.
+- A _left/right_ command that behaves like `cursorLeft` / `cursorRight` but skips over multicharacter delimiters plus a new configurable `pseudoSeparatorNoMM` / `pseudoSeparatorMM` regexp.
+  - In Markmacs Mode, it skips over `\commandName{` which is an opening delimiter, and `\commandName` which is the `pseudoSeparatorMM` default.
 
 ### Changed
 
 - Delimiters can now be configured via regexps -- a length > 2 string that starts & ends with `/` will have them removed and will not be escaped.
+
+### Fixed
+
+- Multicharacter delimiters handling.
 
 ## [1.2.3] -- 2023-03-07
 

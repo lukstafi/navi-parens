@@ -3,7 +3,7 @@
 _Navi Parens_ is a Visual Studio Code extension that provides structured code navigation similar to what's available in Emacs.
 It also provides additional key bindings for moving the cursor without "fingers leaving the home row".
 
-_Navi Parens_ also provides _Markmacs Mode_, which emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor-scope markers are moved with it. Moreover, _Markmacs Mode_ adds some commands, such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
+The future plan for _Navi Parens_ is to build out _Markmacs Mode_ to emulate TeXmacs-like WYSIWYG editing capabilities within preview panes.
 
 ## Keywords
 
@@ -49,18 +49,19 @@ Commands:
 * `selectPastNextWord`: `shift+alt+;` Select past the current/next word, ignoring language-specific rules
 * `selectPastPreviousWord`: `shift+alt+h` Select past the previous word / beginning of current, ignoring language-specific rules
 * `toggleMarkmacsMode`: `ctrl+alt+m` Turn on / off cursor and scope visualization for LaTeX and Mermaid
-* `goRightOrSiblingScope`: `alt+l` Go right one character/separator, or to a sibling scope on the right
-* `goLeftOrSiblingScope`: `alt+j` Go left one character/separator, or to a sibling scope on the left
-* `goUpOneLiner`: `alt+i` Go left / up at least `oneLinerMin` characters, stopping on a scope boundary
-* `goDownOneLiner`: `alt+k` Go right / down at least `oneLinerMin` characters, stopping on a scope boundary
+* `goRightOverDelims`: `alt+l` Go right one character/separator/delimiter, i.e. skip over recognized delimiters
+* `goLeftOverDelims`: `alt+j` Go left one character/separator/delimiter, i.e. skip over recognized delimiters
+* `goUpOneLiner`: MM/`alt+i` Go left / up at least `oneLinerMin` characters, stopping on a scope boundary; binding to `alt+i` activated by `ctrl+alt+m`
+* `goDownOneLiner`: MM/`alt+k` Go right / down at least `oneLinerMin` characters, stopping on a scope boundary; binding to `alt+k` activated by `ctrl+alt+m`
 * `goBeginScopeOrArg`: `alt+a` Go near the opening of the current scope or argument
 * `goEndScopeOrArg`: `alt+e` Go near the closing of the current scope or argument
-* `selectRightOrSiblingScope`: `shift+alt+l` Like `goRightOrSiblingScope`, but extend the selection
-* `selectLeftOrSiblingScope`: `shift+alt+j` Like `goLeftOrSiblingScope`, but extend the selection
-* `selectUpOneLiner`: `shift+alt+i` Like `goUpOneLiner`, but extend the selection
-* `selectDownOneLiner`: `shift+alt+k` Like `goDownOneLiner`, but extend the selection
+* `selectRightOverDelims`: `shift+alt+l` Like `goRightOverDelims`, but extend the selection
+* `selectLeftOverDelims`: `shift+alt+j` Like `goLeftOverDelims`, but extend the selection
+* `selectUpOneLiner`: MM/`shift+alt+i` Like `goUpOneLiner`, but extend the selection
+* `selectDownOneLiner`: MM/`shift+alt+k` Like `goDownOneLiner`, but extend the selection
 * `selectBeginScopeOrArg`: `shift+alt+a` Like `goBeginScopeOrArg`, but extend the selection
 * `selectEndScopeOrArg`: `shift+alt+e` Like `goEndScopeOrArg`, but extend the selection
+* `toggleMarkmacsMode`: `ctrl+alt+m` Enable/disable Markmacs Mode, which is tailored for LaTeX and changes the behavior of the `alt+i`, `alt+k`, `alt+j`, `alt+l` bindings/commands.
 
 The meaning of "near the beginning/end of a scope" is mode-specific.
 
@@ -68,14 +69,14 @@ Extra key bindings:
 * `insertCursorAtEndOfEachLineSelected`: rebound from `shift+alt+i` to `shift+alt+p`
 * `cursorRight`: `alt+l`
 * `cursorLeft`: `alt+j`
-* `cursorUp`, `list.focusUp`, `selectPrevCodeAction`, `selectPrevSuggestion`, `selectPrevParameterHint`: `alt+i`
-* `cursorDown`, `list.focusDown`, `selectNextCodeAction`, `selectNextSuggestion`, `selectNextParameterHint`: `alt+k`
+* `cursorUp`, NoMM/`alt-i`, `list.focusUp`, `selectPrevCodeAction`, `selectPrevSuggestion`, `selectPrevParameterHint`: `alt+i`
+* `cursorDown`, NoMM/`alt-k`, `list.focusDown`, `selectNextCodeAction`, `selectNextSuggestion`, `selectNextParameterHint`: `alt+k`
 * `cursorHome`: `alt+a`
 * `cursorEnd`: `alt+e`
 * `cursorRightSelect`: `shift+alt+l`
 * `cursorLeftSelect`: `shift+alt+j`
-* `cursorUpSelect`: `shift+alt+i`
-* `cursorDownSelect`: `shift+alt+k`
+* `cursorUpSelect`: NoMM/`shift+alt+i`
+* `cursorDownSelect`: NoMM/`shift+alt+k`
 * `cursorHomeSelect`: `shift+alt+a`
 * `cursorEndSelect`: `shift+alt+e`
 * `deleteRight`: `alt+d`
@@ -117,23 +118,28 @@ Navigation with `Raw` bracket mode.
 
 ![Raw bracket scope mode](animations/rawbrackets.gif)
 
-## MarkMacs Mode
+## Future plan -- the big goal for v2.0: MarkMacs Mode
 
-_Markmacs Mode_ emulates TeXmacs-like WYSIWYG editing capabilities within preview panes by simply updating the document directly. When the cursor position changes, a cursor marker and a scope marker are moved with it. Moreover, VSC Markmacs adds commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives. _Markmacs Mode_ is only active inside inline LaTeX, LaTeX and Mermaid blocks.
+_Markmacs Mode_ will emulate TeXmacs-like WYSIWYG editing capabilities within preview panes. The LaTeX and Mermaid code will be postprocessed before being rendered, to add a cursor marker and a scope marker. Moreover, Markmacs Mode will add commands such as "cycle-through" which replaces a token to the left of the cursor with its alternatives.
 
-### Features
+### Planned features
 
-- Intercepts cursor position changes, and moves/adds LaTeX code or Mermaid style to highlight the nearest scope (braces, parentheses, brackets) encompassing the cursor, with a color split indicating the cursor position.
-  - The actual cursor and edit actions happen in the markdown / latex pane, but user's focus can be in the preview pane.
+- Postprocesses the previewed code:
+  - moves/adds LaTeX commands or Mermaid style to highlight the cursor position and the nearest scope encompassing the cursor, e.g. with a color split indicating the cursor position;
+  - renders the text of partially entered or edited commands (when the cursor is on/at the command text) by escaping the `\`.
+  - The actual cursor and edit actions happen in the markdown / latex pane, but user's focus can be fully in the preview pane.
 - Adds snippets, keybindings for the snippets commands.
 - Adds a command to cycle through alternatives of what's to the left of the cursor.
     - E.g. $S$ -> $\Sigma$ -> $\sum$ -> $S$; $P$ -> $\Pi$ -> $\prod$ -> $P$; $f$ -> $\phi$ -> $\varphi$ -> $f$...
-- Adds context-sensitive commands to extend the object at cursor to the right, bottom, left and up. For Markdown tables, adds columns or rows; for Mermaid diagrams, adds siblings or children or parents.
+- Adds context-sensitive commands to extend the object at cursor to the right, bottom, left and up. For Markdown tables and LaTeX matrices, adds columns or rows; for Mermaid diagrams, adds siblings or children or parents.
+
+Note: there's [a PanDoc filter](https://github.com/raghur/mermaid-filter) for [Mermaid](http://mermaid.js.org/#/).
+
+You can [sponsor the development of Navi Parens](https://github.com/sponsors/lukstafi).
 
 ### Requirements
 
 - [Mermaid VS Code extension](https://github.com/mjbvz/vscode-markdown-mermaid) to make full use of the graph editing functionality.
-  - There's [a PanDoc filter](https://github.com/raghur/mermaid-filter) for [Mermaid](http://mermaid.js.org/#/).
 
 ## Extension Settings
 
@@ -247,12 +253,11 @@ Initial release of _Navi Parens_.
 * Fixes to handling indentation scopes that touch beginning/end-of-document.
 * Special-case behavior where the cursor is at the start of the indentation header line.
 
-### 2.0.0
+### 1.3.0
 
-* Introduces _Markmacs Mode_.
-* Fixes tricky multicharacter delimiter handling for the RAW mode.
+* Introduces _Markmacs Mode_ with extra support for navigating LaTeX.
+* Fixes tricky multicharacter delimiter handling.
 * Includes LaTeX matrix and equation environment delimiters in defaults.
-* Introduces new commands `upOrPrevious`, `downOrNext`, where additional separators close the scope of the cursor when looking for the RAW outer scope.
-* Introduces new commands `upOrPrevious`, `downOrNext`, where additional separators close the scope of the cursor when looking for the RAW outer scope.
+* Next character, previous character commands that skip over multicharacter delimiters.
 
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog
