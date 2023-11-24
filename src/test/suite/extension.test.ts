@@ -9,9 +9,9 @@ async function openFileWithCursor(annotated: string, language: string): Promise<
 }> {
 	let source = annotated.indexOf('@');
 	let target = annotated.indexOf('^');
-	if (source < target) { --target; } else {	--source;	}
+	if (source < target) { --target; } else { --source; }
 	let content = annotated.replace('@', '').replace('^', '');
-	const doc = await vscode.workspace.openTextDocument({language, content});
+	const doc = await vscode.workspace.openTextDocument({ language, content });
 	const sourcePos = doc.positionAt(source);
 	const targetPos = doc.positionAt(target);
 	const textEditor = await vscode.window.showTextDocument(doc);
@@ -75,20 +75,28 @@ function testCase(content: string, command: string, mode: string, language: stri
 		}));
 		// TODO(2): enable symbol providers -- perhaps add mocks.
 		const modes = new Map([
-			['IND/JTB', ['Indentation', 'JumpToBracket']],
-			['IND/RAW', ['Indentation', 'Raw']],
-			['NON/JTB', ['None', 'JumpToBracket']],
-			['NON/RAW', ['None', 'Raw']],
-			['IND/NON', ['Indentation', 'None']],
-			['NON/NON', ['None', 'None']],
+			['IND/JTB', ['Indentation', 'JumpToBracket', false]],
+			['IND/RAW', ['Indentation', 'Raw', false]],
+			['NON/JTB', ['None', 'JumpToBracket', false]],
+			['NON/RAW', ['None', 'Raw', false]],
+			['IND/NON', ['Indentation', 'None', false]],
+			['NON/NON', ['None', 'None', false]],
+			['IND/JTB/MM', ['Indentation', 'JumpToBracket', true]],
+			['IND/RAW/MM', ['Indentation', 'Raw', true]],
+			['NON/JTB/MM', ['None', 'JumpToBracket', true]],
+			['NON/RAW/MM', ['None', 'Raw', true]],
+			['IND/NON/MM', ['Indentation', 'None', true]],
+			['NON/NON/MM', ['None', 'None', true]],
 		]);
 		const modePair = modes.get(mode);
 		assert.notStrictEqual(modePair, undefined);
 		if (!modePair) { return; }
-		const [blockMode, bracketsMode] = modePair;
+		const [blockMode, bracketsMode, markmacsMode] = modePair;
 		await vscode.workspace.getConfiguration().update("navi-parens.blockScopeMode", blockMode,
 			vscode.ConfigurationTarget.Global, true);
 		await vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketsMode,
+			vscode.ConfigurationTarget.Global, true);
+		await vscode.workspace.getConfiguration().update("navi-parens.isMarkmacsMode", markmacsMode,
 			vscode.ConfigurationTarget.Global, true);
 		// Wait extra for the bracket providers to settle.
 		if (bracketsMode === 'JumpToBracket') {
@@ -726,7 +734,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToUpScope', mode, 'pascal'
 		));
-		
+
 		test('Tricky syntax navigation: either _next_ or down should find next scope ' + mode, testCase(
 			`
 			@for x in xs:
@@ -737,7 +745,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastNextScope', mode, 'pascal'
 		));
-		
+
 		test('Tricky syntax navigation: find next scope from inside indentation header ' + mode, testCase(
 			`
 			f@or x in xs:
@@ -748,7 +756,7 @@ suite('Extension Test Suite', () => {
 			`,
 			'goPastNextScope', mode, 'pascal'
 		));
-		
+
 		test('Tricky syntax navigation: either next or _down_ should find next scope ' + mode, testCase(
 			`
 			^@for x in xs:
@@ -759,16 +767,16 @@ suite('Extension Test Suite', () => {
 			`,
 			'goToDownScope', mode, 'pascal'
 		));
-		
+
 		test('Tricky syntax navigation: either _next_ or down should find next scope 2 ' + mode, testCase(
-`@for x in xs:
+			`@for x in xs:
 	if x:
 		foo(x)
 	pass
 ^pass`,
 			'goPastNextScope', mode, 'pascal'
 		));
-	
+
 		test('Corner case: respect indentation for going up scope ' + mode, testCase(
 			`
 ^if true:
@@ -817,27 +825,27 @@ end
 		test('Tricky syntax navigation: either go to down scope or go past next scope should ' +
 			'find end of scope 1 ' + mode,
 			testCase(
-			`
+				`
 			procedure Foo(Param: boolean);^@ begin  
 				pass;
 					
 				pass;
 			end
 			`,
-			'goToDownScope', mode, 'pascal'
-		));
+				'goToDownScope', mode, 'pascal'
+			));
 		test('Tricky syntax navigation: either go to up scope or go past next scope should ' +
 			'find end of scope 2 ' + mode,
 			testCase(
-			`
+				`
 			procedure Foo(Param: boolean);@ begin  
 				pass;
 					
 				pass;
 			^end
 			`,
-			'goPastNextScope', mode, 'pascal'
-		));
+				'goPastNextScope', mode, 'pascal'
+			));
 
 	}
 	for (const mode of ['NON/RAW', 'NON/JTB']) {
@@ -1548,6 +1556,99 @@ word2
 			paragraph
 			paragraph^`,
 			'goToNextEmptyLine', mode, 'text'
+		));
+	}
+	for (const mode of ['NON/RAW', 'NON/RAW/MM']) {
+		test('Previous character', testCase(
+			`paragra^p@h1`,
+			'goLeftOverDelims', mode, 'Markdown'
+		));
+		test('Next character', testCase(
+			`paragrap@h^1`,
+			'goRightOverDelims', mode, 'Markdown'
+		));
+		test('Previous character of start', testCase(
+			`^@paragraph1`,
+			'goLeftOverDelims', mode, 'Markdown'
+		));
+		test('Next character of end', testCase(
+			`paragraph1@^`,
+			'goRightOverDelims', mode, 'Markdown'
+		));
+		test('Previous character of backslash', testCase(
+			`paragrap^\\@h1`,
+			'goLeftOverDelims', mode, 'Markdown'
+		));
+		test('Next character of backslash', testCase(
+			`paragrap@\\^h1`,
+			'goRightOverDelims', mode, 'Markdown'
+		));
+		test('Previous skip over delimiter', testCase(
+			`paragraph^\\begin{pmatrix}@1`,
+			'goLeftOverDelims', mode, 'Markdown'
+		));
+		test('Next skip over delimiter', testCase(
+			`paragraph@\\begin{pmatrix}^1`,
+			'goRightOverDelims', mode, 'Markdown'
+		));
+	}
+	{
+		const mode = 'NON/RAW/MM';
+		test('Previous skip over MarkmacsMode pseudo-separator', testCase(
+			`At^\\paragraph @1`,
+			'goLeftOverDelims', mode, 'Markdown'
+		));
+		test('Next skip over MarkmacsMode pseudo-separator', testCase(
+			`At@\\paragraph ^1`,
+			'goRightOverDelims', mode, 'Markdown'
+		));
+		test('Begin argument position inside LaTeX matrix, mid', testCase(
+			`\\begin{matrix} a &^ b@ & c \\end{matrix}`,
+			'goBeginScopeOrArg', mode, 'Markdown'
+		));
+		test('Begin argument position inside LaTeX matrix, first', testCase(
+			`\\begin{matrix}^ a @& b & c \\end{matrix}`,
+			'goBeginScopeOrArg', mode, 'Markdown'
+		));
+		test('End argument position inside LaTeX matrix, mid', testCase(
+			`\\begin{matrix} a &@ b ^& c \\end{matrix}`,
+			'goEndScopeOrArg', mode, 'Markdown'
+		));
+		test('End argument position inside LaTeX matrix, last', testCase(
+			`\\begin{matrix} a & b & @c ^\\end{matrix}`,
+			'goEndScopeOrArg', mode, 'Markdown'
+		));
+		test('Up One Liner: skip text up to a separator', testCase(
+			`\\begin{matrix} a ^& 123 45678 901234567\\pseudo 89012345678901234567890 @ & c \\end{matrix}`,
+			'goUpOneLiner', mode, 'Markdown'
+		));
+		test('Down One Liner: skip text down to a separator', testCase(
+			`\\begin{matrix} a &@ 123 45678 901234567\\pseudo 89012345678901234567890 &^ c \\end{matrix}`,
+			'goDownOneLiner', mode, 'Markdown'
+		));
+		test('Tricky syntax navigation: Up One Liner: skip text up past a pseudo-separator', testCase(
+			`^\\begin{matrix} a 123 \\pseudo 45678 901234567 & 89012345678901234567890 @ & c \\end{matrix}`,
+			'goUpOneLiner', mode, 'Markdown'
+		));
+		test('Tricky syntax navigation: Down One Liner: skip text down past a pseudo-separator', testCase(
+			`\\begin{matrix} a &@ 123 45678 901234567 & 89012345678901234567890\\pseudo c \\end{matrix}^`,
+			'goDownOneLiner', mode, 'Markdown'
+		));
+		test('Up One Liner: skip out of nested scopes', testCase(
+			`123 ^( 012345678901234567890 { \\begin{matrix} a & { [ ( @ ) ] } & c \\end{matrix} } )`,
+			'goUpOneLiner', mode, 'Markdown'
+		));
+		test('Up One Liner: skip into nested scopes', testCase(
+			`( { \\begin{matrix} a & { [ ^( 012345678901234567890 ) ] } & c \\end{matrix} } )@ 123`,
+			'goUpOneLiner', mode, 'Markdown'
+		));
+		test('Down One Liner: skip out of nested scopes', testCase(
+			`123 ( { \\begin{matrix} a & { [ ( @ ) ] } & c \\end{matrix} 012345678901234567890 }^ )`,
+			'goDownOneLiner', mode, 'Markdown'
+		));
+		test('Down One Liner: skip into nested scopes', testCase(
+			`123 @( { \\begin{matrix} a & { [ ( 012345678901234567890 )^ ] } & c \\end{matrix} } ) 123`,
+			'goDownOneLiner', mode, 'Markdown'
 		));
 	}
 });
