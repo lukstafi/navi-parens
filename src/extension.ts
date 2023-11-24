@@ -446,10 +446,9 @@ function findOuterBracketRaw(
 		let nesting = 0;
 		let delta = direction[side];
 		let skippedChars = 0;
-		for (
-			let offset = cursor - delta * Math.max(closingRawMaxLength || 0, openingRawMaxLength || 0);
-			0 <= offset && offset <= lastOffset; offset += delta
-		) {
+		let offset = cursor - delta * Math.max(closingRawMaxLength || 0, openingRawMaxLength || 0);
+		offset = Math.max(0, Math.min(offset, lastOffset));
+		for (; 0 <= offset && offset <= lastOffset; offset += delta) {
 			// Reset to the default delta.
 			delta = direction[side];
 			const offsetPos = doc.positionAt(offset);
