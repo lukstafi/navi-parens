@@ -243,28 +243,6 @@
           "default": "false",
           "scope": "language-overridable"
         },
-        "navi-parens.closingBrackets": {
-          "description": "The superset of supported closing delimiters (the default should be enough)",
-          "type": "array",
-          "default": [
-            ")",
-            "]",
-            "}",
-            ">"
-          ],
-          "scope": "language-overridable"
-        },
-        "navi-parens.openingBrackets": {
-          "description": "The superset of supported opening delimiters (the default should be enough)",
-          "type": "array",
-          "default": [
-            "(",
-            "[",
-            "{",
-            "<"
-          ],
-          "scope": "language-overridable"
-        },
         "navi-parens.separatorsNoMM": {
           "markdownDescription": "The separators for commands like `goBeginScopeOrArg`, `goUpOneLiner` when not in Markmacs Mode",
           "type": "array",

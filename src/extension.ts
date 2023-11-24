@@ -41,9 +41,10 @@ function escapeRegExps(strings: string[]) {
 	return strings.map(s => '(' + escapeRegExp(s) + ')').join('|');
 }
 
-let closingBrackets: string[] = [")", "]", "}", ">"];
-let openingBrackets: string[] = ["(", "[", "{", "<"];
-let separatorsJTB: string[] = [",", ";"];
+const noMatchRegex = /^\b$/;
+// The superset of supported closing and opening delimiters.
+const closingBrackets: string[] = [")", "]", "}", ">"];
+const openingBrackets: string[] = ["(", "[", "{", "<"];
 let closingBeforeRawRegex: RegExp | null = null;
 let openingBeforeRawRegex: RegExp | null = null;
 let separatorsMMBeforeRawRegex: RegExp | null = null;
@@ -240,7 +241,7 @@ async function findOuterBracket(
 	// If we are touching a bracket from the outside and we wouldn't cross a scope moving beside, jump from there
 	// rather than current position, to minimize jumpToBracket calls.
 	let from = pos;
-	const allBrackets = openingBrackets.concat(closingBrackets).concat(separatorsJTB);
+	const allBrackets = openingBrackets.concat(closingBrackets);
 	let leftPos = pos.character === 0 ? null : doc.validatePosition(pos.translate(0, -1));
 	let rightPos = doc.validatePosition(pos.translate(0, 1));
 	if (openingBrackets.includes(characterAtPoint(doc, pos))) {
@@ -312,30 +313,73 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		const lookingAt = characterAtPoint(doc, lookingAtPos);
 		const delimiters =
 			delimiter === DelimiterType.closing ? closingBrackets :
-				delimiter === DelimiterType.opening ? openingBrackets
-					: delimiter === DelimiterType.separator ? separatorsJTB : [];
+				delimiter === DelimiterType.opening ? openingBrackets : [];
 		return delimiters.includes(lookingAt) ? lookingAt : null;
 	}
-	if (!closingAfterRawRegex || !closingBeforeRawRegex || !openingAfterRawRegex || !openingBeforeRawRegex ||
-		!separatorsMMAfterRawRegex || !separatorsNoMMAfterRawRegex ||
-		!separatorsNoMMBeforeRawRegex || !separatorsMMBeforeRawRegex ||
-		!pseudoSepMMAfterRawRegex || !pseudoSepNoMMAfterRawRegex ||
-		!pseudoSepNoMMBeforeRawRegex || !pseudoSepMMBeforeRawRegex
-	) {
-		assert(closingAfterRawRegex, 'Navi Parens is not initialized!');
-		assert(closingBeforeRawRegex, 'Navi Parens is not initialized!');
-		assert(openingAfterRawRegex, 'Navi Parens is not initialized!');
-		assert(openingBeforeRawRegex, 'Navi Parens is not initialized!');
-		assert(separatorsMMAfterRawRegex, 'Navi Parens is not initialized!');
-		assert(separatorsNoMMAfterRawRegex, 'Navi Parens is not initialized!');
-		assert(separatorsNoMMBeforeRawRegex, 'Navi Parens is not initialized!');
-		assert(separatorsMMBeforeRawRegex, 'Navi Parens is not initialized!');
-		assert(pseudoSepMMAfterRawRegex, 'Navi Parens is not initialized!');
-		assert(pseudoSepNoMMAfterRawRegex, 'Navi Parens is not initialized!');
-		assert(pseudoSepNoMMBeforeRawRegex, 'Navi Parens is not initialized!');
-		assert(pseudoSepMMBeforeRawRegex, 'Navi Parens is not initialized!');
-		return null;
-	};
+	const configuration = vscode.workspace.getConfiguration();
+	if (!closingAfterRawRegex) {
+
+	}
+	if (!closingBeforeRawRegex || !closingAfterRawRegex) {
+		const closingBracketsRaw = configuration.get<string[]>("navi-parens.closingBracketsRaw") || [];
+		if (closingBracketsRaw.length > 0) {
+			closingBeforeRawRegex = makeRegExp('(' + escapeRegExps(closingBracketsRaw) + ')$');
+			closingAfterRawRegex = makeRegExp('^(' + escapeRegExps(closingBracketsRaw) + ')');
+		} else {
+			closingBeforeRawRegex = makeRegExp('(' + escapeRegExps(closingBrackets) + ')$');
+			closingAfterRawRegex = makeRegExp('^(' + escapeRegExps(closingBrackets) + ')');
+		}
+	}
+	if (!openingBeforeRawRegex || !openingAfterRawRegex) {
+		const openingBracketsRaw = configuration.get<string[]>("navi-parens.openingBracketsRaw") || [];
+		if (openingBracketsRaw.length > 0) {
+			openingBeforeRawRegex = makeRegExp('(' + escapeRegExps(openingBracketsRaw) + ')$');
+			openingAfterRawRegex = makeRegExp('^(' + escapeRegExps(openingBracketsRaw) + ')');
+		} else {
+			openingBeforeRawRegex = makeRegExp('(' + escapeRegExps(openingBrackets) + ')$');
+			openingAfterRawRegex = makeRegExp('^(' + escapeRegExps(openingBrackets) + ')');
+		}
+	}
+	if (!separatorsMMBeforeRawRegex || !separatorsMMAfterRawRegex) {
+		const separatorsMM = configuration.get<string[]>("navi-parens.separatorsMM") || [];
+		if (separatorsMM.length > 0) {
+			separatorsMMBeforeRawRegex = makeRegExp('(' + escapeRegExps(separatorsMM) + ')$');
+			separatorsMMAfterRawRegex = makeRegExp('^(' + escapeRegExps(separatorsMM) + ')');
+		} else {
+			separatorsMMBeforeRawRegex = makeRegExp('(' + escapeRegExps([',', ';']) + ')$');
+			separatorsMMAfterRawRegex = makeRegExp('^(' + escapeRegExps([',', ';']) + ')');
+		}
+	}
+	if (!separatorsNoMMBeforeRawRegex || !separatorsNoMMAfterRawRegex) {
+		const separatorsNoMM = configuration.get<string[]>("navi-parens.separatorsNoMM") || [];
+		if (separatorsNoMM.length > 0) {
+			separatorsNoMMBeforeRawRegex = makeRegExp('(' + escapeRegExps(separatorsNoMM) + ')$');
+			separatorsNoMMAfterRawRegex = makeRegExp('^(' + escapeRegExps(separatorsNoMM) + ')');
+		} else {
+			separatorsNoMMBeforeRawRegex = makeRegExp('(' + escapeRegExps([',', ';']) + ')$');
+			separatorsNoMMAfterRawRegex = makeRegExp('^(' + escapeRegExps([',', ';']) + ')');
+		}
+	}
+	if (!pseudoSepMMBeforeRawRegex || !pseudoSepMMAfterRawRegex) {
+		const pseudoSepMM = configuration.get<string>("navi-parens.pseudoSeparatorMM");
+		if (pseudoSepMM) {
+			pseudoSepMMBeforeRawRegex = makeRegExp('(' + pseudoSepMM + ')$');
+			pseudoSepMMAfterRawRegex = makeRegExp('^(' + pseudoSepMM + ')');
+		} else {
+			pseudoSepMMBeforeRawRegex = noMatchRegex;
+			pseudoSepMMAfterRawRegex = noMatchRegex;
+		}
+	}
+	if (!pseudoSepNoMMBeforeRawRegex || !pseudoSepNoMMAfterRawRegex) {
+		const pseudoSepNoMM = configuration.get<string>("navi-parens.pseudoSeparatorNoMM");
+		if (pseudoSepNoMM && pseudoSepNoMM.length > 0) {
+			pseudoSepNoMMBeforeRawRegex = makeRegExp('(' + pseudoSepNoMM + ')$');
+			pseudoSepNoMMAfterRawRegex = makeRegExp('^(' + pseudoSepNoMM + ')');
+		} else {
+			pseudoSepNoMMBeforeRawRegex = noMatchRegex;
+			pseudoSepNoMMAfterRawRegex = noMatchRegex;
+		}
+	}
 	const translPos = before ? doc.lineAt(pos.line).range.start : doc.lineAt(pos.line).range.end;
 	const textAtPoint = doc.getText(doc.validateRange(new vscode.Selection(pos, translPos)));
 	if (delimiter !== DelimiterType.jointDelimiters) {
@@ -346,9 +390,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 						(isMarkmacsMode() ? (before ? separatorsMMBeforeRawRegex : separatorsMMAfterRawRegex) :
 							(before ? separatorsNoMMBeforeRawRegex : separatorsNoMMAfterRawRegex)) :
 						// delimiter === DelimiterType.markmacs ? (before ? markmacsBeforeRegex : markmacsAfterRegex) :
-							(isMarkmacsMode() ?
-								(before ? pseudoSepMMBeforeRawRegex : pseudoSepMMAfterRawRegex) :
-								(before ? pseudoSepNoMMBeforeRawRegex : pseudoSepNoMMAfterRawRegex));
+						(isMarkmacsMode() ?
+							(before ? pseudoSepMMBeforeRawRegex : pseudoSepMMAfterRawRegex) :
+							(before ? pseudoSepNoMMBeforeRawRegex : pseudoSepNoMMAfterRawRegex));
 		const matchResults = delimiters.exec(textAtPoint);
 		return matchResults?.[0] || null;
 	} else {
@@ -365,8 +409,8 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		const unull = (x: RegExpExecArray | null) => x ? [x[0]] : [];
 		const matchResults =
 			[...unull(closing), ...unull(opening), ...unull(separator),
-				// ...unull(markmacs),
-				...unull(pseudo)];
+			// ...unull(markmacs),
+			...unull(pseudo)];
 		if (matchResults.length === 0) {
 			return null;
 		}
@@ -379,6 +423,17 @@ function findOuterBracketRaw(
 	forOneLinerMin?: number | undefined
 ): vscode.Selection | null {
 	const doc = textEditor.document;
+	if (!closingRawMaxLength || !openingRawMaxLength) {
+		const configuration = vscode.workspace.getConfiguration();
+		const closingBracketsRaw = configuration.get<string[]>("navi-parens.closingBracketsRaw") || [];
+		if (closingBracketsRaw.length > 0) {
+			closingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
+		}
+		const openingBracketsRaw = configuration.get<string[]>("navi-parens.openingBracketsRaw") || [];
+		if (openingBracketsRaw.length > 0) {
+			openingRawMaxLength = Math.max(...openingBracketsRaw.map(delim => delim.length));
+		}
+	}
 	// Target end first, then anchor end.
 	const direction = before ? [-1, 1] : [1, -1];
 	const beforeFor = [before, !before];
@@ -968,15 +1023,6 @@ function updateStatusBarItem(
 
 function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 	const configuration = vscode.workspace.getConfiguration();
-	if (event.affectsConfiguration('navi-parens.closingBrackets')) {
-		closingBrackets = configuration.get<string[]>("navi-parens.closingBrackets") || [];
-	}
-	if (event.affectsConfiguration('navi-parens.openingBrackets')) {
-		openingBrackets = configuration.get<string[]>("navi-parens.openingBrackets") || [];
-	}
-	if (event.affectsConfiguration('navi-parens.separatorsJTB')) {
-		separatorsJTB = configuration.get<string[]>("navi-parens.separatorsJTB") || [];
-	}
 	const closingBracketsRaw = configuration.get<string[]>("navi-parens.closingBracketsRaw") || [];
 	if (event.affectsConfiguration('navi-parens.closingBracketsRaw')) {
 		if (closingBracketsRaw.length > 0) {
@@ -1014,8 +1060,13 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		event.affectsConfiguration('navi-parens.closingBracketsRaw')
 	) {
 		const pseudoSepMM = configuration.get<string>("navi-parens.pseudoSeparatorMM");
-		pseudoSepMMBeforeRawRegex = makeRegExp('(' + pseudoSepMM + ')$');
-		pseudoSepMMAfterRawRegex = makeRegExp('^(' + pseudoSepMM + ')');
+		if (pseudoSepMM && pseudoSepMM.length > 0) {
+			pseudoSepMMBeforeRawRegex = makeRegExp('(' + pseudoSepMM + ')$');
+			pseudoSepMMAfterRawRegex = makeRegExp('^(' + pseudoSepMM + ')');
+		} else {
+			pseudoSepMMBeforeRawRegex = noMatchRegex;
+			pseudoSepMMAfterRawRegex = noMatchRegex;
+		}
 	}
 	if (
 		event.affectsConfiguration('navi-parens.pseudoSeparatorNoMM') ||
@@ -1024,8 +1075,13 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		event.affectsConfiguration('navi-parens.closingBracketsRaw')
 	) {
 		const pseudoSepNoMM = configuration.get<string>("navi-parens.pseudoSeparatorNoMM");
-		pseudoSepNoMMBeforeRawRegex = makeRegExp('(' + pseudoSepNoMM + ')$');
-		pseudoSepNoMMAfterRawRegex = makeRegExp('^(' + pseudoSepNoMM + ')');
+		if (pseudoSepNoMM && pseudoSepNoMM.length > 0) {
+			pseudoSepNoMMBeforeRawRegex = makeRegExp('(' + pseudoSepNoMM + ')$');
+			pseudoSepNoMMAfterRawRegex = makeRegExp('^(' + pseudoSepNoMM + ')');
+		} else {
+			pseudoSepNoMMBeforeRawRegex = noMatchRegex;
+			pseudoSepNoMMAfterRawRegex = noMatchRegex;
+		}
 	}
 	if (event.affectsConfiguration('navi-parens.blockScopeMode') ||
 		event.affectsConfiguration('navi-parens.bracketScopeMode') ||
@@ -1120,11 +1176,6 @@ function isMarkmacsMode(): boolean {
 	return mm === undefined ? false : mm;
 }
 
-function isMarkmacsContext(doc: vscode.TextDocument, pos: vscode.Position): boolean {
-	// TODO: check for a LaTeX context.
-	return isMarkmacsMode();
-}
-
 async function toggleMarkmacsMode(textEditor: vscode.TextEditor) {
 	const configuration = vscode.workspace.getConfiguration();
 	const isMarkmacsMode = !configuration.get<boolean>("navi-parens.isMarkmacsMode");
@@ -1170,50 +1221,6 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, the extension "navi-parens" is being activated!');
 
 	const configuration = vscode.workspace.getConfiguration();
-	const closingBracketsConfig = configuration.get<string[]>("navi-parens.closingBrackets");
-	if (closingBracketsConfig) {
-		closingBrackets = closingBracketsConfig;
-	}
-	const openingBracketsConfig = configuration.get<string[]>("navi-parens.openingBrackets");
-	if (openingBracketsConfig) {
-		openingBrackets = openingBracketsConfig;
-	}
-	const separatorsJTBConfig = configuration.get<string[]>("navi-parens.separatorsJTB");
-	if (separatorsJTBConfig) {
-		separatorsJTB = separatorsJTBConfig;
-	}
-	const closingBracketsRaw = configuration.get<string[]>("navi-parens.closingBracketsRaw") || [];
-	if (closingBracketsRaw.length > 0) {
-		closingBeforeRawRegex = makeRegExp('(' + escapeRegExps(closingBracketsRaw) + ')$');
-		closingAfterRawRegex = makeRegExp('^(' + escapeRegExps(closingBracketsRaw) + ')');
-		closingRawMaxLength = Math.max(...closingBracketsRaw.map(delim => delim.length));
-	}
-	const openingBracketsRaw = configuration.get<string[]>("navi-parens.openingBracketsRaw") || [];
-	if (openingBracketsRaw.length > 0) {
-		openingBeforeRawRegex = makeRegExp('(' + escapeRegExps(openingBracketsRaw) + ')$');
-		openingAfterRawRegex = makeRegExp('^(' + escapeRegExps(openingBracketsRaw) + ')');
-		openingRawMaxLength = Math.max(...openingBracketsRaw.map(delim => delim.length));
-	}
-	const separatorsMM = configuration.get<string[]>("navi-parens.separatorsMM") || [];
-	if (separatorsMM.length > 0) {
-		separatorsMMBeforeRawRegex = makeRegExp('(' + escapeRegExps(separatorsMM) + ')$');
-		separatorsMMAfterRawRegex = makeRegExp('^(' + escapeRegExps(separatorsMM) + ')');
-	}
-	const separatorsNoMM = configuration.get<string[]>("navi-parens.separatorsNoMM") || [];
-	if (separatorsNoMM.length > 0) {
-		separatorsNoMMBeforeRawRegex = makeRegExp('(' + escapeRegExps(separatorsNoMM) + ')$');
-		separatorsNoMMAfterRawRegex = makeRegExp('^(' + escapeRegExps(separatorsNoMM) + ')');
-	}
-	{
-		const pseudoSepMM = configuration.get<string>("navi-parens.pseudoSeparatorMM");
-		pseudoSepMMBeforeRawRegex = makeRegExp('(' + pseudoSepMM + ')$');
-		pseudoSepMMAfterRawRegex = makeRegExp('^(' + pseudoSepMM + ')');
-	}
-	{
-		const pseudoSepNoMM = configuration.get<string>("navi-parens.pseudoSeparatorNoMM");
-		pseudoSepNoMMBeforeRawRegex = makeRegExp('(' + pseudoSepNoMM + ')$');
-		pseudoSepNoMMAfterRawRegex = makeRegExp('^(' + pseudoSepNoMM + ')');
-	}
 	vscode.workspace.onDidChangeConfiguration(configurationChangeUpdate);
 	// vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) =>
 	// 	markmacsUpdate(event.textEditor));

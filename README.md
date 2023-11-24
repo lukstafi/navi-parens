@@ -163,12 +163,6 @@ This extension contributes the following settings:
   * `JumpToBracket`: uses `editor.action.jumpToBracket` (i.e. `ctrl+shift+\`). The default.
   * `Raw`: only the bracket characters are considered, without context.
   * `ctrl+shift+alt+p` toggles between `Semantic` and `Raw`.
-* `navi-parens.closingBrackets`: the superset of supported closing delimiters.
-  * Defaults to `[")", "]", "}", ">"]`.
-  * Can be language specific.
-* `navi-parens.openingBrackets`: the superset of supported opening delimiters.
-  * Defaults to `["(", "[", "{", "<"]`.
-  * Can be language specific.
 * `navi-parens.separatorsNoMM`: The separators for commands like `goBeginScopeOrArg`, `goUpOneLiner` when not in Markmacs Mode.
   * Defaults to `[",", ";", "/[^a-zA-Z0-9]let /"]`.
   * Can be language specific.
