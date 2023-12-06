@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.3.1] -- 2023-12-06
+
+### Fixed
+
+- Performance: Only call `getConfiguration` to lazily initialize settings, and in the _configuration changed_ callback.
+
 ## [1.3.0] -- 2023-11-23
 
 ### Added

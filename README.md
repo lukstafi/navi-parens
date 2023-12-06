@@ -254,4 +254,8 @@ Initial release of _Navi Parens_.
 * Includes LaTeX matrix and equation environment delimiters in defaults.
 * Next character, previous character commands that skip over multicharacter delimiters.
 
+### 1.3.1
+
+Emergency release fixing a performance regression.
+
 [changelog]: https://marketplace.visualstudio.com/items/lukstafi.navi-parens/changelog
