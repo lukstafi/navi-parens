@@ -316,11 +316,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 				delimiter === DelimiterType.opening ? openingBrackets : [];
 		return delimiters.includes(lookingAt) ? lookingAt : null;
 	}
-	const configuration = vscode.workspace.getConfiguration();
-	if (!closingAfterRawRegex) {
-
-	}
+	let configuration = null;
 	if (!closingBeforeRawRegex || !closingAfterRawRegex) {
+		configuration = vscode.workspace.getConfiguration();
 		const closingBracketsRaw = configuration.get<string[]>("navi-parens.closingBracketsRaw") || [];
 		if (closingBracketsRaw.length > 0) {
 			closingBeforeRawRegex = makeRegExp('(' + escapeRegExps(closingBracketsRaw) + ')$');
@@ -331,6 +329,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!openingBeforeRawRegex || !openingAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const openingBracketsRaw = configuration.get<string[]>("navi-parens.openingBracketsRaw") || [];
 		if (openingBracketsRaw.length > 0) {
 			openingBeforeRawRegex = makeRegExp('(' + escapeRegExps(openingBracketsRaw) + ')$');
@@ -341,6 +342,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!separatorsMMBeforeRawRegex || !separatorsMMAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const separatorsMM = configuration.get<string[]>("navi-parens.separatorsMM") || [];
 		if (separatorsMM.length > 0) {
 			separatorsMMBeforeRawRegex = makeRegExp('(' + escapeRegExps(separatorsMM) + ')$');
@@ -351,6 +355,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!separatorsNoMMBeforeRawRegex || !separatorsNoMMAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const separatorsNoMM = configuration.get<string[]>("navi-parens.separatorsNoMM") || [];
 		if (separatorsNoMM.length > 0) {
 			separatorsNoMMBeforeRawRegex = makeRegExp('(' + escapeRegExps(separatorsNoMM) + ')$');
@@ -361,6 +368,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!pseudoSepMMBeforeRawRegex || !pseudoSepMMAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const pseudoSepMM = configuration.get<string>("navi-parens.pseudoSeparatorMM");
 		if (pseudoSepMM) {
 			pseudoSepMMBeforeRawRegex = makeRegExp('(' + pseudoSepMM + ')$');
@@ -371,6 +381,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!pseudoSepNoMMBeforeRawRegex || !pseudoSepNoMMAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const pseudoSepNoMM = configuration.get<string>("navi-parens.pseudoSeparatorNoMM");
 		if (pseudoSepNoMM && pseudoSepNoMM.length > 0) {
 			pseudoSepNoMMBeforeRawRegex = makeRegExp('(' + pseudoSepNoMM + ')$');
