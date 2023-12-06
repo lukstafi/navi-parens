@@ -38,7 +38,7 @@ function escapeRegExp(s: string) {
 
 // In case of doubt, add more parentheses.
 function escapeRegExps(strings: string[]) {
-	return strings.map(s => '(' + escapeRegExp(s) + ')').join('|');
+	return strings.map(s => '(?:' + escapeRegExp(s) + ')').join('|');
 }
 
 const noMatchRegex = /^\b$/;
