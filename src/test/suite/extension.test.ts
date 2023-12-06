@@ -92,6 +92,7 @@ function testCase(content: string, command: string, mode: string, language: stri
 		assert.notStrictEqual(modePair, undefined);
 		if (!modePair) { return; }
 		const [blockMode, bracketsMode, markmacsMode] = modePair;
+		vscode.workspace.onDidChangeConfiguration(myExtension.configurationChangeUpdate);
 		await vscode.workspace.getConfiguration().update("navi-parens.blockScopeMode", blockMode,
 			vscode.ConfigurationTarget.Global, true);
 		await vscode.workspace.getConfiguration().update("navi-parens.bracketScopeMode", bracketsMode,
