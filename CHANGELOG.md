@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.3.2] -- 2023-12-25
+
+### Fixed
+
+- Rebinds `ctrl+alt+m` to `ctrl+alt+n` because of key chord capture on some systems (issue #24).
+
 ## [1.3.1] -- 2023-12-06
 
 ### Fixed
