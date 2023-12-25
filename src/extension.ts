@@ -67,29 +67,6 @@ function makeRegExp(s: string) {
 	return new RegExp(s, 'u');
 }
 
-// v2: scope markings.
-// const markmacsBegLightTheme = "\\textcolor{firebrick}{";
-// const markmacsMidLightTheme = "}\\textcolor{indianred}{";
-// const markmacsEndLightTheme = "}\\textcolor{peru}{}";
-// const markmacsBegDarkTheme = "\\textcolor{chartreuse}{";
-// const markmacsMidDarkTheme = "}\\textcolor{limegreen}{";
-// const markmacsEndDarkTheme = "}\\textcolor{papayawhip}{}";
-// let isCurrentThemeLight =
-// 	vscode.window.activeColorTheme.kind === 1 /* Light */ ||
-// 	vscode.window.activeColorTheme.kind === 4 /* HighContrastLight */;
-// let markmacsBeg =
-// 	isCurrentThemeLight ? markmacsBegLightTheme : markmacsBegDarkTheme;
-// let markmacsMid =
-// 	isCurrentThemeLight ? markmacsMidLightTheme : markmacsMidDarkTheme;
-// let markmacsEnd =
-// 	isCurrentThemeLight ? markmacsEndLightTheme : markmacsEndDarkTheme;
-
-// const markmacsSeparators =
-// 	[markmacsBegLightTheme, markmacsMidLightTheme, markmacsEndLightTheme,
-// 		markmacsBegDarkTheme, markmacsMidDarkTheme, markmacsEndDarkTheme];
-// const markmacsBeforeRegex = makeRegExp('(' + escapeRegExps(markmacsSeparators) + ')$');
-// const markmacsAfterRegex = makeRegExp('^(' + escapeRegExps(markmacsSeparators) + ')');
-
 /** From Navi Parens perspective, positions on the border of a scope are outside of the scope. */
 function containsInside(range: vscode.Range, pos: vscode.Position): boolean {
 	return range.contains(pos) && !range.start.isEqual(pos) && !range.end.isEqual(pos);
@@ -216,10 +193,6 @@ function atPosition(doc: vscode.TextDocument, offset: number) {
 		// In case endline is represented as two characters in the document.
 		pos = doc.positionAt(offset + 1);
 	}
-	// else if (pos.isEqual(doc.positionAt(offset + 1))) {
-	// In case endline is represented as two characters in the document.
-	// pos = doc.positionAt(offset - 1);
-	// }
 	return pos;
 }
 
@@ -473,12 +446,6 @@ function findOuterBracketRaw(
 			if (direction[side] === -1 && offsetPos.character === 0) {
 				continue;
 			}
-			// const lookingAtMM = oneOfAtPoint(doc, DelimiterType.markmacs, true, beforeFor[side], offsetPos);
-			// if (lookingAtMM) {
-			// 	skippedChars += lookingAtMM.length;
-			// 	delta = lookingAtMM.length * direction[side];
-			// 	continue;
-			// }
 			const lookingAtIncr =
 				oneOfAtPoint(doc, incrIsClosing[side] ? DelimiterType.closing : DelimiterType.opening, true,
 					beforeFor[side], offsetPos);
@@ -660,7 +627,7 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 				new vscode.Selection(symbol.selectionRange.end, rangeEnd);
 		}
 	} else if (blockMode === "Indentation") {
-		blockScope = await findOuterIndentation(textEditor, before, near, pos);
+		blockScope = findOuterIndentation(textEditor, before, near, pos);
 	} else { console.assert(blockMode === "None", `Unknown Block Scope Mode ${blockMode}.`); }
 	// If one scope includes the other, pick the nearer target, otherwise pick the farther target.
 	let result = null;
@@ -718,11 +685,6 @@ async function findSiblingBracket(
 		if (before && offsetPos.character === 0) {
 			continue;
 		}
-		// const lookingAtMM = oneOfAtPoint(doc, DelimiterType.markmacs, true, before, offsetPos);
-		// if (lookingAtMM) {
-		// 	offset += (lookingAtMM.length - 1) * direction;
-		// 	continue;
-		// }
 		const lookingAtIncr =
 			oneOfAtPoint(doc, incrIsClosing ? DelimiterType.closing : DelimiterType.opening, raw, before, offsetPos);
 		const lookingAtDecr =
@@ -865,8 +827,8 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 				new vscode.Selection(candidate.start, candidate.end);
 		}
 	} else if (blockMode === "Indentation") {
-		blockScope = await findSiblingIndentation(textEditor, before, pos);
-		scopeLimit = await findOuterIndentation(textEditor, before, false, pos);
+		blockScope = findSiblingIndentation(textEditor, before, pos);
+		scopeLimit = findOuterIndentation(textEditor, before, false, pos);
 	} else { console.assert(blockMode === "None", `Unknown Block Scope Mode ${blockMode}.`); }
 
 	if (!bracketsMode) {
@@ -993,10 +955,6 @@ export async function goPastCharacter(textEditor: vscode.TextEditor, select: boo
 	const doc = textEditor.document;
 	let pos = textEditor.selection.active;
 	const direction = before ? -1 : 1;
-	// const lookingAtMM = oneOfAtPoint(doc, DelimiterType.markmacs, true, before, pos);
-	// if (lookingAtMM) {
-	// 	pos = doc.positionAt(doc.offsetAt(pos) + lookingAtMM.length * direction);
-	// }
 	const lookingAt = oneOfAtPoint(doc, DelimiterType.jointDelimiters, true, before, pos);
 	let targetPos = null;
 	if (lookingAt) {
@@ -1120,79 +1078,6 @@ function markmacsRange(doc: vscode.TextDocument, pos: vscode.Position): vscode.R
 	return null;
 }
 
-// async function removeCursorMarkers(textEditor: vscode.TextEditor) {
-// 	const doc = textEditor.document;
-// 	let cursor = doc.offsetAt(textEditor.selection.active);
-// 	let anchor = doc.offsetAt(textEditor.selection.anchor);
-// 	for (const light of [true, false]) {
-// 		const delim = light ? markmacsEndLightTheme : markmacsEndDarkTheme;
-// 		const text = doc.getText();
-// 		let atPos = text.length;
-// 		let lastPos = null;
-// 		while ((atPos = text.lastIndexOf(delim, atPos - 1)) >= 0) {
-// 			const pos = doc.positionAt(atPos);
-// 			lastPos = pos;
-// 			// The cursor adapts to edits, there's no need to re-position it.
-// 			await textEditor.edit(
-// 				(edit: vscode.TextEditorEdit) =>
-// 					edit.replace(new vscode.Range(pos, doc.positionAt(atPos + delim.length)), ''));
-// 			{
-// 				const delim = light ? markmacsMidLightTheme : markmacsMidDarkTheme;
-// 				const matched = text.lastIndexOf(delim, atPos);
-// 				if (matched >= 0) {
-// 					await textEditor.edit(
-// 						(edit: vscode.TextEditorEdit) =>
-// 							edit.replace(new vscode.Range(doc.positionAt(matched), doc.positionAt(matched + delim.length)), ''));
-// 				}
-// 			}
-// 			{
-// 				const delim = light ? markmacsBegLightTheme : markmacsBegDarkTheme;
-// 				const matched = text.lastIndexOf(delim, atPos);
-// 				if (matched >= 0) {
-// 					await textEditor.edit(
-// 						(edit: vscode.TextEditorEdit) =>
-// 							edit.replace(new vscode.Range(doc.positionAt(matched), doc.positionAt(matched + delim.length)), ''));
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
-// async function addCursorMarker(
-// 	textEditor: vscode.TextEditor, begPos: vscode.Position, endPos: vscode.Position
-// ) {
-// 	const doc = textEditor.document;
-// 	const beg = doc.offsetAt(begPos);
-// 	const end = doc.offsetAt(endPos);
-// 	let anchor = doc.offsetAt(textEditor.selection.anchor);
-// 	const mid = doc.offsetAt(textEditor.selection.active);
-// 	if (mid < beg || end < mid) {
-// 		return;
-// 	}
-// 	await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(end), markmacsEnd));
-// 	await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(mid), markmacsMid));
-// 	await textEditor.edit((edit: vscode.TextEditorEdit) => edit.insert(doc.positionAt(beg), markmacsBeg));
-// 	// Reposition the cursor to be before the inserted markmacsMid.
-// 	let anchorTo = anchor;
-// 	if (anchor >= beg) {
-// 		anchorTo += markmacsBeg.length;
-// 	}
-// 	let posTo = mid;
-// 	if (mid >= beg) {
-// 		posTo += markmacsBeg.length;
-// 	}
-// 	if (anchor > mid) {
-// 		anchorTo += markmacsMid.length;
-// 	}
-// 	if (anchor > end) {
-// 		anchorTo += markmacsEnd.length;
-// 	}
-// 	if (mid > end) {
-// 		posTo += markmacsEnd.length;
-// 	}
-// 	textEditor.selection = new vscode.Selection(atPosition(doc, posTo), atPosition(doc, anchorTo));
-// }
-
 function isMarkmacsMode(): boolean {
 	const configuration = vscode.workspace.getConfiguration();
 	const mm = configuration.get<boolean>("navi-parens.isMarkmacsMode");
@@ -1204,12 +1089,6 @@ async function toggleMarkmacsMode(textEditor: vscode.TextEditor) {
 	const isMarkmacsMode = !configuration.get<boolean>("navi-parens.isMarkmacsMode");
 	await configuration.update("navi-parens.isMarkmacsMode", isMarkmacsMode,
 		vscode.ConfigurationTarget.Global, true);
-	// if (isMarkmacsMode) {
-	// 	lastUpdatedPosition = null;
-	// 	await markmacsUpdate(textEditor);
-	// } else {
-	// 	await removeCursorMarkers(textEditor);
-	// }
 }
 
 async function cycleBracketScopeMode(_textEditor: vscode.TextEditor) {
@@ -1248,20 +1127,12 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, the extension "navi-parens" is being activated!');
 
 	vscode.workspace.onDidChangeConfiguration(configurationChangeUpdate);
-	// vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) =>
-	// 	markmacsUpdate(event.textEditor));
 
 	vscode.workspace.onDidChangeTextDocument(event => {
 		const uri = event.document.uri;
 		const state = documentStates.get(uri);
 		if (state) { state.needsUpdate = true; }
 	}, null, context.subscriptions);
-
-	// vscode.window.onDidChangeActiveColorTheme(() => {
-	// 	isCurrentThemeLight =
-	// 		vscode.window.activeColorTheme.kind === 1 /* Light */ ||
-	// 		vscode.window.activeColorTheme.kind === 4 /* HighContrastLight */;
-	// });
 
 	function newCommand(
 		command: string, callback: (textEditor: vscode.TextEditor, ...args: any[]) => void
