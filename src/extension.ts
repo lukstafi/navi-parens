@@ -1287,7 +1287,7 @@ export function activate(context: vscode.ExtensionContext) {
 			configuration.get<string>('navi-parens.bracketScopeMode') +
 			(configuration.get<boolean>('navi-parens.isMarkmacsMode') ? '/MarkmacsMode' : '') +
 			' (`ctrl+shift+alt+p` changes block scope mode / ' +
-			'`ctrl+alt+p` changes bracket scope mode / `ctrl+alt+m` changes Markmacs mode).');
+			'`ctrl+alt+p` changes bracket scope mode / `ctrl+alt+n` changes Markmacs mode).');
 	}));
 	// Create a new status bar item.
 	naviStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);

@@ -585,7 +585,7 @@
       },
       {
         "command": "navi-parens.toggleMarkmacsMode",
-        "key": "ctrl+alt+m"
+        "key": "ctrl+alt+n"
       },
       {
         "command": "navi-parens.goRightOverDelims",

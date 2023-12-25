@@ -48,11 +48,11 @@ Commands:
 * `goPastPreviousWord`: `alt+h` Go past the previous word / beginning of current, ignoring language-specific rules
 * `selectPastNextWord`: `shift+alt+;` Select past the current/next word, ignoring language-specific rules
 * `selectPastPreviousWord`: `shift+alt+h` Select past the previous word / beginning of current, ignoring language-specific rules
-* `toggleMarkmacsMode`: `ctrl+alt+m` Turn on / off cursor and scope visualization for LaTeX and Mermaid
+* `toggleMarkmacsMode`: `ctrl+alt+n` Turn on / off cursor and scope visualization for LaTeX and Mermaid
 * `goRightOverDelims`: `alt+l` Go right one character/separator/delimiter, i.e. skip over recognized delimiters
 * `goLeftOverDelims`: `alt+j` Go left one character/separator/delimiter, i.e. skip over recognized delimiters
-* `goUpOneLiner`: MM/`alt+i` Go left / up at least `oneLinerMin` characters, stopping on a scope boundary; binding to `alt+i` activated by `ctrl+alt+m`
-* `goDownOneLiner`: MM/`alt+k` Go right / down at least `oneLinerMin` characters, stopping on a scope boundary; binding to `alt+k` activated by `ctrl+alt+m`
+* `goUpOneLiner`: MM/`alt+i` Go left / up at least `oneLinerMin` characters, stopping on a scope boundary; binding to `alt+i` activated by `ctrl+alt+n`
+* `goDownOneLiner`: MM/`alt+k` Go right / down at least `oneLinerMin` characters, stopping on a scope boundary; binding to `alt+k` activated by `ctrl+alt+n`
 * `goBeginScopeOrArg`: `alt+a` Go near the opening of the current scope or argument
 * `goEndScopeOrArg`: `alt+e` Go near the closing of the current scope or argument
 * `selectRightOverDelims`: `shift+alt+l` Like `goRightOverDelims`, but extend the selection
@@ -61,7 +61,7 @@ Commands:
 * `selectDownOneLiner`: MM/`shift+alt+k` Like `goDownOneLiner`, but extend the selection
 * `selectBeginScopeOrArg`: `shift+alt+a` Like `goBeginScopeOrArg`, but extend the selection
 * `selectEndScopeOrArg`: `shift+alt+e` Like `goEndScopeOrArg`, but extend the selection
-* `toggleMarkmacsMode`: `ctrl+alt+m` Enable/disable Markmacs Mode, which is tailored for LaTeX and changes the behavior of the `alt+i`, `alt+k`, `alt+j`, `alt+l` bindings/commands.
+* `toggleMarkmacsMode`: `ctrl+alt+n` Enable/disable Markmacs Mode, which is tailored for LaTeX and changes the behavior of the `alt+i`, `alt+k`, `alt+j`, `alt+l` bindings/commands.
 
 The meaning of "near the beginning/end of a scope" is mode-specific.
 
