@@ -38,7 +38,7 @@ function escapeRegExp(s: string) {
 
 // In case of doubt, add more parentheses.
 function escapeRegExps(strings: string[]) {
-	return strings.map(s => '(' + escapeRegExp(s) + ')').join('|');
+	return strings.map(s => '(?:' + escapeRegExp(s) + ')').join('|');
 }
 
 const noMatchRegex = /^\b$/;
@@ -60,6 +60,8 @@ let pseudoSepNoMMAfterRawRegex: RegExp | null = null;
 let closingRawMaxLength: number | null = null;
 let openingRawMaxLength: number | null = null;
 let naviStatusBarItem: vscode.StatusBarItem;
+let bracketsMode: string | undefined;
+let blockMode: string | undefined;
 
 function makeRegExp(s: string) {
 	return new RegExp(s, 'u');
@@ -316,11 +318,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 				delimiter === DelimiterType.opening ? openingBrackets : [];
 		return delimiters.includes(lookingAt) ? lookingAt : null;
 	}
-	const configuration = vscode.workspace.getConfiguration();
-	if (!closingAfterRawRegex) {
-
-	}
+	let configuration = null;
 	if (!closingBeforeRawRegex || !closingAfterRawRegex) {
+		configuration = vscode.workspace.getConfiguration();
 		const closingBracketsRaw = configuration.get<string[]>("navi-parens.closingBracketsRaw") || [];
 		if (closingBracketsRaw.length > 0) {
 			closingBeforeRawRegex = makeRegExp('(' + escapeRegExps(closingBracketsRaw) + ')$');
@@ -331,6 +331,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!openingBeforeRawRegex || !openingAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const openingBracketsRaw = configuration.get<string[]>("navi-parens.openingBracketsRaw") || [];
 		if (openingBracketsRaw.length > 0) {
 			openingBeforeRawRegex = makeRegExp('(' + escapeRegExps(openingBracketsRaw) + ')$');
@@ -341,6 +344,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!separatorsMMBeforeRawRegex || !separatorsMMAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const separatorsMM = configuration.get<string[]>("navi-parens.separatorsMM") || [];
 		if (separatorsMM.length > 0) {
 			separatorsMMBeforeRawRegex = makeRegExp('(' + escapeRegExps(separatorsMM) + ')$');
@@ -351,6 +357,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!separatorsNoMMBeforeRawRegex || !separatorsNoMMAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const separatorsNoMM = configuration.get<string[]>("navi-parens.separatorsNoMM") || [];
 		if (separatorsNoMM.length > 0) {
 			separatorsNoMMBeforeRawRegex = makeRegExp('(' + escapeRegExps(separatorsNoMM) + ')$');
@@ -361,6 +370,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!pseudoSepMMBeforeRawRegex || !pseudoSepMMAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const pseudoSepMM = configuration.get<string>("navi-parens.pseudoSeparatorMM");
 		if (pseudoSepMM) {
 			pseudoSepMMBeforeRawRegex = makeRegExp('(' + pseudoSepMM + ')$');
@@ -371,6 +383,9 @@ function oneOfAtPoint(doc: vscode.TextDocument, delimiter: DelimiterType, isRaw:
 		}
 	}
 	if (!pseudoSepNoMMBeforeRawRegex || !pseudoSepNoMMAfterRawRegex) {
+		if (!configuration) {
+			configuration = vscode.workspace.getConfiguration();
+		}
 		const pseudoSepNoMM = configuration.get<string>("navi-parens.pseudoSeparatorNoMM");
 		if (pseudoSepNoMM && pseudoSepNoMM.length > 0) {
 			pseudoSepNoMMBeforeRawRegex = makeRegExp('(' + pseudoSepNoMM + ')$');
@@ -517,8 +532,10 @@ function findOuterBracketRaw(
 
 async function findBracketScopeOverPos(
 	textEditor: vscode.TextEditor, before: boolean, pos: vscode.Position): Promise<vscode.Selection | null> {
-	const configuration = vscode.workspace.getConfiguration();
-	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	if (!bracketsMode) {
+		const configuration = vscode.workspace.getConfiguration();
+		bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	}
 	let bracketScope = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
 		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos, /*useSeparators=*/false) : null;
 	return bracketScope;
@@ -600,8 +617,10 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 	const savedSelection = textEditor.selection;
 	const pos = savedSelection.active;
 	let state = await updateStateForPosition(textEditor);
-	const configuration = vscode.workspace.getConfiguration();
-	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	if (!bracketsMode) {
+		const configuration = vscode.workspace.getConfiguration();
+		bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	}
 	let bracketScope = bracketsMode === "JumpToBracket" ? await findOuterBracket(textEditor, before, pos) :
 		bracketsMode === "Raw" ? findOuterBracketRaw(textEditor, before, pos, useSeparators) : null;
 	const doc = textEditor.document;
@@ -623,7 +642,10 @@ export async function goToOuterScope(textEditor: vscode.TextEditor, select: bool
 		const be = lookingAtE ? bracketScope.end.translate(0, -1 * translE) : bracketScope.end;
 		bracketScope = before ? new vscode.Selection(be, bs) : new vscode.Selection(bs, be);
 	}
-	const blockMode = configuration.get<string>("navi-parens.blockScopeMode");
+	if (!blockMode) {
+		const configuration = vscode.workspace.getConfiguration();
+		blockMode = configuration.get<string>("navi-parens.blockScopeMode");
+	}
 	let blockScope = null;
 	if (blockMode === "Semantic") {
 		const symbol = state.lastSymbolAndAncestors.pop();
@@ -813,8 +835,10 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 	// State update might interact with the UI, save UI state early.
 	const savedSelection = textEditor.selection;
 	let state = await updateStateForPosition(textEditor);
-	const configuration = vscode.workspace.getConfiguration();
-	const blockMode = configuration.get<string>("navi-parens.blockScopeMode");
+	if (!blockMode) {
+		const configuration = vscode.workspace.getConfiguration();
+		blockMode = configuration.get<string>("navi-parens.blockScopeMode");
+	}
 	const pos = savedSelection.active;
 	let blockScope: vscode.Selection | null = null;
 	let scopeLimit: vscode.Range | null = null;
@@ -845,7 +869,9 @@ export async function goPastSiblingScope(textEditor: vscode.TextEditor, select: 
 		scopeLimit = await findOuterIndentation(textEditor, before, false, pos);
 	} else { console.assert(blockMode === "None", `Unknown Block Scope Mode ${blockMode}.`); }
 
-	const bracketsMode = vscode.workspace.getConfiguration().get<string>("navi-parens.bracketScopeMode");
+	if (!bracketsMode) {
+		bracketsMode = vscode.workspace.getConfiguration().get<string>("navi-parens.bracketScopeMode");
+	}
 	let bracketScope = bracketsMode === "None" ? null :
 		await findSiblingBracket(textEditor, bracketsMode === "Raw", before, pos);
 
@@ -1009,18 +1035,16 @@ export async function goOneLiner(textEditor: vscode.TextEditor, select: boolean,
 
 }
 
-function updateStatusBarItem(
-	blockScopeMode: string | undefined, bracketScopeMode: string | undefined, isMarkmacsMode: boolean | undefined
-): void {
-	const blockMode = blockScopeMode === 'Semantic' ? 'SEM' :
-		(blockScopeMode === 'Indentation' ? 'IND' : (blockScopeMode === 'None' ? 'NON' : '---'));
-	const bracketMode = bracketScopeMode === 'JumpToBracket' ? 'JTB' :
-		(bracketScopeMode === 'Raw' ? 'RAW' : (bracketScopeMode === 'None' ? 'NON' : '---'));
-	naviStatusBarItem.text = `Navi: ${blockMode}/${bracketMode}${isMarkmacsMode ? '/MM' : ''}`;
+function updateStatusBarItem(isMarkmacsMode: boolean | undefined): void {
+	const block = blockMode === 'Semantic' ? 'SEM' :
+		(blockMode === 'Indentation' ? 'IND' : (blockMode === 'None' ? 'NON' : '---'));
+	const brackets = bracketsMode === 'JumpToBracket' ? 'JTB' :
+		(bracketsMode === 'Raw' ? 'RAW' : (bracketsMode === 'None' ? 'NON' : '---'));
+	naviStatusBarItem.text = `Navi: ${block}/${brackets}${isMarkmacsMode ? '/MM' : ''}`;
 	naviStatusBarItem.show();
 }
 
-function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
+export function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 	const configuration = vscode.workspace.getConfiguration();
 	const closingBracketsRaw = configuration.get<string[]>("navi-parens.closingBracketsRaw") || [];
 	if (event.affectsConfiguration('navi-parens.closingBracketsRaw')) {
@@ -1086,9 +1110,9 @@ function configurationChangeUpdate(event: vscode.ConfigurationChangeEvent) {
 		event.affectsConfiguration('navi-parens.bracketScopeMode') ||
 		event.affectsConfiguration('navi-parens.isMarkmacsMode')
 	) {
-		updateStatusBarItem(configuration.get<string>('navi-parens.blockScopeMode'),
-			configuration.get<string>('navi-parens.bracketScopeMode'),
-			configuration.get<boolean>('navi-parens.isMarkmacsMode'));
+		bracketsMode = configuration.get<string>('navi-parens.bracketScopeMode');
+		blockMode = configuration.get<string>('navi-parens.blockScopeMode');
+		updateStatusBarItem(configuration.get<boolean>('navi-parens.isMarkmacsMode'));
 	}
 }
 
@@ -1190,7 +1214,9 @@ async function toggleMarkmacsMode(textEditor: vscode.TextEditor) {
 
 async function cycleBracketScopeMode(_textEditor: vscode.TextEditor) {
 	const configuration = vscode.workspace.getConfiguration();
-	const bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	if (!bracketsMode) {
+		bracketsMode = configuration.get<string>("navi-parens.bracketScopeMode");
+	}
 	let newMode = bracketsMode === "None" ? "JumpToBracket" : (
 		bracketsMode === "JumpToBracket" ? "Raw" : (bracketsMode === "Raw" ? "None" : null)
 	);
@@ -1204,12 +1230,14 @@ async function cycleBracketScopeMode(_textEditor: vscode.TextEditor) {
 
 async function cycleBlockScopeMode(_textEditor: vscode.TextEditor) {
 	const configuration = vscode.workspace.getConfiguration();
-	const blocksMode = configuration.get<string>("navi-parens.blockScopeMode");
-	let newMode = blocksMode === "None" ? "Semantic" : (
-		blocksMode === "Semantic" ? "Indentation" : (blocksMode === "Indentation" ? "None" : null)
+	if (!blockMode) {
+		blockMode = configuration.get<string>("navi-parens.blockScopeMode");
+	}
+	let newMode = blockMode === "None" ? "Semantic" : (
+		blockMode === "Semantic" ? "Indentation" : (blockMode === "Indentation" ? "None" : null)
 	);
 	if (!newMode) {
-		console.assert(false, `Unknown setting for navi-parens.blockScopeMode: ${blocksMode}.`);
+		console.assert(false, `Unknown setting for navi-parens.blockScopeMode: ${blockMode}.`);
 		newMode = "None";
 	}
 	await configuration.update("navi-parens.blockScopeMode", newMode,
@@ -1219,7 +1247,6 @@ async function cycleBlockScopeMode(_textEditor: vscode.TextEditor) {
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, the extension "navi-parens" is being activated!');
 
-	const configuration = vscode.workspace.getConfiguration();
 	vscode.workspace.onDidChangeConfiguration(configurationChangeUpdate);
 	// vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) =>
 	// 	markmacsUpdate(event.textEditor));
@@ -1282,9 +1309,10 @@ export function activate(context: vscode.ExtensionContext) {
 	const naviCommandId = 'navi-parens.showScopeModes';
 	context.subscriptions.push(vscode.commands.registerCommand(naviCommandId, () => {
 		const configuration = vscode.workspace.getConfiguration();
+		bracketsMode = configuration.get<string>('navi-parens.bracketScopeMode');
+		blockMode = configuration.get<string>('navi-parens.blockScopeMode');
 		vscode.window.showInformationMessage('Navi Parens: ' +
-			configuration.get<string>('navi-parens.blockScopeMode') + '/' +
-			configuration.get<string>('navi-parens.bracketScopeMode') +
+			blockMode + '/' + bracketsMode +
 			(configuration.get<boolean>('navi-parens.isMarkmacsMode') ? '/MarkmacsMode' : '') +
 			' (`ctrl+shift+alt+p` changes block scope mode / ' +
 			'`ctrl+alt+p` changes bracket scope mode / `ctrl+alt+n` changes Markmacs mode).');
@@ -1293,9 +1321,12 @@ export function activate(context: vscode.ExtensionContext) {
 	naviStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	naviStatusBarItem.command = naviCommandId;
 	context.subscriptions.push(naviStatusBarItem);
-	updateStatusBarItem(configuration.get<string>('navi-parens.blockScopeMode'),
-		configuration.get<string>('navi-parens.bracketScopeMode'),
-		configuration.get<boolean>('navi-parens.isMarkmacsMode'));
+	{
+		const configuration = vscode.workspace.getConfiguration();
+		bracketsMode = configuration.get<string>('navi-parens.bracketScopeMode');
+		blockMode = configuration.get<string>('navi-parens.blockScopeMode');
+		updateStatusBarItem(configuration.get<boolean>('navi-parens.isMarkmacsMode'));
+	}
 }
 
 export function deactivate() { }
