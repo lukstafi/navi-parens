@@ -1,5 +1,7 @@
 # navi-parens README
 
+[Navi Parens in the Open VSX Registry](https://open-vsx.org/extension/lukstafi/navi-parens)
+
 _Navi Parens_ is a Visual Studio Code extension that provides structured code navigation similar to what's available in Emacs.
 It also provides additional key bindings for moving the cursor without "fingers leaving the home row".
 
